@@ -1,0 +1,139 @@
+<!-- PAGE_META: {"id": "photo", "title": "获取照片"} -->
+<div class="page" id="page-photo">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTplDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>获取照片</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="photo-top">
+    <div class="pt-thumb" id="pt-thumb"><div class="photo-bg"></div><div class="photo-person"></div></div>
+    <div class="pt-info">
+      <div class="pt-name" id="pt-name"></div>
+      <div class="pt-cap" id="pt-cap"></div>
+    </div>
+    <span class="pt-change" onclick="goTemplates()">更换</span>
+  </div>
+  <div class="camera-area" id="camera-area">
+    <div class="face-guide" id="face-guide"></div>
+    <div class="camera-guide">
+      <div class="svg-ring">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/></svg>
+      </div>
+      <p id="camera-tip">请将人脸置于取景框内</p>
+      <p class="sub" id="camera-sub">正面看向镜头 · 光线充足 · 避免遮挡面部</p>
+    </div>
+  </div>
+  <div id="preview-wrap" class="preview-wrap">
+    <img id="preview-img" alt="拍摄预览">
+    <button class="retake" onclick="retake()">↺ 重拍</button>
+  </div>
+  <div class="camera-bottom">
+    <button class="album-btn" onclick="pickAlbum()">
+      <span class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span><span>相册</span>
+    </button>
+    <button class="shutter-btn" onclick="takePhoto()"></button>
+    <button class="camera-flip" onclick="toast('演示环境已默认前置摄像头','📷')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+  </div>
+  <div class="confirm-bar" id="confirm-bar" style="display:none">
+    <button class="btn primary" id="confirm-go-btn" onclick="goPhotoConfirm()">下一步 ›</button>
+  </div>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
+  <div class="photo-guide-tip" id="photo-guide-tip">正面看向镜头 · 光线充足 · 避免遮挡面部</div>
+  <div class="photo-guide-tip ai" id="photo-guide-tip-ai" style="display:none">请上传本人照片，单人半身效果最佳。</div>
+
+  <!-- 授权弹层（H05） -->
+  <div class="consent-modal" id="consent-modal">
+    <div class="cm-card">
+      <div class="cm-title">照片使用说明</div>
+      <div class="cm-caption">AI 纪念相册 · 现场互动</div>
+      <div class="cm-body">
+        你上传的照片将用于生成本次活动纪念作品。未经你主动提交，作品不会进入现场精选。<br><br>
+        作品保存在云端并与当前浏览器关联；清理浏览器数据或更换设备后，可能无法找回。
+      </div>
+      <div class="cm-check" id="cm-check" onclick="toggleConsentCheck()">
+        <span class="ck-box" id="cm-ck-box">✓</span>
+        <span>我已阅读并同意《隐私说明》和《肖像授权说明》</span>
+      </div>
+      <div class="cm-btns">
+        <button class="btn plain" onclick="closeConsent()">暂不使用</button>
+        <button class="btn primary disabled" id="cm-agree" onclick="agreeConsent()">同意并继续</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* ================= H05 获取照片 ================= */
+function takePhoto() {
+  if (!checkConsentFirst()) return;
+  var area = document.getElementById('camera-area');
+  var pv = document.getElementById('preview-wrap');
+  var bar = document.getElementById('confirm-bar');
+  area.style.display = 'none';
+  pv.style.display = 'block';
+  document.getElementById('preview-img').src = makePortraitSVG();
+  bar.style.display = 'flex';
+  state.photoTaken = true;
+  toast('咔嚓！请确认照片', '📷');
+}
+function pickAlbum() {
+  if (!checkConsentFirst()) return;
+  document.getElementById('file-input').click();
+}
+function retake() {
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('camera-area').style.display = 'flex';
+  document.getElementById('confirm-bar').style.display = 'none';
+  state.photoTaken = false;
+}
+function checkConsentFirst() {
+  if (state.consentAgreed) return true;
+  document.getElementById('consent-modal').classList.add('show');
+  return false;
+}
+function toggleConsentCheck() {
+  var box = document.getElementById('cm-ck-box');
+  var wrap = document.getElementById('cm-check');
+  var agree = document.getElementById('cm-agree');
+  wrap.classList.toggle('checked');
+  agree.classList.toggle('disabled', !wrap.classList.contains('checked'));
+}
+function agreeConsent() {
+  if (!document.getElementById('cm-check').classList.contains('checked')) { toast('请先阅读并同意授权说明', '⚠️'); return; }
+  state.consentAgreed = true;
+  document.getElementById('consent-modal').classList.remove('show');
+  toast('授权已记录', '✓');
+}
+function closeConsent() {
+  document.getElementById('consent-modal').classList.remove('show');
+  toast('未授权前不会使用你的照片', '✓');
+}
+function makePortraitSVG() {
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500">' +
+    '<rect width="400" height="500" fill="#3A3A40"/>' +
+    '<ellipse cx="200" cy="150" rx="85" ry="100" fill="#F5D0A9"/>' +
+    '<rect x="140" y="262" width="120" height="120" rx="55" fill="#D95C4A"/>' +
+    '<rect x="120" y="330" width="160" height="220" rx="60" fill="#C0392B"/>' +
+    '<path d="M160 420 Q200 520 240 420" fill="none" stroke="#7A1712" stroke-width="3"/>' +
+    '</svg>'
+  );
+}
+/* 演示：跳过授权直接拍照（demoFail 使用） */
+function takePhotoNoConsent() {
+  state.consentAgreed = true;
+  var area = document.getElementById('camera-area');
+  var pv = document.getElementById('preview-wrap');
+  var bar = document.getElementById('confirm-bar');
+  area.style.display = 'none';
+  pv.style.display = 'block';
+  document.getElementById('preview-img').src = makePortraitSVG();
+  bar.style.display = 'flex';
+  state.photoTaken = true;
+}
+/* H05 → H06 */
+function goPhotoConfirm() {
+  showPage('photo-confirm');
+  document.getElementById('crop-img').src = state.photoSrc || makePortraitSVG();
+  renderCheck();
+}
+</script>

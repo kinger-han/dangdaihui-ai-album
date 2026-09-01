@@ -1,10 +1,187 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>党代会 AI 纪念相册 · 手机端原型 V2</title>
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>党代会 · AI 纪念相册（手机端原型）</title>
+  <style>
+/* ============================
+   base.css - 全局公共样式
+   ============================ */
+
+/* Reset */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px; color: #333; background: #f0f2f5;
+  line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+.page { display: none; height: 100%; }
+.page.active { display: block; }
+
+/* ---- PC端布局 ---- */
+.pc-layout { display: flex; height: 100vh; overflow: hidden; }
+.pc-sider {
+  width: 200px; background: #fff; border-right: 1px solid #f0f0f0;
+  flex-shrink: 0; display: flex; flex-direction: column; overflow-y: auto;
+}
+.pc-logo {
+  height: 60px; display: flex; align-items: center; padding: 0 24px;
+  font-size: 18px; font-weight: 700; color: #000;
+  border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+}
+.pc-logo-icon {
+  width: 28px; height: 28px; background: #1890ff; border-radius: 6px;
+  margin-right: 10px; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+.pc-menu { flex: 1; padding: 8px 0; }
+.pc-menu-group { padding: 8px 24px 4px; font-size: 12px; color: #999; }
+.pc-menu-item {
+  display: flex; align-items: center; height: 44px; padding: 0 24px;
+  cursor: pointer; transition: all 0.15s; text-decoration: none;
+  color: #333; font-size: 14px;
+}
+.pc-menu-item:hover { background: #f5f7fa; }
+.pc-menu-item.active { background: #e6f7ff; color: #1890ff; border-right: 3px solid #1890ff; }
+.pc-menu-icon { width: 20px; margin-right: 12px; text-align: center; font-size: 16px; }
+
+.pc-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.pc-header {
+  height: 48px; background: #fff; border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; flex-shrink: 0;
+}
+.pc-breadcrumb { font-size: 14px; color: #999; }
+.pc-breadcrumb a { color: #1890ff; text-decoration: none; }
+.pc-breadcrumb .sep { margin: 0 6px; color: #ccc; }
+.pc-breadcrumb .current { color: #333; }
+.pc-header-right { display: flex; align-items: center; gap: 12px; }
+.pc-user-name { font-size: 14px; color: #666; }
+.pc-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: #e6f7ff;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; color: #1890ff;
+}
+.pc-content { flex: 1; padding: 24px; overflow-y: auto; background: #f0f2f5; }
+
+/* ---- 标注角标 ---- */
+.anno-badge {
+  position: absolute; top: -8px; right: -8px;
+  background: #ff4d4f; color: #fff; font-size: 10px;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px; cursor: pointer; z-index: 10;
+  font-weight: 600; line-height: 1;
+}
+.anno-badge:hover { background: #cf1322; }
+[data-anno-id] { position: relative; }
+
+/* ---- 通用组件 ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 0 16px; height: 32px; border-radius: 4px;
+  border: 1px solid #d9d9d9; font-size: 14px; cursor: pointer;
+  transition: all 0.15s; text-decoration: none; white-space: nowrap;
+}
+.btn-primary { background: #1890ff; color: #fff; border-color: #1890ff; }
+.btn-primary:hover { background: #40a9ff; border-color: #40a9ff; }
+.btn-default { background: #fff; color: #333; }
+.btn-default:hover { border-color: #1890ff; color: #1890ff; }
+.btn-link { background: none; border: none; color: #1890ff; padding: 0 4px; height: auto; font-size: 14px; cursor: pointer; }
+.btn-link.danger { color: #f5222d; }
+.btn-link.success { color: #52c41a; }
+.btn-sm { height: 28px; padding: 0 12px; font-size: 13px; }
+
+.table-wrap { background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); overflow: hidden; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+.table th { background: #fafafa; font-weight: 600; color: #333; }
+.table tbody tr:hover { background: #f5f7fa; }
+
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.tag-blue   { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.tag-green  { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.tag-red    { background: #fff2f0; color: #f5222d; border: 1px solid #ffa39e; }
+
+.filter-bar {
+  background: #fff; border-radius: 4px; padding: 20px 24px;
+  display: flex; align-items: center; gap: 24px; margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.filter-item { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 14px; color: #666; white-space: nowrap; }
+.filter-select {
+  height: 32px; padding: 0 12px; border: 1px solid #d9d9d9;
+  border-radius: 4px; font-size: 14px; color: #333; background: #fff; min-width: 120px;
+}
+.filter-date { height: 32px; padding: 0 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; width: 150px; }
+
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 12px; }
+.search-box { display: flex; }
+.search-input {
+  height: 32px; padding: 0 12px; border: 1px solid #d9d9d9;
+  border-radius: 4px 0 0 4px; font-size: 14px; width: 250px; outline: none;
+}
+.search-input:focus { border-color: #1890ff; }
+
+.page-header { margin-bottom: 16px; }
+.page-title { font-size: 18px; font-weight: 700; color: #333; }
+.page-desc { font-size: 14px; color: #999; margin-top: 4px; }
+
+.pagination {
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 16px 0; gap: 8px; font-size: 14px; color: #666;
+}
+.pagination .page-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid #d9d9d9; border-radius: 4px; background: #fff; cursor: pointer;
+}
+.pagination .page-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+
+.form-item { margin-bottom: 16px; }
+.form-label { display: block; margin-bottom: 6px; font-size: 14px; color: #333; font-weight: 500; }
+.input {
+  width: 100%; height: 36px; padding: 0 12px; border: 1px solid #d9d9d9;
+  border-radius: 4px; font-size: 14px; outline: none;
+}
+.input:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal {
+  background: #fff; border-radius: 8px; padding: 24px;
+  min-width: 420px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #333; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 24px; padding-top: 16px; border-top: 1px solid #f0f0f0;
+}
+
+.toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: #333; color: #fff; padding: 8px 20px; border-radius: 6px;
+  font-size: 13px; z-index: 9999; transition: opacity 0.3s;
+}
+
+/* ---- 移动端通用 ---- */
+.m-header {
+  height: 44px; display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 600; color: #000;
+  position: sticky; top: 0; z-index: 100; background: #fff;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #bbb; }
+
+  </style>
+  <style>
+    /* ===== 项目业务样式（组件内 style 被构建丢弃，必须放 shell） ===== */
 /* ============ 全局（PRD 10.2 规范色板） ============ */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 :root {
@@ -54,20 +231,6 @@ body {
 .page.active { display: flex; }
 .page-body { flex: 1; overflow-y: auto; }
 .page-body::-webkit-scrollbar { display: none; }
-
-/* ============ 底部导航（PRD 5.2：首页/精选照片墙/我的纪念） ============ */
-.tab-bar {
-  display: none; height: 60px; background: #fff;
-  border-top: 1px solid var(--line); flex-shrink: 0;
-}
-.tab-bar.show { display: flex; }
-.tab-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; font-size: 10px; color: var(--gray); cursor: pointer; background: none; border: none;
-}
-.tab-item .ti-ico { width: 22px; height: 22px; }
-.tab-item svg { width: 100%; height: 100%; }
-.tab-item.active { color: var(--red); font-weight: 600; }
 
 /* ============ 首页 H01 ============ */
 .home-hero {
@@ -777,500 +940,588 @@ body {
 .demo-menu .dm-item { font-size: 13px; color: var(--ink); padding: 11px 14px; cursor: pointer; border-bottom: 1px solid #F5F1E8; }
 .demo-menu .dm-item:last-child { border-bottom: none; }
 .demo-menu .dm-item:active { background: #F5F1E8; }
-</style>
+  </style>
+  <style>
+    /* ===== 手机壳：全面屏 · 居中展示 ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #EFEAE0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px; min-height: 100vh;
+    }
+    /* 手机壳：默认小米17比例 2656:1220 ≈ 1:2.177（360 × 783.6），项目可覆盖 */
+    .mobile-shell {
+      width: 360px; height: 783.6px;
+      background: #1C1C1E; border-radius: 44px; padding: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      display: flex; flex-direction: column; position: relative;
+      transform-origin: center center;
+    }
+    .mobile-screen {
+      flex: 1; min-height: 0; background: #fff; border-radius: 36px; overflow: hidden;
+      display: flex; flex-direction: column; position: relative;
+    }
+    /* 桌面预览：视口不够高时等比缩小（不影响移动端原型比例） */
+    @media (max-height: 830px) {
+      .mobile-shell { zoom: 0.9; }
+    }
+    @media (max-height: 750px) {
+      .mobile-shell { zoom: 0.82; }
+    }
+    @media (max-height: 680px) {
+      .mobile-shell { zoom: 0.72; }
+    }
+    /* 状态栏（全面屏 · 仿真信号区） */
+    .status-bar {
+      height: 46px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; flex-shrink: 0; z-index: 5;
+      background: transparent;
+    }
+    .status-bar .sb-left {
+      font-size: 15px; font-weight: 600; color: #1a1a1a; letter-spacing: 0.5px;
+    }
+    .status-bar .sb-right { display: flex; align-items: center; gap: 7px; }
+    .status-bar svg { display: block; }
+    .app-root { flex: 1; min-height: 0; overflow-y: auto; position: relative; }
+    .app-root::-webkit-scrollbar { display: none; }
+    /* 全面屏底部横条（安卓手势条） */
+    .home-indicator {
+      height: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      background: transparent;
+    }
+    .home-indicator::after {
+      content: ''; width: 110px; height: 4px; border-radius: 4px;
+      background: rgba(0,0,0,0.22);
+    }
+    /* 底部 Tab（项目通过 tabBar 配置注入） */
+    .tab-bar {
+      height: 52px; border-top: 1px solid #f0f0f0; display: flex;
+      background: #fff; flex-shrink: 0;
+    }
+    .tab-bar-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; font-size: 10px; color: #999;
+      cursor: pointer; text-decoration: none; gap: 2px;
+    }
+    .tab-bar-item.active { color: #B42318; }
+    .tab-bar-item .tab-icon { font-size: 20px; line-height: 1; }
+    /* 页面容器：flex 纵向布局，壳内滚动（页面组件自带业务样式时按需覆盖） */
+    .page { display: none; height: 100%; background: #fff; }
+    .page.active { display: flex; flex-direction: column; }
+    .page-body { flex: 1; overflow-y: auto; min-height: 0; }
+    .page-body::-webkit-scrollbar { display: none; }
+  </style>
 </head>
 <body>
-
-<div class="phone-frame">
-  <div class="phone-screen">
-
-    <div class="phone-notch"></div>
-    <div class="status-bar">
-      <span class="time">10:24</span>
-      <span class="icons">▮▮▮ 5G ▮▮▮</span>
+  <div class="mobile-shell">
+    <div class="mobile-screen">
+      <div class="status-bar">
+        <span class="sb-left">10:24</span>
+        <span class="sb-right">
+          <!-- 信号 -->
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="none">
+            <rect x="0" y="7" width="3" height="4" rx="0.8" fill="#1a1a1a"/>
+            <rect x="4.6" y="5" width="3" height="6" rx="0.8" fill="#1a1a1a"/>
+            <rect x="9.2" y="2.5" width="3" height="8.5" rx="0.8" fill="#1a1a1a"/>
+            <rect x="13.8" y="0" width="3" height="11" rx="0.8" fill="#1a1a1a" opacity="0.25"/>
+          </svg>
+          <!-- WiFi -->
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
+            <path d="M1.2 3.4a9.4 9.4 0 0112.6 0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M3.6 5.9a5.9 5.9 0 017.8 0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="7.5" cy="9" r="1.6" fill="#1a1a1a"/>
+          </svg>
+          <!-- 电池 -->
+          <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+            <rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="#1a1a1a" stroke-width="1"/>
+            <rect x="2" y="2" width="14.5" height="8" rx="1.6" fill="#1a1a1a"/>
+            <path d="M22.5 4v4a2 2 0 000-4z" fill="#1a1a1a"/>
+          </svg>
+        </span>
+      </div>
+      <div class="app-root" id="app-root">
+        <div class="page" id="page-home">
+  <div class="page-body">
+    <div class="home-hero">
+      <div class="badge-party">★ 中国共产党福建省第十二次代表大会</div>
+      <div class="home-title">AI 纪念相册</div>
+      <div class="home-sub">定格奋斗身影　共绘时代华章</div>
+      <div class="home-slogan">扫码拍一张　带走专属纪念</div>
     </div>
-
-    <!-- ============ H01 活动首页 ============ -->
-    <div id="page-home" class="page active">
-      <div class="page-body">
-        <div class="home-hero">
-          <div class="badge-party">★ 中国共产党福建省第十二次代表大会</div>
-          <div class="home-title">AI 纪念相册</div>
-          <div class="home-sub">定格奋斗身影　共绘时代华章</div>
-          <div class="home-slogan">扫码拍一张　带走专属纪念</div>
-        </div>
-        <div class="spot-scroll">
-          <div class="ss-title">★ 现场精选</div>
-          <div class="spot-track" id="spot-track"></div>
-          <div class="spot-empty" id="spot-empty" style="display:none">成为首批留下纪念的参与者</div>
-        </div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-num" id="stat-joiner"></div><div class="stat-label">人参与</div></div>
-          <div class="stat-card"><div class="stat-num gold" id="stat-work"></div><div class="stat-label">张纪念作品</div></div>
-          <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">份纪念档案</div></div>
-        </div>
-        <div class="cap-chip-row">
-          <div class="cap-chip"><b>经典纪念框</b>快速合成</div>
-          <div class="cap-chip"><b>智能主题海报</b>推荐</div>
-          <div class="cap-chip"><b>AI 艺术创作</b>国风创意</div>
-        </div>
-        <div class="home-main">
-          <button class="entry-btn primary" onclick="goCreate()">立即创作纪念照</button>
-          <button class="entry-btn ghost" onclick="goGallery()">看看现场精选</button>
-          <div class="home-tip"><span class="dot"></span> AI 已生成 <b id="home-tip-num"></b> 张现场纪念作品</div>
-        </div>
-      </div>
+    <div class="spot-scroll">
+      <div class="ss-title">★ 现场精选</div>
+      <div class="spot-track" id="spot-track"></div>
+      <div class="spot-empty" id="spot-empty" style="display:none">成为首批留下纪念的参与者</div>
     </div>
-
-    <!-- ============ H02 创作方式 ============ -->
-    <div id="page-create" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>选择创作方式</h2>
-        <span class="hdr-right"></span>
-      </div>
-      <div class="page-body">
-        <div class="create-list">
-          <div class="create-item" onclick="pickCap('A')">
-            <div class="ci-ico ic-a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
-            <div class="ci-body">
-              <div class="ci-name">经典纪念框</div>
-              <div class="ci-desc">原片自然呈现 · 快速合成</div>
-            </div>
-            <span class="ci-tag">多人友好 · 约 3 秒</span>
-            <span class="ci-arrow">›</span>
-          </div>
-          <div class="create-item recommend" onclick="pickCap('B')">
-            <div class="ci-ico ic-b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
-            <div class="ci-body">
-              <div class="ci-name">智能主题海报</div>
-              <div class="ci-desc">智能识别人像 · 融入大会主题场景</div>
-            </div>
-            <span class="ci-tag">推荐 · 约 10 秒</span>
-            <span class="ci-arrow">›</span>
-          </div>
-          <div class="create-item" onclick="pickCap('C')">
-            <div class="ci-ico ic-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg></div>
-            <div class="ci-body">
-              <div class="ci-name">AI 艺术创作</div>
-              <div class="ci-desc">生成国风或创意形象</div>
-            </div>
-            <span class="ci-tag">单人正面照 · 约 30 秒</span>
-            <span class="ci-arrow">›</span>
-          </div>
-        </div>
-      </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="stat-joiner"></div><div class="stat-label">人参与</div></div>
+      <div class="stat-card"><div class="stat-num gold" id="stat-work"></div><div class="stat-label">张纪念作品</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">份纪念档案</div></div>
     </div>
-
-    <!-- ============ H03 模板列表 ============ -->
-    <div id="page-templates" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>选择纪念模板</h2>
-        <span class="hdr-right" onclick="toast('模板效果会因照片而异，请使用本人照片','✨')">?</span>
-      </div>
-      <div class="tpl-tabs" id="tpl-tabs"></div>
-      <div class="page-body">
-        <div class="tpl-grid" id="tpl-grid"></div>
-      </div>
+    <div class="cap-chip-row">
+      <div class="cap-chip"><b>经典纪念框</b>快速合成</div>
+      <div class="cap-chip"><b>智能主题海报</b>推荐</div>
+      <div class="cap-chip"><b>AI 艺术创作</b>国风创意</div>
     </div>
-
-    <!-- ============ H04 模板详情 ============ -->
-    <div id="page-tpl-detail" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="goTemplates()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>模板详情</h2>
-        <span class="hdr-right"></span>
-      </div>
-      <div class="page-body">
-        <div class="td-hero">
-          <div class="td-photo" id="td-photo">
-            <div class="photo-bg"></div>
-            <div class="photo-person"></div>
-          </div>
-          <div class="td-examples" id="td-examples"></div>
-        </div>
-        <div class="td-info">
-          <div class="td-name-row">
-            <span class="td-name" id="td-name"></span>
-            <span class="td-cap-chip" id="td-cap"></span>
-          </div>
-          <div class="td-meta" id="td-meta"></div>
-        </div>
-        <div class="td-guide">
-          <div class="gd-title">适用提示</div>
-          <div id="td-guide-text"></div>
-        </div>
-        <div class="td-ai-tip" id="td-ai-tip" style="display:none">AI 生成效果会因照片而异，请使用本人照片。</div>
-        <div class="td-actions">
-          <button class="td-btn" onclick="startWithTpl()">用这个模板创作</button>
-          <div class="td-secondary" onclick="goTemplates()">查看其他模板</div>
-        </div>
-      </div>
+    <div class="home-main">
+      <button class="entry-btn primary" onclick="goCreate()">立即创作纪念照</button>
+      <button class="entry-btn ghost" onclick="goGallery()">看看现场精选</button>
+      <div class="home-tip"><span class="dot"></span> AI 已生成 <b id="home-tip-num"></b> 张现场纪念作品</div>
     </div>
-
-    <!-- ============ H05 获取照片 ============ -->
-    <div id="page-photo" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="goTplDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>获取照片</h2>
-        <span class="hdr-right"></span>
-      </div>
-      <div class="photo-top">
-        <div class="pt-thumb" id="pt-thumb"><div class="photo-bg"></div><div class="photo-person"></div></div>
-        <div class="pt-info">
-          <div class="pt-name" id="pt-name"></div>
-          <div class="pt-cap" id="pt-cap"></div>
-        </div>
-        <span class="pt-change" onclick="goTemplates()">更换</span>
-      </div>
-      <div class="camera-area" id="camera-area">
-        <div class="face-guide" id="face-guide"></div>
-        <div class="camera-guide">
-          <div class="svg-ring">
-            <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/></svg>
-          </div>
-          <p id="camera-tip">请将人脸置于取景框内</p>
-          <p class="sub" id="camera-sub">正面看向镜头 · 光线充足 · 避免遮挡面部</p>
-        </div>
-      </div>
-      <div id="preview-wrap" class="preview-wrap">
-        <img id="preview-img" alt="拍摄预览">
-        <button class="retake" onclick="retake()">↺ 重拍</button>
-      </div>
-      <div class="camera-bottom">
-        <button class="album-btn" onclick="pickAlbum()">
-          <span class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span><span>相册</span>
-        </button>
-        <button class="shutter-btn" onclick="takePhoto()"></button>
-        <button class="camera-flip" onclick="toast('演示环境已默认前置摄像头','📷')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
-      </div>
-      <div class="confirm-bar" id="confirm-bar" style="display:none">
-        <button class="btn primary" id="confirm-go-btn" onclick="goPhotoConfirm()">下一步 ›</button>
-      </div>
-      <input type="file" id="file-input" accept="image/*" style="display:none">
-      <div class="photo-guide-tip" id="photo-guide-tip">正面看向镜头 · 光线充足 · 避免遮挡面部</div>
-      <div class="photo-guide-tip ai" id="photo-guide-tip-ai" style="display:none">请上传本人照片，单人半身效果最佳。</div>
-    </div>
-
-    <!-- 授权弹层（H05） -->
-    <div class="consent-modal" id="consent-modal">
-      <div class="cm-card">
-        <div class="cm-title">照片使用说明</div>
-        <div class="cm-caption">AI 纪念相册 · 现场互动</div>
-        <div class="cm-body">
-          你上传的照片将用于生成本次活动纪念作品。未经你主动提交，作品不会进入现场精选。<br><br>
-          作品保存在云端并与当前浏览器关联；清理浏览器数据或更换设备后，可能无法找回。
-        </div>
-        <div class="cm-check" id="cm-check" onclick="toggleConsentCheck()">
-          <span class="ck-box" id="cm-ck-box">✓</span>
-          <span>我已阅读并同意《隐私说明》和《肖像授权说明》</span>
-        </div>
-        <div class="cm-btns">
-          <button class="btn plain" onclick="closeConsent()">暂不使用</button>
-          <button class="btn primary disabled" id="cm-agree" onclick="agreeConsent()">同意并继续</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============ H06 照片确认 ============ -->
-    <div id="page-photo-confirm" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="goPhoto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>照片确认</h2>
-        <span class="hdr-right"></span>
-      </div>
-      <div class="page-body">
-        <div class="crop-area">
-          <div class="crop-box-wrap"><div class="crop-box"><img id="crop-img" alt="裁剪预览"></div></div>
-          <div class="crop-hint">可拖动调整位置，比例已按模板固定</div>
-        </div>
-        <div class="check-panel">
-          <div class="check-result" id="check-result">
-            <span class="cr-ico" id="cr-ico">✓</span><span id="cr-text">照片状态良好，可以开始创作</span>
-          </div>
-          <div id="check-rows"></div>
-        </div>
-        <div class="confirm-actions">
-          <button class="btn plain" onclick="goPhoto()">换一张</button>
-          <button class="btn primary" id="confirm-gen-btn" onclick="confirmGenerate()">确认生成</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============ H07 生成进度 ============ -->
-    <div id="page-generating" class="page gen-page">
-      <div class="gen-bg-thumb" id="gen-bg-thumb"></div>
-      <div id="gen-working">
-        <div class="gen-anim">
-          <div class="ring"></div>
-          <div class="ring r2"></div>
-          <div class="core">✦</div>
-        </div>
-        <div class="gen-title" id="gen-title">正在创作你的纪念照</div>
-        <div class="gen-sub" id="gen-sub">预计 30 秒内完成，请稍候</div>
-        <div class="gen-steps" id="gen-steps"></div>
-        <div class="gen-overtime" id="gen-overtime" style="display:none">创作仍在继续，你也可以稍后到“我的纪念”查看。</div>
-      </div>
-      <div class="gen-fail" id="gen-fail">
-        <div class="gf-ico">⚠</div>
-        <div class="gf-title">这次创作没有完成</div>
-        <div class="gf-sub" id="gf-sub">照片不会公开展示，你可以重新尝试</div>
-        <div class="gf-btns">
-          <button class="gf-btn primary" onclick="retryGenerate()">重新生成</button>
-          <button class="gf-btn plain" onclick="goPhoto()">换一张照片</button>
-          <button class="gf-btn plain" onclick="goCreate()">改用智能海报</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 离开确认弹层 -->
-    <div class="leave-modal" id="leave-modal">
-      <div class="lm-card">
-        <div class="lm-title">作品仍在生成</div>
-        <div class="lm-desc">离开后可在“我的纪念”查看进度。</div>
-        <div class="lm-btns">
-          <button class="lm-btn primary" onclick="closeLeave(true)">继续等待</button>
-          <button class="lm-btn plain" onclick="closeLeave(false)">返回首页</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============ H08 作品结果 ============ -->
-    <div id="page-result" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="onResultBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>我的纪念作品</h2>
-        <span class="hdr-right" onclick="goMine()">我的纪念</span>
-      </div>
-      <div class="page-body">
-        <div class="result-hero">
-          <div class="result-photo" id="result-photo" onclick="openFullPhoto()">
-            <div class="photo-bg"></div>
-            <div class="photo-person" id="result-person"></div>
-          </div>
-          <div class="result-number" id="result-number">第 328 号纪念档案 · FJDH-0328-01</div>
-        </div>
-        <div class="result-info">
-          <div class="r-title" id="result-tpl-name"></div>
-          <div class="r-tip" id="result-tip"></div>
-        </div>
-        <div class="result-actions">
-          <button class="ra-btn primary" onclick="saveResult()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存纪念照</button>
-          <button class="ra-btn gold" onclick="genShare()">✨ 生成朋友圈分享图</button>
-          <div class="ra-secondary">
-            <span class="ra-link" onclick="retryCreate()">↻ 换个模板再创作</span>
-            <span class="ra-link" onclick="goPhoto()">🖼 换一张照片</span>
-          </div>
-        </div>
-        <!-- 精选邀请区 -->
-        <div class="selection-box">
-          <div class="sb-title">⭐ 有机会亮相现场大屏</div>
-          <div class="sb-desc">提交后，作品将经过内容检查和工作人员精选。入选作品可能在现场大屏展示。</div>
-          <div class="sb-check" id="sb-check" onclick="toggleSbCheck()">
-            <span class="ck-box" id="sb-ck-box">✓</span>
-            <span>我同意将这张作品用于本次活动现场展示</span>
-          </div>
-          <button class="sb-btn disabled" id="sb-submit" onclick="submitSelection()">提交现场精选</button>
-          <div class="sb-link" onclick="goTerms()">查看展示说明</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 保存长按弹层 -->
-    <div class="save-modal" id="save-modal">
-      <span class="sv-close" onclick="closeModal('save-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-      <div class="sv-photo" id="sv-photo"></div>
-      <div class="sv-tip">长按图片，选择“保存图片”</div>
-    </div>
-
-    <!-- 分享海报弹层 -->
-    <div class="share-modal" id="share-modal">
-      <span class="sh-close" onclick="closeModal('share-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-      <div class="share-poster">
-        <div class="sp-top">
-          <div class="sp-party">中国共产党福建省第十二次代表大会</div>
-          <div class="sp-name">AI 纪念相册</div>
-        </div>
-        <div class="sp-photo" id="sp-photo">
-          <div class="photo-bg"></div>
-          <div class="photo-person"></div>
-        </div>
-        <div class="sp-slogan">定格奋斗身影 · 共绘时代华章</div>
-        <div class="sp-bottom">
-          <div class="sp-num" id="sp-num">第 328 号纪念档案<br>FJDH-0328-01</div>
-          <div class="sp-qr">扫码<br>留纪念</div>
-        </div>
-      </div>
-      <div class="sh-tip">长按海报保存，可分享至朋友圈</div>
-    </div>
-
-    <!-- 精选提交成功弹层 -->
-    <div class="submit-modal" id="submit-modal">
-      <div class="sm-card">
-        <div class="sm-check">✓</div>
-        <div class="sm-title">已提交现场精选</div>
-        <div class="sm-desc">工作人员将从符合展示要求的作品中进行精选。<br>你可以在 <b>“我的纪念”</b> 查看状态。</div>
-        <div class="sm-btns">
-          <button class="btn plain" onclick="closeModal('submit-modal')">知道了</button>
-          <button class="btn primary" onclick="closeSubmitGoMine()">查看我的纪念</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============ H09 精选照片墙 ============ -->
-    <div id="page-gallery" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>现场精选</h2>
-        <span class="hdr-right" onclick="goCreate()">我要拍</span>
-      </div>
-      <div class="wall-toolbar">
-        <span class="wl">每一份认真记录，都值得被珍藏。</span>
-        <span class="wl">共 <b id="wall-count">0</b> 张</span>
-      </div>
-      <div class="page-body">
-        <div class="wall-grid" id="wall-grid"></div>
-      </div>
-    </div>
-
-    <!-- 照片墙详情 -->
-    <div class="wall-detail" id="wall-detail">
-      <span class="wd-close" onclick="closeWallDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-      <div class="wd-photo" id="wd-photo">
-        <div class="wall-bg"></div>
-        <div class="wall-person-d"></div>
-      </div>
-      <div class="wd-name" id="wd-name"></div>
-      <div class="wd-num" id="wd-num"></div>
-      <div class="wd-btns">
-        <button class="wd-btn primary" onclick="sameTemplateFromWall()">拍同款 ›</button>
-        <button class="wd-btn plain" onclick="closeWallDetail()">看看就好</button>
-      </div>
-    </div>
-
-    <!-- ============ H10 我的纪念 ============ -->
-    <div id="page-mine" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>我的纪念</h2>
-        <span class="hdr-right"></span>
-      </div>
-      <div class="page-body">
-        <div class="mine-head">
-          <div class="mh-no" id="mh-no">第 328 号纪念档案</div>
-          <div class="mh-sub" id="mh-sub">访客编号 FJDH-0328</div>
-          <div class="mh-count" id="mh-count">共 0 张作品</div>
-        </div>
-        <div class="mine-tip" id="mine-tip">作品保存在云端并与当前浏览器关联。清理浏览器数据或更换设备后，可能无法在这里找回。</div>
-        <div id="mine-list" class="mine-list"></div>
-      </div>
-    </div>
-
-    <!-- ============ H11 说明与授权 ============ -->
-    <div id="page-terms" class="page">
-      <div class="page-header">
-        <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-        <h2>说明与授权</h2>
-        <span class="hdr-right"></span>
-      </div>
-      <div class="page-body">
-        <div class="terms-body">
-          <div class="terms-sec">
-            <h3>活动说明</h3>
-            <p>AI 纪念相册是本次大会现场的互动留影服务。扫码进入后，上传或拍摄照片，选择纪念模板生成专属作品，可保存分享，也可申请参与现场精选。</p>
-          </div>
-          <div class="terms-sec">
-            <h3>成像能力说明</h3>
-            <p>三种能力：<b>经典纪念框</b>（原图合成，约 3 秒）、《智能主题海报》（人像抠图融合场景，约 10 秒）、《AI 艺术创作》（生成式风格化，约 30 秒）。AI 生成效果会因照片而异，请使用本人照片。</p>
-          </div>
-          <div class="terms-sec">
-            <h3>现场精选规则</h3>
-            <p>勾选同意后，作品将经过内容检查和工作人员精选，入选作品可能在现场大屏展示。未入选不代表作品有问题。作品提交后如需停止展示，请联系现场工作人员。</p>
-          </div>
-          <div class="terms-sec">
-            <h3>隐私说明</h3>
-            <p>你上传的照片仅用于生成本次活动纪念作品与现场展示（需你主动授权）。作品与本浏览器关联。正式版本上线前将公示完整隐私政策、数据保存期限与删除渠道。</p>
-          </div>
-          <div class="terms-sec">
-            <h3>肖像授权说明</h3>
-            <p>提交现场精选即代表你同意将作品用于本次活动现场展示与相关宣传用途。多人照片请确保已获得同框人员同意。</p>
-          </div>
-          <div class="terms-sec">
-            <h3>内容规范</h3>
-            <ul>
-              <li>请使用本人的真实照片，不包含他人隐私信息；</li>
-              <li>不上传含政治敏感、广告、联系方式、水印等内容；</li>
-              <li>AI 不支持生成与政治人物同框、军警制服或特定身份形象。</li>
-            </ul>
-          </div>
-          <div class="terms-sec">
-            <h3>联系我们</h3>
-            <p>如需帮助或撤回展示，请联系现场工作人员。</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============ H12 活动状态页 ============ -->
-    <div id="page-status" class="page status-page">
-      <div class="status-icon" id="status-icon">🕗</div>
-      <div class="status-title" id="status-title">活动即将开始</div>
-      <div class="status-desc" id="status-desc">敬请期待现场 AI 纪念相册</div>
-      <div class="status-btns" id="status-btns"></div>
-    </div>
-
-    <!-- 沉浸预览 -->
-    <div class="full-photo" id="full-photo">
-      <span class="fp-close" onclick="closeModal('full-photo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-      <div class="fp-img">
-        <div class="photo-bg"></div>
-        <div class="photo-person"></div>
-      </div>
-    </div>
-
-    <!-- 底部导航（PRD 5.2） -->
-    <div class="tab-bar" id="tab-bar">
-      <button class="tab-item" data-nav="home" onclick="goHome()">
-        <span class="ti-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-        首页
-      </button>
-      <button class="tab-item" data-nav="gallery" onclick="goGallery()">
-        <span class="ti-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
-        现场精选
-      </button>
-      <button class="tab-item" data-nav="mine" onclick="goMine()">
-        <span class="ti-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-        我的纪念
-      </button>
-    </div>
-
-    <!-- ============ Toast ============ -->
-    <div class="toast" id="toast"><span class="t-icon" id="toast-icon"></span><span id="toast-text"></span></div>
-
   </div>
 </div>
 
-<!-- 演示菜单 -->
-<button class="demo-fab" onclick="toggleDemoMenu()">演示</button>
-<div class="demo-menu" id="demo-menu">
-  <div class="dm-title">状态演示</div>
-  <div class="dm-item" onclick="demoStatus('notstart')">活动未开始</div>
-  <div class="dm-item" onclick="demoStatus('paused')">活动已暂停</div>
-  <div class="dm-item" onclick="demoStatus('ended')">活动已结束</div>
-  <div class="dm-item" onclick="demoStatus('invalid')">链接无效</div>
-  <div class="dm-item" onclick="demoStatus('network')">网络异常</div>
-  <div class="dm-item" onclick="demoQuality('warn')">质量检测 · 可继续</div>
-  <div class="dm-item" onclick="demoQuality('block')">质量检测 · 阻断</div>
-  <div class="dm-item" onclick="demoFail('common')">生成失败</div>
-  <div class="dm-item" onclick="demoFail('safety')">生成失败 · 内容安全</div>
+<div class="page" id="page-create">
+  <div class="page-header">
+    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>选择创作方式</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="create-list">
+      <div class="create-item" onclick="pickCap('A')">
+        <div class="ci-ico ic-a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+        <div class="ci-body">
+          <div class="ci-name">经典纪念框</div>
+          <div class="ci-desc">原片自然呈现 · 快速合成</div>
+        </div>
+        <span class="ci-tag">多人友好 · 约 3 秒</span>
+        <span class="ci-arrow">›</span>
+      </div>
+      <div class="create-item recommend" onclick="pickCap('B')">
+        <div class="ci-ico ic-b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
+        <div class="ci-body">
+          <div class="ci-name">智能主题海报</div>
+          <div class="ci-desc">智能识别人像 · 融入大会主题场景</div>
+        </div>
+        <span class="ci-tag">推荐 · 约 10 秒</span>
+        <span class="ci-arrow">›</span>
+      </div>
+      <div class="create-item" onclick="pickCap('C')">
+        <div class="ci-ico ic-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg></div>
+        <div class="ci-body">
+          <div class="ci-name">AI 艺术创作</div>
+          <div class="ci-desc">生成国风或创意形象</div>
+        </div>
+        <span class="ci-tag">单人正面照 · 约 30 秒</span>
+        <span class="ci-arrow">›</span>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- 底部演示说明 -->
-<div style="position: fixed; bottom: 12px; left: 16px; font-size: 11px; color: #8C8C8C; background: rgba(255,255,255,0.85); padding: 5px 10px; border-radius: 8px; z-index: 930;">党代会 AI 纪念相册 · H5 原型 V2</div>
+<div class="page" id="page-templates">
+  <div class="page-header">
+    <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>选择纪念模板</h2>
+    <span class="hdr-right" onclick="toast('模板效果会因照片而异，请使用本人照片','✨')">?</span>
+  </div>
+  <div class="tpl-tabs" id="tpl-tabs"></div>
+  <div class="page-body">
+    <div class="tpl-grid" id="tpl-grid"></div>
+  </div>
+</div>
 
-<script>
-/* ================= 数据（PRD 3.2 首期 9 模板 · 全部数据驱动） ================= */
+<div class="page" id="page-tpl-detail">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTemplates()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>模板详情</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="td-hero">
+      <div class="td-photo" id="td-photo">
+        <div class="photo-bg"></div>
+        <div class="photo-person"></div>
+      </div>
+      <div class="td-examples" id="td-examples"></div>
+    </div>
+    <div class="td-info">
+      <div class="td-name-row">
+        <span class="td-name" id="td-name"></span>
+        <span class="td-cap-chip" id="td-cap"></span>
+      </div>
+      <div class="td-meta" id="td-meta"></div>
+    </div>
+    <div class="td-guide">
+      <div class="gd-title">适用提示</div>
+      <div id="td-guide-text"></div>
+    </div>
+    <div class="td-ai-tip" id="td-ai-tip" style="display:none">AI 生成效果会因照片而异，请使用本人照片。</div>
+    <div class="td-actions">
+      <button class="td-btn" onclick="startWithTpl()">用这个模板创作</button>
+      <div class="td-secondary" onclick="goTemplates()">查看其他模板</div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-photo">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTplDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>获取照片</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="photo-top">
+    <div class="pt-thumb" id="pt-thumb"><div class="photo-bg"></div><div class="photo-person"></div></div>
+    <div class="pt-info">
+      <div class="pt-name" id="pt-name"></div>
+      <div class="pt-cap" id="pt-cap"></div>
+    </div>
+    <span class="pt-change" onclick="goTemplates()">更换</span>
+  </div>
+  <div class="camera-area" id="camera-area">
+    <div class="face-guide" id="face-guide"></div>
+    <div class="camera-guide">
+      <div class="svg-ring">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/></svg>
+      </div>
+      <p id="camera-tip">请将人脸置于取景框内</p>
+      <p class="sub" id="camera-sub">正面看向镜头 · 光线充足 · 避免遮挡面部</p>
+    </div>
+  </div>
+  <div id="preview-wrap" class="preview-wrap">
+    <img id="preview-img" alt="拍摄预览">
+    <button class="retake" onclick="retake()">↺ 重拍</button>
+  </div>
+  <div class="camera-bottom">
+    <button class="album-btn" onclick="pickAlbum()">
+      <span class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span><span>相册</span>
+    </button>
+    <button class="shutter-btn" onclick="takePhoto()"></button>
+    <button class="camera-flip" onclick="toast('演示环境已默认前置摄像头','📷')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+  </div>
+  <div class="confirm-bar" id="confirm-bar" style="display:none">
+    <button class="btn primary" id="confirm-go-btn" onclick="goPhotoConfirm()">下一步 ›</button>
+  </div>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
+  <div class="photo-guide-tip" id="photo-guide-tip">正面看向镜头 · 光线充足 · 避免遮挡面部</div>
+  <div class="photo-guide-tip ai" id="photo-guide-tip-ai" style="display:none">请上传本人照片，单人半身效果最佳。</div>
+
+  <!-- 授权弹层（H05） -->
+  <div class="consent-modal" id="consent-modal">
+    <div class="cm-card">
+      <div class="cm-title">照片使用说明</div>
+      <div class="cm-caption">AI 纪念相册 · 现场互动</div>
+      <div class="cm-body">
+        你上传的照片将用于生成本次活动纪念作品。未经你主动提交，作品不会进入现场精选。<br><br>
+        作品保存在云端并与当前浏览器关联；清理浏览器数据或更换设备后，可能无法找回。
+      </div>
+      <div class="cm-check" id="cm-check" onclick="toggleConsentCheck()">
+        <span class="ck-box" id="cm-ck-box">✓</span>
+        <span>我已阅读并同意《隐私说明》和《肖像授权说明》</span>
+      </div>
+      <div class="cm-btns">
+        <button class="btn plain" onclick="closeConsent()">暂不使用</button>
+        <button class="btn primary disabled" id="cm-agree" onclick="agreeConsent()">同意并继续</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-photo-confirm">
+  <div class="page-header">
+    <button class="back-btn" onclick="goPhoto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>照片确认</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="crop-area">
+      <div class="crop-box-wrap"><div class="crop-box"><img id="crop-img" alt="裁剪预览"></div></div>
+      <div class="crop-hint">可拖动调整位置，比例已按模板固定</div>
+    </div>
+    <div class="check-panel">
+      <div class="check-result" id="check-result">
+        <span class="cr-ico" id="cr-ico">✓</span><span id="cr-text">照片状态良好，可以开始创作</span>
+      </div>
+      <div id="check-rows"></div>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn plain" onclick="goPhoto()">换一张</button>
+      <button class="btn primary" id="confirm-gen-btn" onclick="confirmGenerate()">确认生成</button>
+    </div>
+  </div>
+</div>
+
+<div class="page gen-page" id="page-generating">
+  <div class="gen-bg-thumb" id="gen-bg-thumb"></div>
+  <div id="gen-working">
+    <div class="gen-anim">
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="core">✦</div>
+    </div>
+    <div class="gen-title" id="gen-title">正在创作你的纪念照</div>
+    <div class="gen-sub" id="gen-sub">预计 30 秒内完成，请稍候</div>
+    <div class="gen-steps" id="gen-steps"></div>
+    <div class="gen-overtime" id="gen-overtime" style="display:none">创作仍在继续，你也可以稍后到“我的纪念”查看。</div>
+  </div>
+  <div class="gen-fail" id="gen-fail">
+    <div class="gf-ico">⚠</div>
+    <div class="gf-title">这次创作没有完成</div>
+    <div class="gf-sub" id="gf-sub">照片不会公开展示，你可以重新尝试</div>
+    <div class="gf-btns">
+      <button class="gf-btn primary" onclick="retryGenerate()">重新生成</button>
+      <button class="gf-btn plain" onclick="goPhoto()">换一张照片</button>
+      <button class="gf-btn plain" onclick="goCreate()">改用智能海报</button>
+    </div>
+  </div>
+
+  <!-- 离开确认弹层 -->
+  <div class="leave-modal" id="leave-modal">
+    <div class="lm-card">
+      <div class="lm-title">作品仍在生成</div>
+      <div class="lm-desc">离开后可在“我的纪念”查看进度。</div>
+      <div class="lm-btns">
+        <button class="lm-btn primary" onclick="closeLeave(true)">继续等待</button>
+        <button class="lm-btn plain" onclick="closeLeave(false)">返回首页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-result">
+  <div class="page-header">
+    <button class="back-btn" onclick="onResultBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>我的纪念作品</h2>
+    <span class="hdr-right" onclick="goMine()">我的纪念</span>
+  </div>
+  <div class="page-body">
+    <div class="result-hero">
+      <div class="result-photo" id="result-photo" onclick="openFullPhoto()">
+        <div class="photo-bg"></div>
+        <div class="photo-person" id="result-person"></div>
+      </div>
+      <div class="result-number" id="result-number">第 328 号纪念档案 · FJDH-0328-01</div>
+    </div>
+    <div class="result-info">
+      <div class="r-title" id="result-tpl-name"></div>
+      <div class="r-tip" id="result-tip"></div>
+    </div>
+    <div class="result-actions">
+      <button class="ra-btn primary" onclick="saveResult()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存纪念照</button>
+      <button class="ra-btn gold" onclick="genShare()">✨ 生成朋友圈分享图</button>
+      <div class="ra-secondary">
+        <span class="ra-link" onclick="retryCreate()">↻ 换个模板再创作</span>
+        <span class="ra-link" onclick="goPhoto()">🖼 换一张照片</span>
+      </div>
+    </div>
+    <!-- 精选邀请区 -->
+    <div class="selection-box">
+      <div class="sb-title">⭐ 有机会亮相现场大屏</div>
+      <div class="sb-desc">提交后，作品将经过内容检查和工作人员精选。入选作品可能在现场大屏展示。</div>
+      <div class="sb-check" id="sb-check" onclick="toggleSbCheck()">
+        <span class="ck-box" id="sb-ck-box">✓</span>
+        <span>我同意将这张作品用于本次活动现场展示</span>
+      </div>
+      <button class="sb-btn disabled" id="sb-submit" onclick="submitSelection()">提交现场精选</button>
+      <div class="sb-link" onclick="goTerms()">查看展示说明</div>
+    </div>
+  </div>
+
+  <!-- 保存长按弹层 -->
+  <div class="save-modal" id="save-modal">
+    <span class="sv-close" onclick="closeModal('save-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+    <div class="sv-photo" id="sv-photo"></div>
+    <div class="sv-tip">长按图片，选择“保存图片”</div>
+  </div>
+
+  <!-- 分享海报弹层 -->
+  <div class="share-modal" id="share-modal">
+    <span class="sh-close" onclick="closeModal('share-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+    <div class="share-poster">
+      <div class="sp-top">
+        <div class="sp-party">中国共产党福建省第十二次代表大会</div>
+        <div class="sp-name">AI 纪念相册</div>
+      </div>
+      <div class="sp-photo" id="sp-photo">
+        <div class="photo-bg"></div>
+        <div class="photo-person"></div>
+      </div>
+      <div class="sp-slogan">定格奋斗身影 · 共绘时代华章</div>
+      <div class="sp-bottom">
+        <div class="sp-num" id="sp-num">第 328 号纪念档案<br>FJDH-0328-01</div>
+        <div class="sp-qr">扫码<br>留纪念</div>
+      </div>
+    </div>
+    <div class="sh-tip">长按海报保存，可分享至朋友圈</div>
+  </div>
+
+  <!-- 精选提交成功弹层 -->
+  <div class="submit-modal" id="submit-modal">
+    <div class="sm-card">
+      <div class="sm-check">✓</div>
+      <div class="sm-title">已提交现场精选</div>
+      <div class="sm-desc">工作人员将从符合展示要求的作品中进行精选。<br>你可以在 <b>“我的纪念”</b> 查看状态。</div>
+      <div class="sm-btns">
+        <button class="btn plain" onclick="closeModal('submit-modal')">知道了</button>
+        <button class="btn primary" onclick="closeSubmitGoMine()">查看我的纪念</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 沉浸预览 -->
+  <div class="full-photo" id="full-photo">
+    <span class="fp-close" onclick="closeModal('full-photo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+    <div class="fp-img">
+      <div class="photo-bg"></div>
+      <div class="photo-person"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-gallery">
+  <div class="page-header">
+    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>现场精选</h2>
+    <span class="hdr-right" onclick="goCreate()">我要拍</span>
+  </div>
+  <div class="wall-toolbar">
+    <span class="wl">每一份认真记录，都值得被珍藏。</span>
+    <span class="wl">共 <b id="wall-count">0</b> 张</span>
+  </div>
+  <div class="page-body">
+    <div class="wall-grid" id="wall-grid"></div>
+  </div>
+
+  <!-- 照片墙详情 -->
+  <div class="wall-detail" id="wall-detail">
+    <span class="wd-close" onclick="closeWallDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+    <div class="wd-photo" id="wd-photo">
+      <div class="wall-bg"></div>
+      <div class="wall-person-d"></div>
+    </div>
+    <div class="wd-name" id="wd-name"></div>
+    <div class="wd-num" id="wd-num"></div>
+    <div class="wd-btns">
+      <button class="wd-btn primary" onclick="sameTemplateFromWall()">拍同款 ›</button>
+      <button class="wd-btn plain" onclick="closeWallDetail()">看看就好</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-mine">
+  <div class="page-header">
+    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>我的纪念</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="mine-head">
+      <div class="mh-no" id="mh-no">第 328 号纪念档案</div>
+      <div class="mh-sub" id="mh-sub">访客编号 FJDH-0328</div>
+      <div class="mh-count" id="mh-count">共 0 张作品</div>
+    </div>
+    <div class="mine-tip" id="mine-tip">作品保存在云端并与当前浏览器关联。清理浏览器数据或更换设备后，可能无法在这里找回。</div>
+    <div id="mine-list" class="mine-list"></div>
+  </div>
+</div>
+
+<div class="page" id="page-terms">
+  <div class="page-header">
+    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>说明与授权</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="terms-body">
+      <div class="terms-sec">
+        <h3>活动说明</h3>
+        <p>AI 纪念相册是本次大会现场的互动留影服务。扫码进入后，上传或拍摄照片，选择纪念模板生成专属作品，可保存分享，也可申请参与现场精选。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>成像能力说明</h3>
+        <p>三种能力：<b>经典纪念框</b>（原图合成，约 3 秒）、《智能主题海报》（人像抠图融合场景，约 10 秒）、《AI 艺术创作》（生成式风格化，约 30 秒）。AI 生成效果会因照片而异，请使用本人照片。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>现场精选规则</h3>
+        <p>勾选同意后，作品将经过内容检查和工作人员精选，入选作品可能在现场大屏展示。未入选不代表作品有问题。作品提交后如需停止展示，请联系现场工作人员。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>隐私说明</h3>
+        <p>你上传的照片仅用于生成本次活动纪念作品与现场展示（需你主动授权）。作品与本浏览器关联。正式版本上线前将公示完整隐私政策、数据保存期限与删除渠道。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>肖像授权说明</h3>
+        <p>提交现场精选即代表你同意将作品用于本次活动现场展示与相关宣传用途。多人照片请确保已获得同框人员同意。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>内容规范</h3>
+        <ul>
+          <li>请使用本人的真实照片，不包含他人隐私信息；</li>
+          <li>不上传含政治敏感、广告、联系方式、水印等内容；</li>
+          <li>AI 不支持生成与政治人物同框、军警制服或特定身份形象。</li>
+        </ul>
+      </div>
+      <div class="terms-sec">
+        <h3>联系我们</h3>
+        <p>如需帮助或撤回展示，请联系现场工作人员。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page status-page" id="page-status">
+  <div class="status-icon" id="status-icon">🕗</div>
+  <div class="status-title" id="status-title">活动即将开始</div>
+  <div class="status-desc" id="status-desc">敬请期待现场 AI 纪念相册</div>
+  <div class="status-btns" id="status-btns"></div>
+</div>
+      </div>
+      <nav class="tab-bar" id="tab-bar">
+        <div class="tab-bar-item" data-page="home" onclick="ProtoRouter.go('home')"><div class="tab-icon">🏠</div><div>首页</div></div>
+<div class="tab-bar-item" data-page="gallery" onclick="ProtoRouter.go('gallery')"><div class="tab-icon">⭐</div><div>现场精选</div></div>
+<div class="tab-bar-item" data-page="mine" onclick="ProtoRouter.go('mine')"><div class="tab-icon">🎖</div><div>我的纪念</div></div>
+
+      </nav>
+      <div class="home-indicator"></div>
+    </div>
+    <div class="toast" id="toast"><span class="t-icon" id="toast-icon"></span><span id="toast-text"></span></div>
+    <button class="demo-fab" onclick="toggleDemoMenu()">演示</button>
+    <div class="demo-menu" id="demo-menu">
+      <div class="dm-title">状态演示</div>
+      <div class="dm-item" onclick="demoStatus('notstart')">活动未开始</div>
+      <div class="dm-item" onclick="demoStatus('paused')">活动已暂停</div>
+      <div class="dm-item" onclick="demoStatus('ended')">活动已结束</div>
+      <div class="dm-item" onclick="demoStatus('invalid')">链接无效</div>
+      <div class="dm-item" onclick="demoStatus('network')">网络异常</div>
+      <div class="dm-item" onclick="demoQuality('warn')">质量检测 · 可继续</div>
+      <div class="dm-item" onclick="demoQuality('block')">质量检测 · 阻断</div>
+      <div class="dm-item" onclick="demoFail('common')">生成失败</div>
+      <div class="dm-item" onclick="demoFail('safety')">生成失败 · 内容安全</div>
+    </div>
+  </div>
+
+  <script>
+/* mock-data.js - 演示数据 */
+var MOCK = {
+  user: { name: "管理员", role: "admin", avatar: "👤", department: "产品部" },
+  users: [
+    { phone: "138****1234", name: "张三", customers: ["XX博物馆"], sessions: 23, lastVisit: "2026-07-13", regTime: "2026-03-15", status: "正常", color: "#faad14" },
+    { phone: "139****5678", name: "李四", customers: ["科技馆"], sessions: 8, lastVisit: "2026-07-12", regTime: "2026-04-20", status: "正常", color: "#52c41a" },
+    { phone: "136****9012", name: "王五", customers: ["XX博物馆","科技馆","自然博物馆"], sessions: 45, lastVisit: "2026-07-13", regTime: "2026-02-10", status: "正常", color: "#1890ff" },
+    { phone: "137****3456", name: "赵六", customers: ["XX博物馆"], sessions: 3, lastVisit: "2026-07-10", regTime: "2026-06-01", status: "正常", color: "#722ed1" },
+    { phone: "135****7890", name: "孙七", customers: ["自然博物馆"], sessions: 12, lastVisit: "2026-07-08", regTime: "2026-05-12", status: "已禁用", color: "#f5222d" },
+    { phone: "133****2468", name: "周八", customers: ["科技馆"], sessions: 1, lastVisit: "2026-07-13", regTime: "2026-07-01", status: "正常", color: "#13c2c2" }
+  ],
+  chatRecords: [
+    { id: "C001", user: "张三", customer: "XX博物馆", messages: 12, startTime: "2026-07-13 14:30" },
+    { id: "C002", user: "李四", customer: "科技馆", messages: 5, startTime: "2026-07-13 13:20" },
+    { id: "C003", user: "王五", customer: "XX博物馆", messages: 28, startTime: "2026-07-13 10:15" },
+    { id: "C004", user: "赵六", customer: "XX博物馆", messages: 3, startTime: "2026-07-12 16:45" },
+    { id: "C005", user: "孙七", customer: "自然博物馆", messages: 8, startTime: "2026-07-12 11:00" }
+  ],
+  chatList: [
+    { id: 1, title: "示例对话一", time: "14:30", unread: 0 },
+    { id: 2, title: "示例对话二", time: "昨天", unread: 2 },
+    { id: 3, title: "示例对话三", time: "07-11", unread: 0 }
+  ]
+};
+
+  </script>
+  <script>
+/* ================= 共享数据（PRD 3.2 首期 9 模板 · 全部数据驱动） ================= */
 var ACTIVITY = {
   fullName: '中国共产党福建省第十二次代表大会',
   productName: 'AI 纪念相册',
@@ -1293,7 +1544,6 @@ var TPL_GROUPS = [
   { id: 'aichuangyi', name: 'AI 创意' }
 ];
 
-/* 9 个模板：id / name / group / cap(A|B|C) / people(人数) / time(预计耗时) / guide(拍摄指引) / prime(热门) */
 var TEMPLATES = [
   { id: 'shenghui', name: '盛会留念框', group: 'classic', cap: 'A', people: '1-6 人', time: '约 3 秒', guide: '建议多人合照，原图居中，红金边框', prime: true },
   { id: 'fenjin',   name: '奋进新征程', group: 'classic', cap: 'A', people: '1-4 人', time: '约 3 秒', guide: '竖版照片 + 金色题字 + 福建剪影', prime: false },
@@ -1338,11 +1588,12 @@ var state = {
   sbChecked: false,
   photoTaken: false,
   photoSrc: null,
-  qcLevel: 'ok',        /* ok|warn|block */
+  qcLevel: 'ok',
   generating: false,
-  generationFail: null, /* null | common | safety */
+  generationFail: null,
   curWork: null,
-  visitFromWall: false  /* 拍同款直达标记 */
+  wallWork: null,
+  visitFromWall: false
 };
 
 /* ================= 页面切换 ================= */
@@ -1351,11 +1602,12 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   var el = document.getElementById('page-' + id);
   if (el) el.classList.add('active');
-  /* 底部导航显隐：拍摄/确认/生成/说明/状态页不显示（PRD 5.2） */
   var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
   var tabBar = document.getElementById('tab-bar');
-  if (hideTabs.indexOf(id) >= 0) { tabBar.classList.remove('show'); }
-  else { tabBar.classList.add('show'); tabBar.querySelectorAll('.tab-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-nav') === id); }); }
+  if (tabBar) {
+    if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; }
+    else { tabBar.style.display = 'flex'; tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); }); }
+  }
   if (PAGE_STACK[PAGE_STACK.length-1] !== id) PAGE_STACK.push(id);
   return id;
 }
@@ -1369,16 +1621,14 @@ function historyBack() {
 function refreshTabs(id) {
   var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
   var tabBar = document.getElementById('tab-bar');
-  if (hideTabs.indexOf(id) >= 0) { tabBar.classList.remove('show'); return; }
-  tabBar.classList.add('show');
-  tabBar.querySelectorAll('.tab-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-nav') === id); });
+  if (!tabBar) return;
+  if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; return; }
+  tabBar.style.display = 'flex';
+  tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
 }
 function goHome()   { state.visitFromWall = false; showPage('home'); }
 function goCreate() { showPage('create'); }
-function goTemplates() {
-  /* 需求进入模板页时按当前分组渲染 */
-  renderTplTabs(); renderTplGrid(); showPage('templates');
-}
+function goTemplates() { renderTplTabs(); renderTplGrid(); showPage('templates'); }
 function goTplDetail() { showPage('tpl-detail'); }
 function goPhoto()  { showPage('photo'); }
 function goPhotoConfirm() { showPage('photo-confirm'); }
@@ -1396,9 +1646,47 @@ function pickCap(cap) {
   goTemplates();
 }
 
+/* ================= Toast ================= */
+var toastTimer = null;
+function toast(text, icon) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  document.getElementById('toast-icon').textContent = icon || '✓';
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
+
+/* ================= 首页精选轮播 ================= */
+function renderSpot() {
+  var track = document.getElementById('spot-track');
+  if (!track) return;
+  var html = '';
+  GALLERY.slice(0, 5).forEach(function(p) {
+    html += '<div class="spot-card" onclick="goGallery()">' +
+      '<div class="photo-bg wb-' + p.bg + '"></div>' +
+      '<div class="photo-person"></div>' +
+      '<span class="spot-num">' + p.num + '</span>' +
+      '</div>';
+  });
+  track.innerHTML = html;
+}
+
+/* ================= 初始化 ================= */
+document.getElementById('stat-joiner').textContent = ACTIVITY.joinerCount;
+document.getElementById('stat-work').textContent = ACTIVITY.workCount;
+document.getElementById('stat-archive').textContent = ACTIVITY.archiveIndex;
+document.getElementById('home-tip-num').textContent = ACTIVITY.workCount;
+renderSpot();
+
+/* H02 无独立逻辑（pickCap 在 01 页共享区） */
+
 /* ================= H03 模板列表 ================= */
 function renderTplTabs() {
   var wrap = document.getElementById('tpl-tabs');
+  if (!wrap) return;
   wrap.innerHTML = '';
   TPL_GROUPS.forEach(function(g, i) {
     var b = document.createElement('button');
@@ -1411,6 +1699,7 @@ function renderTplTabs() {
 }
 function renderTplGrid() {
   var grid = document.getElementById('tpl-grid');
+  if (!grid) return;
   var list = TEMPLATES.filter(function(t){ return t.group === state.curTplGroup; });
   var html = '';
   list.forEach(function(t) {
@@ -1434,7 +1723,6 @@ function openTplDetail(id) {
   var photo = document.getElementById('td-photo');
   photo.className = 'td-photo';
   photo.style.cssText = '';
-  /* 样张按模板渲染 */
   var bg = photo.querySelector('.photo-bg');
   bg.setAttribute('data-tpl', t.id);
   document.getElementById('td-name').textContent = t.name;
@@ -1444,29 +1732,28 @@ function openTplDetail(id) {
   document.getElementById('td-meta').innerHTML = '形式：' + cap.tag.split(' · ')[1] + '　·　人数：' + t.people + '　·　预计 ' + t.time;
   document.getElementById('td-guide-text').textContent = t.guide + '。人物区域不应被文字遮挡。';
   document.getElementById('td-ai-tip').style.display = (t.cap === 'A') ? 'none' : 'block';
-  /* 示例点 */
   var dots = document.getElementById('td-examples');
   dots.innerHTML = '';
   for (var i = 0; i < 3; i++) {
-    var d = document.createElement('span');
-    d.className = 'td-example-dot' + (i === 0 ? ' active' : '');
-    d.onclick = (function(idx){ return function() {
-      var person = photo.querySelector('.photo-person');
-      person.style.background = 'linear-gradient(135deg,' + TD_EXAMPLE_COLORS[idx] + ',' + TD_EXAMPLE_COLORS[(idx+1)%3] + ')';
-      dots.querySelectorAll('.td-example-dot').forEach(function(x){ x.classList.remove('active'); });
-      d.classList.add('active');
-    }; })(i);
-    dots.appendChild(d);
+    (function(idx) {
+      var d = document.createElement('span');
+      d.className = 'td-example-dot' + (idx === 0 ? ' active' : '');
+      d.onclick = function() {
+        var person = photo.querySelector('.photo-person');
+        person.style.background = 'linear-gradient(135deg,' + TD_EXAMPLE_COLORS[idx] + ',' + TD_EXAMPLE_COLORS[(idx+1)%3] + ')';
+        dots.querySelectorAll('.td-example-dot').forEach(function(x){ x.classList.remove('active'); });
+        d.classList.add('active');
+      };
+      dots.appendChild(d);
+    })(i);
   }
   showPage('tpl-detail');
 }
 function startWithTpl() {
-  /* 进入 H05，同步已选模板 */
   var t = findByTpl(state.selectedTpl);
   document.getElementById('pt-thumb').querySelector('.photo-bg').setAttribute('data-tpl', t.id);
   document.getElementById('pt-name').textContent = t.name;
   document.getElementById('pt-cap').textContent = CAPABILITIES[t.cap].name + ' · ' + t.people + ' · ' + t.time;
-  /* 取景示意：多人变体 */
   var maxP = parseInt(t.people.split('-')[1] || t.people.split('-')[0], 10);
   var fg = document.getElementById('face-guide');
   fg.className = 'face-guide' + (maxP >= 3 ? ' multi' : '');
@@ -1495,30 +1782,12 @@ function pickAlbum() {
   if (!checkConsentFirst()) return;
   document.getElementById('file-input').click();
 }
-document.getElementById('file-input').addEventListener('change', function(e) {
-  var f = e.target.files && e.target.files[0];
-  if (!f) return;
-  var reader = new FileReader();
-  reader.onload = function(ev) {
-    var area = document.getElementById('camera-area');
-    var pv = document.getElementById('preview-wrap');
-    var bar = document.getElementById('confirm-bar');
-    area.style.display = 'none';
-    pv.style.display = 'block';
-    document.getElementById('preview-img').src = ev.target.result;
-    bar.style.display = 'flex';
-    state.photoTaken = true;
-    state.photoSrc = ev.target.result;
-  };
-  reader.readAsDataURL(f);
-});
 function retake() {
   document.getElementById('preview-wrap').style.display = 'none';
   document.getElementById('camera-area').style.display = 'flex';
   document.getElementById('confirm-bar').style.display = 'none';
   state.photoTaken = false;
 }
-/* 首次上传前置：授权弹层（H05） */
 function checkConsentFirst() {
   if (state.consentAgreed) return true;
   document.getElementById('consent-modal').classList.add('show');
@@ -1541,12 +1810,10 @@ function closeConsent() {
   document.getElementById('consent-modal').classList.remove('show');
   toast('未授权前不会使用你的照片', '✓');
 }
-/* 模拟人像 SVG（原型占位） */
 function makePortraitSVG() {
-  var bg = '#3A3A40';
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500">' +
-    '<rect width="400" height="500" fill="' + bg + '"/>' +
+    '<rect width="400" height="500" fill="#3A3A40"/>' +
     '<ellipse cx="200" cy="150" rx="85" ry="100" fill="#F5D0A9"/>' +
     '<rect x="140" y="262" width="120" height="120" rx="55" fill="#D95C4A"/>' +
     '<rect x="120" y="330" width="160" height="220" rx="60" fill="#C0392B"/>' +
@@ -1554,7 +1821,19 @@ function makePortraitSVG() {
     '</svg>'
   );
 }
-/* H05 → H06 照片确认 */
+/* 演示：跳过授权直接拍照（demoFail 使用） */
+function takePhotoNoConsent() {
+  state.consentAgreed = true;
+  var area = document.getElementById('camera-area');
+  var pv = document.getElementById('preview-wrap');
+  var bar = document.getElementById('confirm-bar');
+  area.style.display = 'none';
+  pv.style.display = 'block';
+  document.getElementById('preview-img').src = makePortraitSVG();
+  bar.style.display = 'flex';
+  state.photoTaken = true;
+}
+/* H05 → H06 */
 function goPhotoConfirm() {
   showPage('photo-confirm');
   document.getElementById('crop-img').src = state.photoSrc || makePortraitSVG();
@@ -1569,6 +1848,7 @@ function renderCheck() {
   var ico = document.getElementById('cr-ico');
   var text = document.getElementById('cr-text');
   var btn = document.getElementById('confirm-gen-btn');
+  if (!rows || !result) return;
   if (state.qcLevel === 'block') {
     result.className = 'check-result block';
     ico.textContent = '✕';
@@ -1607,12 +1887,10 @@ function renderCheck() {
     '<div class="check-row"><span class="cr-name">亮度</span><span class="cr-state pass">✓ 正常</span></div>' +
     '<div class="check-row"><span class="cr-name">主体完整度</span><span class="cr-state pass">✓ 完整</span></div>';
 }
-/* A 类文案“确认合成”，B/C “确认生成”（PRD H06） */
 function confirmGenerate() {
   var t = findByTpl(state.selectedTpl);
   if (state.qcLevel === 'block') { toast('请先更换照片后再继续', '⚠️'); return; }
   document.getElementById('confirm-gen-btn').textContent = CAPABILITIES[t.cap].confirmBtn;
-  /* 组装生成页 */
   var stepsWrap = document.getElementById('gen-steps');
   var steps = [];
   if (t.cap === 'A') steps = ['正在排版纪念信息', '正在合成高清作品'];
@@ -1631,14 +1909,11 @@ function confirmGenerate() {
   document.getElementById('gen-overtime').style.display = 'none';
   document.getElementById('gen-fail').classList.remove('show');
   document.getElementById('gen-working').style.display = 'block';
-  /* 背景样张 */
   var bgThumb = document.getElementById('gen-bg-thumb');
   bgThumb.style.background = 'linear-gradient(170deg, #50100F 0%, #7A1712 60%, #B42318 100%)';
-  /* 失败演示模式 */
   if (state.generationFail) {
     var fail = state.generationFail;
     state.generationFail = null;
-    /* 先走两步再失败 */
     showPage('generating');
     var fi = 0;
     var ftimer = setInterval(function() {
@@ -1654,6 +1929,8 @@ function confirmGenerate() {
   showPage('generating');
   startGenTimer(steps);
 }
+
+/* ================= H07 生成进度 ================= */
 function startGenTimer(steps) {
   var i = 0;
   var stepMs = 1100;
@@ -1669,7 +1946,6 @@ function startGenTimer(steps) {
   }, stepMs);
 }
 function finishGenerate() {
-  /* 创建新作品并进入结果页 */
   var t = findByTpl(state.selectedTpl);
   var nextNum = MY_WORKS.length + 1;
   var work = {
@@ -1709,12 +1985,6 @@ function retryGenerate() {
   });
   startGenTimer(steps);
 }
-/* 返回二次确认（H07） */
-var pendingLeaveGo = null;
-function onGensBack() {
-  if (document.getElementById('gen-fail').classList.contains('show')) { goMine(); return; }
-  document.getElementById('leave-modal').classList.add('show');
-}
 function closeLeave(continueWait) {
   document.getElementById('leave-modal').classList.remove('show');
   if (!continueWait) goHome();
@@ -1728,7 +1998,6 @@ function renderResult() {
   photo.querySelector('.photo-bg').setAttribute('data-tpl', t.id);
   document.getElementById('result-tpl-name').textContent = t.name + ' · ' + CAPABILITIES[t.cap].name;
   document.getElementById('result-tip').textContent = CAPABILITIES[t.cap].desc;
-  /* 精选邀请区状态重置 */
   state.sbChecked = false;
   document.getElementById('sb-check').classList.remove('checked');
   document.getElementById('sb-submit').className = 'sb-btn disabled';
@@ -1754,7 +2023,6 @@ function genShare() {
   document.getElementById('sp-num').innerHTML = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案<br>' + state.curWork.no;
   document.getElementById('share-modal').classList.add('show');
 }
-/* 精选邀请区 */
 function toggleSbCheck() {
   var wrap = document.getElementById('sb-check');
   var btn = document.getElementById('sb-submit');
@@ -1764,15 +2032,12 @@ function toggleSbCheck() {
 }
 function submitSelection() {
   if (!state.sbChecked) { toast('请先勾选同意展示授权', '⚠️'); return; }
-  if (state.curWork) { state.curWork.status = 'wait'; state.curWork.setStatusText = '已提交，等待精选'; findInMine(state.curWork.no); }
+  if (state.curWork) state.curWork.status = 'wait';
   document.getElementById('submit-modal').classList.add('show');
 }
 function closeSubmitGoMine() {
   document.getElementById('submit-modal').classList.remove('show');
   goMine();
-}
-function findInMine(no) {
-  /* 已在 renderMine 中按状态呈现，无需额外操作 */
 }
 function retryCreate() { goTemplates(); }
 function onResultBack() { goHome(); }
@@ -1780,6 +2045,7 @@ function onResultBack() { goHome(); }
 /* ================= H09 精选照片墙 ================= */
 function renderWall() {
   var grid = document.getElementById('wall-grid');
+  if (!grid) return;
   var html = '';
   GALLERY.forEach(function(p, idx) {
     html += '<div class="wall-item" onclick="openWallDetail(' + idx + ')">' +
@@ -1797,7 +2063,6 @@ function openWallDetail(idx) {
   var t = findByTpl(p.tpl);
   d.classList.add('show');
   var wp = document.getElementById('wd-photo');
-  wp.setAttribute('data-tpl', p.tpl);
   wp.querySelector('.wall-bg').className = 'wall-bg wb-' + p.bg;
   document.getElementById('wd-name').textContent = t.name + ' · ' + CAPABILITIES[t.cap].name;
   document.getElementById('wd-num').textContent = p.num + ' · 点击可拍同款';
@@ -1853,96 +2118,298 @@ function openWorkFromMine(idx) {
   renderResult();
 }
 
-/* ================= Toast ================= */
-var toastTimer = null;
-function toast(text, icon) {
-  var t = document.getElementById('toast');
-  document.getElementById('toast-icon').textContent = icon || '✓';
-  document.getElementById('toast-text').textContent = text;
-  t.classList.add('show');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
-}
+/* H11 说明与授权：静态页，无独立逻辑 */
 
-/* ================= 弹层通用 ================= */
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+/* H12 活动状态：页面切换由 shell 演示菜单驱动 demoStatus() */
+  </script>
+  <script>
+/* ============================
+   base.js - ProtoKit 运行时引擎
+   ProtoRouter + ProtoAnno + ProtoDoc
+   ============================ */
 
-/* ================= 演示菜单 ================= */
-function toggleDemoMenu() {
-  var m = document.getElementById('demo-menu');
-  m.classList.toggle('show');
-}
-document.addEventListener('click', function(e) {
-  var m = document.getElementById('demo-menu');
-  if (m.classList.contains('show') && !e.target.closest('.demo-menu') && !e.target.closest('.demo-fab')) {
-    m.classList.remove('show');
+// ---- 路由引擎 ----
+var ProtoRouter = {
+  currentPage: null,
+  defaultPage: null,
+
+  init: function(defaultPage) {
+    this.defaultPage = defaultPage || '';
+    window.addEventListener('hashchange', this.render.bind(this));
+    this.render();
+  },
+
+  render: function() {
+    var hash = window.location.hash || '#/' + this.defaultPage;
+    var pageId = hash.replace('#/', '').replace('#', '');
+
+    // 销毁旧页面
+    if (this.currentPage && typeof window['destroy_' + this.currentPage.replace(/-/g, '_')] === 'function') {
+      window['destroy_' + this.currentPage.replace(/-/g, '_')]();
+    }
+
+    // 隐藏所有页面
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+
+    // 显示目标页面
+    var target = document.getElementById('page-' + pageId);
+    if (target) {
+      target.classList.add('active');
+      this.currentPage = pageId;
+
+      // 调用初始化
+      var fnName = 'init_' + pageId.replace(/-/g, '_');
+      if (typeof window[fnName] === 'function') {
+        window[fnName]();
+      }
+
+      // 更新菜单高亮
+      document.querySelectorAll('.pc-menu-item').forEach(function(item) {
+        item.classList.toggle('active', item.getAttribute('data-page') === pageId);
+      });
+
+      // 更新移动端 Tab
+      document.querySelectorAll('.tab-bar-item').forEach(function(tab) {
+        tab.classList.toggle('active', tab.getAttribute('data-page') === pageId);
+      });
+
+      // 更新面包屑
+      var bc = document.getElementById('breadcrumb-current');
+      if (bc) bc.textContent = pageId;
+
+      // 更新页码导航
+      document.querySelectorAll('.page-nav-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-page') === pageId);
+      });
+
+      // 文档联动
+      ProtoDoc.trigger('page-load', pageId);
+
+      // 渲染标注
+      ProtoAnno.render();
+
+      // 更新 hash
+      if (location.hash !== '#/' + pageId) {
+        history.replaceState(null, '', '#/' + pageId);
+      }
+    }
+  },
+
+  go: function(pageId) {
+    window.location.hash = '#/' + pageId;
   }
-});
-function demoStatus(type) {
-  var states = {
-    notstart: { icon: '🕗', title: '活动即将开始', desc: '敬请期待现场 AI 纪念相册', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
-    paused:   { icon: '⏸', title: '系统正在准备中', desc: '请稍后再次扫码体验', btns: '<button class="status-btn primary" onclick="demoStatus(\'paused\')">刷新</button>' },
-    ended:    { icon: '🎖', title: '本次活动已结束', desc: '感谢参与，共同珍藏这份大会记忆', btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button>' },
-    invalid:  { icon: '⚠', title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码', btns: '' },
-    network:  { icon: '📡', title: '网络连接不稳定', desc: '请检查网络后重试', btns: '<button class="status-btn primary" onclick="goHome()">重新加载</button>' }
-  };
-  var s = states[type];
-  document.getElementById('status-icon').textContent = s.icon;
-  document.getElementById('status-title').textContent = s.title;
-  document.getElementById('status-desc').textContent = s.desc;
-  document.getElementById('status-btns').innerHTML = s.btns;
-  toggleDemoMenu();
-  goStatus();
-}
-function demoQuality(level) {
-  state.qcLevel = level;
-  toggleDemoMenu();
-  toast(level === 'block' ? '已切换到“质量阻断”演示，请从照片确认页查看' : '已切换到“轻微问题”演示，请从照片确认页查看', '🧪');
-  goPhotoConfirm();
-}
-function demoFail(type) {
-  state.generationFail = type;
-  /* 确保有照片已拍，直接进入生成页 */
-  if (!state.photoTaken) {
-    takePhotoNoConsent();
+};
+
+// ---- 标注引擎 ----
+var ProtoAnno = {
+  visible: true,
+
+  render: function() {
+    if (!this.visible) return;
+    document.querySelectorAll('[data-anno-id]').forEach(function(el) {
+      if (el.querySelector('.anno-badge')) return;
+      var id = el.getAttribute('data-anno-id');
+      var badge = document.createElement('span');
+      badge.className = 'anno-badge';
+      badge.textContent = id;
+      badge.onclick = function(e) {
+        e.stopPropagation();
+        if (window.PLATFORM === 'mobile') {
+          ProtoDoc.trigger('anno:' + id, ProtoRouter.currentPage);
+        } else {
+          ProtoAnno.showPopover(el, id);
+        }
+      };
+      el.appendChild(badge);
+    });
+  },
+
+  toggle: function() {
+    this.visible = !this.visible;
+    document.querySelectorAll('.anno-badge').forEach(function(b) {
+      b.style.display = ProtoAnno.visible ? 'flex' : 'none';
+    });
+  },
+
+  showPopover: function(el, id) {
+    var title = el.getAttribute('data-anno-title') || id;
+    var desc = el.getAttribute('data-anno-desc') || '暂无说明';
+    var container = document.getElementById('anno-popover-container');
+    if (!container) return;
+
+    var rect = el.getBoundingClientRect();
+    container.innerHTML =
+      '<div style="position:fixed;top:' + (rect.bottom + 8) + 'px;left:' + rect.left +
+      'px;background:#fff;border-radius:8px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);' +
+      'z-index:10001;min-width:240px;max-width:360px;">' +
+      '<div style="font-weight:600;margin-bottom:8px;">' + title + '</div>' +
+      '<div style="font-size:13px;color:#666;line-height:1.6;">' + desc + '</div>' +
+      '<div style="text-align:right;margin-top:12px;">' +
+      '<button class="btn btn-sm btn-default" onclick="document.getElementById(\'anno-popover-container\').innerHTML=\'\'">关闭</button>' +
+      '</div></div>';
+
+    setTimeout(function() {
+      document.addEventListener('click', function handler() {
+        container.innerHTML = '';
+        document.removeEventListener('click', handler);
+      });
+    }, 100);
   }
-  toggleDemoMenu();
-  confirmGenerate();
-}
-function takePhotoNoConsent() {
-  state.consentAgreed = true;
-  var area = document.getElementById('camera-area');
-  var pv = document.getElementById('preview-wrap');
-  var bar = document.getElementById('confirm-bar');
-  area.style.display = 'none';
-  pv.style.display = 'block';
-  document.getElementById('preview-img').src = makePortraitSVG();
-  bar.style.display = 'flex';
-  state.photoTaken = true;
+};
+
+// ---- 文档联动引擎 ----
+var ProtoDoc = {
+  storagePrefix: 'proto_doc_',
+
+  trigger: function(eventId, pageId) {
+    var panel = document.getElementById('doc-panel');
+    if (!panel) return;
+
+    // 查找对应 doc-section
+    var sections = document.querySelectorAll('.doc-section[data-trigger]');
+    var matched = null;
+    sections.forEach(function(s) {
+      if (s.getAttribute('data-trigger') === eventId) matched = s;
+    });
+
+    // 移动端：高亮对应 doc-card
+    if (pageId) {
+      document.querySelectorAll('.doc-card').forEach(function(card) {
+        card.classList.toggle('highlight', card.getAttribute('data-page') === pageId);
+      });
+      var docCard = document.querySelector('.doc-card[data-page="' + pageId + '"]');
+      if (docCard) {
+        panel.innerHTML = docCard.innerHTML;
+        return;
+      }
+    }
+
+    if (matched) {
+      var saved = localStorage.getItem(this.storagePrefix + eventId);
+      panel.innerHTML = saved || matched.innerHTML;
+      panel.setAttribute('data-current-trigger', eventId);
+    }
+  },
+
+  save: function() {
+    var panel = document.getElementById('doc-panel');
+    var eventId = panel.getAttribute('data-current-trigger');
+    if (eventId) {
+      localStorage.setItem(this.storagePrefix + eventId, panel.innerHTML);
+      showToast('保存成功');
+    }
+  },
+
+  reset: function() {
+    var panel = document.getElementById('doc-panel');
+    var eventId = panel.getAttribute('data-current-trigger');
+    if (eventId) {
+      localStorage.removeItem(this.storagePrefix + eventId);
+      this.trigger(eventId);
+      showToast('已重置');
+    }
+  }
+};
+
+// ---- 工具函数 ----
+function renderList(containerId, items, renderItem) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = items.map(renderItem).join('');
 }
 
-/* ================= 初始化 ================= */
-renderTplTabs();
-renderTplGrid();
-renderSpot();
-/* 首页参与数据 */
-document.getElementById('stat-joiner').textContent = ACTIVITY.joinerCount;
-document.getElementById('stat-work').textContent = ACTIVITY.workCount;
-document.getElementById('stat-archive').textContent = ACTIVITY.archiveIndex;
-document.getElementById('home-tip-num').textContent = ACTIVITY.workCount;
-/* 首页精选轮播 */
-function renderSpot() {
-  var track = document.getElementById('spot-track');
-  var html = '';
-  GALLERY.slice(0, 5).forEach(function(p, idx) {
-    html += '<div class="spot-card" onclick="goGallery()">' +
-      '<div class="photo-bg wb-' + p.bg + '"></div>' +
-      '<div class="photo-person"></div>' +
-      '<span class="spot-num">' + p.num + '</span>' +
-      '</div>';
+function renderTable(containerId, columns, rows) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var html = '<table class="table"><thead><tr>';
+  columns.forEach(function(col) { html += '<th>' + col.label + '</th>'; });
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(row) {
+    html += '<tr>';
+    columns.forEach(function(col) { html += '<td>' + (row[col.key] !== undefined ? row[col.key] : '') + '</td>'; });
+    html += '</tr>';
   });
-  track.innerHTML = html;
+  html += '</tbody></table>';
+  container.innerHTML = html;
 }
-</script>
+
+function showModal(title, bodyHtml, onConfirm) {
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML =
+    '<div class="modal"><div class="modal-title">' + title + '</div>' +
+    '<div class="modal-body">' + bodyHtml + '</div>' +
+    '<div class="modal-footer"><button class="btn btn-default" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>' +
+    '<button class="btn btn-primary" id="modal-confirm-btn">确定</button></div></div>';
+  document.body.appendChild(overlay);
+  overlay.querySelector('#modal-confirm-btn').onclick = function() {
+    document.body.removeChild(overlay);
+    if (typeof onConfirm === 'function') onConfirm();
+  };
+}
+
+function showToast(msg, duration) {
+  duration = duration || 2000;
+  var toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function() {
+    toast.style.opacity = '0';
+    setTimeout(function() { document.body.removeChild(toast); }, 300);
+  }, duration);
+}
+
+function mockRequest(data, delay) {
+  delay = delay || 300;
+  return new Promise(function(resolve) { setTimeout(function() { resolve(data); }, delay); });
+}
+
+  </script>
+  <script>
+    /* ===== 演示菜单（全局） ===== */
+    function toggleDemoMenu() {
+      var m = document.getElementById('demo-menu');
+      if (m) m.classList.toggle('show');
+    }
+    document.addEventListener('click', function(e) {
+      var m = document.getElementById('demo-menu');
+      if (m && m.classList.contains('show') && !e.target.closest('.demo-menu') && !e.target.closest('.demo-fab')) {
+        m.classList.remove('show');
+      }
+    });
+    function demoStatus(type) {
+      var states = {
+        notstart: { icon: '🕗', title: '活动即将开始', desc: '敬请期待现场 AI 纪念相册', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
+        paused:   { icon: '⏸', title: '系统正在准备中', desc: '请稍后再次扫码体验', btns: '<button class="status-btn primary" onclick="demoStatus(\'paused\')">刷新</button>' },
+        ended:    { icon: '🎖', title: '本次活动已结束', desc: '感谢参与，共同珍藏这份大会记忆', btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button>' },
+        invalid:  { icon: '⚠', title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码', btns: '' },
+        network:  { icon: '📡', title: '网络连接不稳定', desc: '请检查网络后重试', btns: '<button class="status-btn primary" onclick="goHome()">重新加载</button>' }
+      };
+      var st = states[type];
+      document.getElementById('status-icon').textContent = st.icon;
+      document.getElementById('status-title').textContent = st.title;
+      document.getElementById('status-desc').textContent = st.desc;
+      document.getElementById('status-btns').innerHTML = st.btns;
+      toggleDemoMenu();
+      goStatus();
+    }
+    function demoQuality(level) {
+      if (typeof takePhotoNoConsent === 'function' && !window.__qcPhotoReady) {
+        takePhotoNoConsent();
+        window.__qcPhotoReady = true;
+      }
+      state.qcLevel = level;
+      toggleDemoMenu();
+      toast(level === 'block' ? '已切换到“质量阻断”演示，请从照片确认页查看' : '已切换到“轻微问题”演示，请从照片确认页查看', '🧪');
+      goPhotoConfirm();
+    }
+    function demoFail(type) {
+      state.generationFail = type;
+      if (!state.photoTaken) takePhotoNoConsent();
+      toggleDemoMenu();
+      confirmGenerate();
+    }
+  </script>
 </body>
 </html>

@@ -1,0 +1,98 @@
+<!-- PAGE_META: {"id": "generating", "title": "生成进度"} -->
+<div class="page gen-page" id="page-generating">
+  <div class="gen-bg-thumb" id="gen-bg-thumb"></div>
+  <div id="gen-working">
+    <div class="gen-anim">
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="core">✦</div>
+    </div>
+    <div class="gen-title" id="gen-title">正在创作你的纪念照</div>
+    <div class="gen-sub" id="gen-sub">预计 30 秒内完成，请稍候</div>
+    <div class="gen-steps" id="gen-steps"></div>
+    <div class="gen-overtime" id="gen-overtime" style="display:none">创作仍在继续，你也可以稍后到“我的纪念”查看。</div>
+  </div>
+  <div class="gen-fail" id="gen-fail">
+    <div class="gf-ico">⚠</div>
+    <div class="gf-title">这次创作没有完成</div>
+    <div class="gf-sub" id="gf-sub">照片不会公开展示，你可以重新尝试</div>
+    <div class="gf-btns">
+      <button class="gf-btn primary" onclick="retryGenerate()">重新生成</button>
+      <button class="gf-btn plain" onclick="goPhoto()">换一张照片</button>
+      <button class="gf-btn plain" onclick="goCreate()">改用智能海报</button>
+    </div>
+  </div>
+
+  <!-- 离开确认弹层 -->
+  <div class="leave-modal" id="leave-modal">
+    <div class="lm-card">
+      <div class="lm-title">作品仍在生成</div>
+      <div class="lm-desc">离开后可在“我的纪念”查看进度。</div>
+      <div class="lm-btns">
+        <button class="lm-btn primary" onclick="closeLeave(true)">继续等待</button>
+        <button class="lm-btn plain" onclick="closeLeave(false)">返回首页</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* ================= H07 生成进度 ================= */
+function startGenTimer(steps) {
+  var i = 0;
+  var stepMs = 1100;
+  var timer = setInterval(function() {
+    i++;
+    if (i < steps.length && document.getElementById('gs-' + (i-1))) document.getElementById('gs-' + (i-1)).className = 'gen-step done';
+    if (i < steps.length) document.getElementById('gs-' + i).className = 'gen-step active';
+    if (i >= 2) document.getElementById('gen-overtime').style.display = 'block';
+    if (i >= steps.length) {
+      clearInterval(timer);
+      setTimeout(function() { finishGenerate(); }, 500);
+    }
+  }, stepMs);
+}
+function finishGenerate() {
+  var t = findByTpl(state.selectedTpl);
+  var nextNum = MY_WORKS.length + 1;
+  var work = {
+    no: 'FJDH-0328-0' + nextNum,
+    tpl: t.id,
+    status: 'notsub',
+    time: '今天 10:2' + ((nextNum) % 10),
+    num: nextNum
+  };
+  MY_WORKS.push(work);
+  state.curWork = work;
+  renderResult();
+}
+function showGenFail(type) {
+  document.getElementById('gen-working').style.display = 'none';
+  var fail = document.getElementById('gen-fail');
+  fail.classList.add('show');
+  var sub = document.getElementById('gf-sub');
+  if (type === 'safety') sub.textContent = '当前照片暂不支持生成，请更换一张照片。';
+  else sub.textContent = '照片不会公开展示，你可以重新尝试';
+}
+function retryGenerate() {
+  state.generationFail = null;
+  var t = findByTpl(state.selectedTpl);
+  document.getElementById('gen-fail').classList.remove('show');
+  document.getElementById('gen-working').style.display = 'block';
+  showPage('generating');
+  var steps = t.cap === 'A' ? ['正在排版纪念信息','正在合成高清作品'] : t.cap === 'B' ? ['正在识别人像','正在融合主题场景','正在优化光影细节'] : ['正在分析人物特征','正在创作艺术画面','正在完成细节优化'];
+  var stepsWrap = document.getElementById('gen-steps');
+  stepsWrap.innerHTML = '';
+  steps.forEach(function(s, i) {
+    var div = document.createElement('div');
+    div.className = 'gen-step' + (i === 0 ? ' active' : '');
+    div.id = 'gs-' + i;
+    div.innerHTML = '<span class="s-dot"></span><span>' + s + '</span>';
+    stepsWrap.appendChild(div);
+  });
+  startGenTimer(steps);
+}
+function closeLeave(continueWait) {
+  document.getElementById('leave-modal').classList.remove('show');
+  if (!continueWait) goHome();
+}
+</script>

@@ -1,0 +1,85 @@
+<!-- PAGE_META: {"id": "tpl-detail", "title": "模板详情"} -->
+<div class="page" id="page-tpl-detail">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTemplates()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>模板详情</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="td-hero">
+      <div class="td-photo" id="td-photo">
+        <div class="photo-bg"></div>
+        <div class="photo-person"></div>
+      </div>
+      <div class="td-examples" id="td-examples"></div>
+    </div>
+    <div class="td-info">
+      <div class="td-name-row">
+        <span class="td-name" id="td-name"></span>
+        <span class="td-cap-chip" id="td-cap"></span>
+      </div>
+      <div class="td-meta" id="td-meta"></div>
+    </div>
+    <div class="td-guide">
+      <div class="gd-title">适用提示</div>
+      <div id="td-guide-text"></div>
+    </div>
+    <div class="td-ai-tip" id="td-ai-tip" style="display:none">AI 生成效果会因照片而异，请使用本人照片。</div>
+    <div class="td-actions">
+      <button class="td-btn" onclick="startWithTpl()">用这个模板创作</button>
+      <div class="td-secondary" onclick="goTemplates()">查看其他模板</div>
+    </div>
+  </div>
+</div>
+<script>
+/* ================= H04 模板详情 ================= */
+var TD_EXAMPLE_COLORS = ['#F5D0A9', '#E8B88A', '#D9A066'];
+function openTplDetail(id) {
+  state.selectedTpl = id;
+  var t = findByTpl(id);
+  var cap = CAPABILITIES[t.cap];
+  var photo = document.getElementById('td-photo');
+  photo.className = 'td-photo';
+  photo.style.cssText = '';
+  var bg = photo.querySelector('.photo-bg');
+  bg.setAttribute('data-tpl', t.id);
+  document.getElementById('td-name').textContent = t.name;
+  var cc = document.getElementById('td-cap');
+  cc.className = 'td-cap-chip cap-' + t.cap.toLowerCase();
+  cc.textContent = cap.name;
+  document.getElementById('td-meta').innerHTML = '形式：' + cap.tag.split(' · ')[1] + '　·　人数：' + t.people + '　·　预计 ' + t.time;
+  document.getElementById('td-guide-text').textContent = t.guide + '。人物区域不应被文字遮挡。';
+  document.getElementById('td-ai-tip').style.display = (t.cap === 'A') ? 'none' : 'block';
+  var dots = document.getElementById('td-examples');
+  dots.innerHTML = '';
+  for (var i = 0; i < 3; i++) {
+    (function(idx) {
+      var d = document.createElement('span');
+      d.className = 'td-example-dot' + (idx === 0 ? ' active' : '');
+      d.onclick = function() {
+        var person = photo.querySelector('.photo-person');
+        person.style.background = 'linear-gradient(135deg,' + TD_EXAMPLE_COLORS[idx] + ',' + TD_EXAMPLE_COLORS[(idx+1)%3] + ')';
+        dots.querySelectorAll('.td-example-dot').forEach(function(x){ x.classList.remove('active'); });
+        d.classList.add('active');
+      };
+      dots.appendChild(d);
+    })(i);
+  }
+  showPage('tpl-detail');
+}
+function startWithTpl() {
+  var t = findByTpl(state.selectedTpl);
+  document.getElementById('pt-thumb').querySelector('.photo-bg').setAttribute('data-tpl', t.id);
+  document.getElementById('pt-name').textContent = t.name;
+  document.getElementById('pt-cap').textContent = CAPABILITIES[t.cap].name + ' · ' + t.people + ' · ' + t.time;
+  var maxP = parseInt(t.people.split('-')[1] || t.people.split('-')[0], 10);
+  var fg = document.getElementById('face-guide');
+  fg.className = 'face-guide' + (maxP >= 3 ? ' multi' : '');
+  document.getElementById('camera-tip').textContent = maxP === 1 ? '请将人脸置于取景框内' : '请将 ' + (maxP > 2 ? '合影' : '人物') + ' 置于取景框内';
+  document.getElementById('camera-sub').textContent = '正面看向镜头 · 光线充足 · 避免遮挡面部';
+  var tip = document.getElementById('photo-guide-tip');
+  tip.textContent = t.guide;
+  document.getElementById('photo-guide-tip-ai').style.display = (t.cap === 'A') ? 'none' : 'block';
+  showPage('photo');
+}
+</script>

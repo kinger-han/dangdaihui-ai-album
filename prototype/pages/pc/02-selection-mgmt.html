@@ -1,0 +1,225 @@
+<!-- PAGE_META: {"id": "selection-mgmt", "title": "精选管理"} -->
+<div class="page" id="page-selection-mgmt">
+  <style>
+    .sel-stats { display: flex; gap: 12px; margin-bottom: 14px; }
+    .sel-stat-card {
+      flex: 1; background: #fff; border: 1px solid #eee; border-radius: 6px;
+      padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+    }
+    .sel-stat-card .ss-num { font-size: 24px; font-weight: 700; color: #0B5DEA; }
+    .sel-stat-card .ss-label { font-size: 13px; color: #666; }
+    .sel-card {
+      background: #fff; border: 1px solid #eee; border-radius: 8px;
+      padding: 12px; margin-bottom: 12px; display: flex; gap: 12px;
+      align-items: center;
+    }
+    .sel-card .sc-thumb {
+      width: 52px; height: 68px; border-radius: 4px; overflow: hidden;
+      position: relative; cursor: zoom-in; flex-shrink: 0; background: #F0EAE0;
+    }
+    .sel-card .sc-thumb .pt-bg { position: absolute; inset: 0; }
+    .sel-card .sc-thumb .pt-person {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 55%; aspect-ratio: 3/4; border-radius: 3px; z-index: 2;
+      background: linear-gradient(135deg, #F5D0A9, #D9A066);
+      border: 1.5px solid rgba(255,255,255,0.8);
+    }
+    .sel-card .sc-info { flex: 1; min-width: 0; }
+    .sel-card .sc-tpl { font-size: 14px; font-weight: 600; color: #333; }
+    .sel-card .sc-meta { font-size: 12px; color: #999; margin-top: 4px; line-height: 1.7; }
+    .sel-card .sc-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .toolbar-btn.primary { background: #0B5DEA; color: #fff; border-color: #0B5DEA; }
+  </style>
+
+  <div class="page-header">
+    <div class="page-title">精选管理 <span class="sub">用户授权同意展示的照片（可上屏）</span></div>
+  </div>
+
+  <div class="sel-stats">
+    <div class="sel-stat-card"><div class="ss-num">6</div><div class="ss-label">待精选</div></div>
+    <div class="sel-stat-card"><div class="ss-num">4</div><div class="ss-label">已精选</div></div>
+    <div class="sel-stat-card"><div class="ss-num">12</div><div class="ss-label">累计提交</div></div>
+    <div class="sel-stat-card"><div class="ss-num">5</div><div class="ss-label">已上屏</div></div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-item">
+      <span class="filter-label">状态</span>
+      <select class="filter-select" id="f-sel-status" onchange="renderSelCards()">
+        <option value="">全部</option>
+        <option value="wait">待精选</option>
+        <option value="picked">已精选</option>
+        <option value="onscreen">已上屏</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">能力类型</span>
+      <select class="filter-select" id="f-sel-cap" onchange="renderSelCards()">
+        <option value="">全部</option>
+        <option value="A">经典纪念框</option>
+        <option value="B">智能主题海报</option>
+        <option value="C">AI 艺术创作</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <button class="filter-btn primary" onclick="batchPick()">批量设为精选</button>
+      <button class="filter-btn" onclick="batchOnScreen()">批量上屏</button>
+    </div>
+  </div>
+
+  <div id="sel-list-container"></div>
+
+  <!-- 大图预览 -->
+  <div class="preview-overlay" id="sel-preview-overlay">
+    <div class="preview-box">
+      <span class="pv-close" onclick="closeSelPreview()">×</span>
+      <div class="pv-img" id="sel-pv-img"></div>
+      <div class="pv-meta" id="sel-pv-meta"></div>
+    </div>
+  </div>
+
+  <div id="toast-area"></div>
+</div>
+
+<style>
+  /* 预览（页面级，供两个页面内联使用） */
+  .preview-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+  }
+  .preview-overlay.show { display: flex; }
+  .preview-box {
+    background: #fff; border-radius: 8px; padding: 16px;
+    width: 420px; text-align: center; position: relative;
+  }
+  .preview-box .pv-img {
+    width: 100%; aspect-ratio: 3/4; border-radius: 6px; overflow: hidden;
+    position: relative; background: #26262A;
+  }
+  .preview-box .pv-img .photo-bg { position: absolute; inset: 0; }
+  .preview-box .pv-img .photo-person {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 60%; aspect-ratio: 3/4; border-radius: 8px; z-index: 2;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .preview-box .pv-meta { font-size: 13px; color: #666; margin-top: 12px; text-align: left; line-height: 1.8; }
+  .preview-box .pv-close { position: absolute; top: 10px; right: 14px; font-size: 20px; cursor: pointer; color: #999; }
+  .preview-box .pv-close:hover { color: #333; }
+</style>
+
+<script>
+/* ================= 精选管理（用户同意上屏的照片） ================= */
+var SEL_LIST = [
+  { no: 'FJDH-0328-01', visitor: 'FJDH-0328', tpl: '党旗礼赞', cap: 'B', screen: '主会场 · 屏1', time: '09-30 10:21', status: 'onscreen', ai: '通过' },
+  { no: 'FJDH-0002-01', visitor: 'FJDH-0002', tpl: '盛会留念框', cap: 'A', screen: '序厅 · 屏2', time: '09-30 09:12', status: 'picked',  ai: '通过' },
+  { no: 'FJDH-0009-01', visitor: 'FJDH-0009', tpl: '工笔华章', cap: 'C', screen: '序厅 · 屏2', time: '09-30 09:20', status: 'picked',  ai: '通过' },
+  { no: 'FJDH-0015-01', visitor: 'FJDH-0015', tpl: '盛世华章', cap: 'B', screen: '签到区 · 屏3', time: '09-30 09:31', status: 'wait', ai: '存疑' },
+  { no: 'FJDH-0021-01', visitor: 'FJDH-0021', tpl: '水墨山河', cap: 'C', screen: '签到区 · 屏3', time: '09-30 09:44', status: 'wait', ai: '通过' },
+  { no: 'FJDH-0033-01', visitor: 'FJDH-0033', tpl: '盛会留念框', cap: 'A', screen: '主会场 · 屏1', time: '09-30 10:02', status: 'onscreen', ai: '通过' },
+  { no: 'FJDH-0052-01', visitor: 'FJDH-0052', tpl: '福见山海', cap: 'B', screen: '签到区 · 屏3', time: '09-30 10:15', status: 'onscreen', ai: '通过' },
+  { no: 'FJDH-0068-01', visitor: 'FJDH-0068', tpl: '奋进新征程', cap: 'A', screen: '序厅 · 屏2', time: '09-30 10:26', status: 'wait', ai: '通过' },
+  { no: 'FJDH-0077-01', visitor: 'FJDH-0077', tpl: '工笔华章', cap: 'C', screen: '签到区 · 屏3', time: '09-30 10:30', status: 'wait', ai: '通过' },
+  { no: 'FJDH-0084-01', visitor: 'FJDH-0084', tpl: '盛世华章', cap: 'B', screen: '主会场 · 屏1', time: '09-30 10:35', status: 'wait', ai: '拦截' }
+];
+var SEL_SELECTED = {};
+var SEL_BATCH = false;
+
+function selTplBg(no) {
+  var n = parseInt(no.replace(/\D/g, ''), 10) || 1;
+  return (n % 8) + 1;
+}
+function selCapName(c) { return { A: '经典框', B: '智能海报', C: 'AI 艺术' }[c] || c; }
+function selStatusText(s) {
+  if (s === 'onscreen') return '已上屏';
+  if (s === 'picked') return '已精选';
+  return '待精选';
+}
+function renderSelCards() {
+  var stF = document.getElementById('f-sel-status').value;
+  var capF = document.getElementById('f-sel-cap').value;
+  var list = SEL_LIST.filter(function(p) {
+    if (stF === 'onscreen' && p.status !== 'onscreen') return false;
+    if (stF === 'picked' && p.status !== 'picked') return false;
+    if (stF === 'wait' && p.status !== 'wait') return false;
+    if (capF && p.cap !== capF) return false;
+    return true;
+  });
+  var wrap = document.getElementById('sel-list-container');
+  var html = '';
+  list.forEach(function(p) {
+    var bg = selTplBg(p.no);
+    var enabled = p.status === 'wait' || p.status === 'picked';
+    html += '<div class="sel-card">' +
+      '<span class="sc-thumb" onclick="openSelPreview(\'' + p.no + '\')">' +
+        '<span class="pt-bg wb-' + bg + '"></span><span class="pt-person"></span></span>' +
+      '<div class="sc-info">' +
+        '<div class="sc-tpl">' + p.tpl + ' <span class="type-badge">' + selCapName(p.cap) + '</span></div>' +
+        '<div class="sc-meta">' + p.no + ' · 访客 ' + p.visitor + ' · ' + p.screen + '<br>提交时间 ' + p.time + ' · AI 初审 ' + p.ai +
+          ' · 当前状态 <b>' + selStatusText(p.status) + '</b></div>' +
+      '</div>' +
+      '<div class="sc-actions">' +
+        selActionHtml(p) +
+      '</div>' +
+      '</div>';
+  });
+  if (!list.length) html = '<div class="table-card" style="padding:50px;text-align:center;color:#999">暂无符合条件的照片</div>';
+  wrap.innerHTML = html;
+}
+function selActionHtml(p) {
+  var h = '';
+  if (p.status !== 'onscreen') {
+    h += '<button class="toolbar-btn primary" onclick="selOnScreen(\'' + p.no + '\')">上屏</button>';
+  }
+  if (p.status === 'wait') {
+    h += '<a class="action-btn" onclick="setPicked(\'' + p.no + '\')">设为精选</a>';
+  } else if (p.status === 'picked') {
+    h += '<a class="action-btn" onclick="setPicked(\'' + p.no + '\')">取消精选</a>';
+  }
+  h += '<a class="action-btn" onclick="selOpenPreviewAction(\'' + p.no + '\')">查看大图</a>';
+  return h;
+}
+function setPicked(no) {
+  var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  p.status = p.status === 'picked' ? 'wait' : 'picked';
+  renderSelCards();
+}
+function selOnScreen(no) {
+  var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  p.status = 'onscreen';
+  document.getElementById('toast-area').innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">已上屏：' + no + '</div>';
+  setTimeout(function(){ document.getElementById('toast-area').innerHTML = ''; }, 1600);
+  renderSelCards();
+}
+function batchPick() {
+  var n = 0;
+  SEL_LIST.forEach(function(p) { if (p.status === 'wait') { p.status = 'picked'; n++; } });
+  renderSelCards();
+  document.getElementById('toast-area').innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">已批量设为精选 ' + n + ' 张</div>';
+  setTimeout(function(){ document.getElementById('toast-area').innerHTML = ''; }, 1600);
+}
+function batchOnScreen() {
+  var n = 0;
+  SEL_LIST.forEach(function(p) { if (p.status === 'picked') { p.status = 'onscreen'; n++; } });
+  renderSelCards();
+  document.getElementById('toast-area').innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">已批量上屏 ' + n + ' 张</div>';
+  setTimeout(function(){ document.getElementById('toast-area').innerHTML = ''; }, 1600);
+}
+function openSelPreview(no) {
+  var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  var bg = selTplBg(p.no);
+  var img = document.getElementById('sel-pv-img');
+  img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
+  document.getElementById('sel-pv-meta').innerHTML =
+    '<b>作品编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + selCapName(p.cap) + '）<br>' +
+    '<b>访客编号：</b>' + p.visitor + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time +
+    '<br><span style="color:#999;font-size:12px">原型示意：正式版本展示真实生成图片</span>';
+  document.getElementById('sel-preview-overlay').classList.add('show');
+}
+function selOpenPreviewAction(no) { openSelPreview(no); }
+function closeSelPreview() { document.getElementById('sel-preview-overlay').classList.remove('show'); }
+function init_selection_mgmt() { renderSelCards(); }
+init_selection_mgmt();
+</script>

@@ -1,0 +1,115 @@
+<!-- PAGE_META: {"id": "photo-confirm", "title": "照片确认"} -->
+<div class="page" id="page-photo-confirm">
+  <div class="page-header">
+    <button class="back-btn" onclick="goPhoto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>照片确认</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="crop-area">
+      <div class="crop-box-wrap"><div class="crop-box"><img id="crop-img" alt="裁剪预览"></div></div>
+      <div class="crop-hint">可拖动调整位置，比例已按模板固定</div>
+    </div>
+    <div class="check-panel">
+      <div class="check-result" id="check-result">
+        <span class="cr-ico" id="cr-ico">✓</span><span id="cr-text">照片状态良好，可以开始创作</span>
+      </div>
+      <div id="check-rows"></div>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn plain" onclick="goPhoto()">换一张</button>
+      <button class="btn primary" id="confirm-gen-btn" onclick="confirmGenerate()">确认生成</button>
+    </div>
+  </div>
+</div>
+<script>
+/* ================= H06 照片确认 ================= */
+function renderCheck() {
+  var t = findByTpl(state.selectedTpl);
+  var rows = document.getElementById('check-rows');
+  var result = document.getElementById('check-result');
+  var ico = document.getElementById('cr-ico');
+  var text = document.getElementById('cr-text');
+  var btn = document.getElementById('confirm-gen-btn');
+  if (!rows || !result) return;
+  if (state.qcLevel === 'block') {
+    result.className = 'check-result block';
+    ico.textContent = '✕';
+    text.textContent = (t.cap === 'C') ? '该模板仅支持单人，请换一张照片或选择多人模板' : '未检测到人脸，请重拍或换一张照片';
+    btn.className = 'btn primary disabled';
+    btn.disabled = true;
+    rows.innerHTML =
+      '<div class="check-row"><span class="cr-name">人脸数量</span><span class="cr-state fail">✕ 未检测到</span></div>' +
+      '<div class="check-row"><span class="cr-name">清晰度</span><span class="cr-state pass">✓ 良好</span></div>' +
+      '<div class="check-row"><span class="cr-name">亮度</span><span class="cr-state pass">✓ 正常</span></div>' +
+      '<div class="check-row"><span class="cr-name">遮挡</span><span class="cr-state pass">✓ 无</span></div>';
+    return;
+  }
+  if (state.qcLevel === 'warn') {
+    result.className = 'check-result warn';
+    ico.textContent = '!';
+    text.textContent = '画面稍暗，可能影响生成效果（可继续）';
+    btn.className = 'btn primary';
+    btn.disabled = false;
+    rows.innerHTML =
+      '<div class="check-row"><span class="cr-name">人脸数量</span><span class="cr-state pass">✓ 1 人</span></div>' +
+      '<div class="check-row"><span class="cr-name">清晰度</span><span class="cr-state pass">✓ 良好</span></div>' +
+      '<div class="check-row"><span class="cr-name">亮度</span><span class="cr-state warn">! 稍暗</span></div>' +
+      '<div class="check-row"><span class="cr-name">遮挡</span><span class="cr-state pass">✓ 无</span></div>';
+    return;
+  }
+  result.className = 'check-result ok';
+  ico.textContent = '✓';
+  text.textContent = '照片状态良好，可以开始创作';
+  btn.className = 'btn primary';
+  btn.disabled = false;
+  var multi = (t.cap === 'A');
+  rows.innerHTML =
+    '<div class="check-row"><span class="cr-name">人脸数量</span><span class="cr-state pass">✓ ' + (multi ? '多人正常' : '1 人') + '</span></div>' +
+    '<div class="check-row"><span class="cr-name">清晰度</span><span class="cr-state pass">✓ 良好</span></div>' +
+    '<div class="check-row"><span class="cr-name">亮度</span><span class="cr-state pass">✓ 正常</span></div>' +
+    '<div class="check-row"><span class="cr-name">主体完整度</span><span class="cr-state pass">✓ 完整</span></div>';
+}
+function confirmGenerate() {
+  var t = findByTpl(state.selectedTpl);
+  if (state.qcLevel === 'block') { toast('请先更换照片后再继续', '⚠️'); return; }
+  document.getElementById('confirm-gen-btn').textContent = CAPABILITIES[t.cap].confirmBtn;
+  var stepsWrap = document.getElementById('gen-steps');
+  var steps = [];
+  if (t.cap === 'A') steps = ['正在排版纪念信息', '正在合成高清作品'];
+  else if (t.cap === 'B') steps = ['正在识别人像', '正在融合主题场景', '正在优化光影细节'];
+  else steps = ['正在分析人物特征', '正在创作艺术画面', '正在完成细节优化'];
+  stepsWrap.innerHTML = '';
+  steps.forEach(function(s, i) {
+    var div = document.createElement('div');
+    div.className = 'gen-step' + (i === 0 ? ' active' : '');
+    div.id = 'gs-' + i;
+    div.innerHTML = '<span class="s-dot"></span><span>' + s + '</span>';
+    stepsWrap.appendChild(div);
+  });
+  document.getElementById('gen-title').textContent = '正在创作你的纪念照';
+  document.getElementById('gen-sub').textContent = '预计 ' + t.time + ' 完成，请稍候';
+  document.getElementById('gen-overtime').style.display = 'none';
+  document.getElementById('gen-fail').classList.remove('show');
+  document.getElementById('gen-working').style.display = 'block';
+  var bgThumb = document.getElementById('gen-bg-thumb');
+  bgThumb.style.background = 'linear-gradient(170deg, #50100F 0%, #7A1712 60%, #B42318 100%)';
+  if (state.generationFail) {
+    var fail = state.generationFail;
+    state.generationFail = null;
+    showPage('generating');
+    var fi = 0;
+    var ftimer = setInterval(function() {
+      fi++;
+      if (fi < steps.length && document.getElementById('gs-' + (fi-1))) document.getElementById('gs-' + (fi-1)).className = 'gen-step done';
+      if (fi >= 2) {
+        clearInterval(ftimer);
+        setTimeout(function() { showGenFail(fail); }, 600);
+      }
+    }, 500);
+    return;
+  }
+  showPage('generating');
+  startGenTimer(steps);
+}
+</script>

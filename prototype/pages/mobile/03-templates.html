@@ -1,0 +1,44 @@
+<!-- PAGE_META: {"id": "templates", "title": "模板列表"} -->
+<div class="page" id="page-templates">
+  <div class="page-header">
+    <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>选择纪念模板</h2>
+    <span class="hdr-right" onclick="toast('模板效果会因照片而异，请使用本人照片','✨')">?</span>
+  </div>
+  <div class="tpl-tabs" id="tpl-tabs"></div>
+  <div class="page-body">
+    <div class="tpl-grid" id="tpl-grid"></div>
+  </div>
+</div>
+<script>
+/* ================= H03 模板列表 ================= */
+function renderTplTabs() {
+  var wrap = document.getElementById('tpl-tabs');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  TPL_GROUPS.forEach(function(g, i) {
+    var b = document.createElement('button');
+    b.className = 'tpl-tab' + (g.id === state.curTplGroup ? ' active' : '');
+    b.textContent = g.name;
+    if (i === 3) { var hot = document.createElement('span'); hot.className = 'tag-hot'; hot.textContent = '创意'; b.appendChild(hot); }
+    b.onclick = function() { state.curTplGroup = g.id; renderTplTabs(); renderTplGrid(); };
+    wrap.appendChild(b);
+  });
+}
+function renderTplGrid() {
+  var grid = document.getElementById('tpl-grid');
+  if (!grid) return;
+  var list = TEMPLATES.filter(function(t){ return t.group === state.curTplGroup; });
+  var html = '';
+  list.forEach(function(t) {
+    var cap = CAPABILITIES[t.cap];
+    html += '<div class="tpl-card" data-id="' + t.id + '" onclick="openTplDetail(\'' + t.id + '\')">' +
+      '<div class="tpl-thumb"><div class="tpl-inner"><div class="tpl-' + t.id + '"><div class="avatar-dummy"></div></div></div></div>' +
+      '<div class="tpl-name">' + t.name + '<span class="cap-tag cap-' + t.cap.toLowerCase() + '">' + cap.name + '</span></div>' +
+      '<div class="tpl-desc">' + t.guide + '<div class="tpl-cap-line">人数 ' + t.people + ' · ' + t.time + '</div></div>' +
+      '</div>';
+  });
+  if (list.length === 0) html = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray);font-size:13px">该分类暂无模板</div>';
+  grid.innerHTML = html;
+}
+</script>

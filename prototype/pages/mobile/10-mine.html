@@ -1,0 +1,58 @@
+<!-- PAGE_META: {"id": "mine", "title": "我的纪念"} -->
+<div class="page" id="page-mine">
+  <div class="page-header">
+    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>我的纪念</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="mine-head">
+      <div class="mh-no" id="mh-no">第 328 号纪念档案</div>
+      <div class="mh-sub" id="mh-sub">访客编号 FJDH-0328</div>
+      <div class="mh-count" id="mh-count">共 0 张作品</div>
+    </div>
+    <div class="mine-tip" id="mine-tip">作品保存在云端并与当前浏览器关联。清理浏览器数据或更换设备后，可能无法在这里找回。</div>
+    <div id="mine-list" class="mine-list"></div>
+  </div>
+</div>
+<script>
+/* ================= H10 我的纪念 ================= */
+function renderMine() {
+  document.getElementById('mh-no').textContent = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案';
+  document.getElementById('mh-sub').textContent = '访客编号 FJDH-0328';
+  document.getElementById('mh-count').textContent = '共 ' + MY_WORKS.length + ' 张作品';
+  var list = document.getElementById('mine-list');
+  if (MY_WORKS.length === 0) {
+    list.innerHTML = '<div class="mine-empty"><div class="big">🎖</div><p>还没有生成纪念作品</p><p><button class="gen-btn" onclick="goCreate()">创作第一张纪念照</button></p></div>';
+    return;
+  }
+  var html = '';
+  MY_WORKS.forEach(function(w, i) {
+    var t = findByTpl(w.tpl);
+    var pill = statusPill(w.status);
+    html += '<div class="mine-card" data-num="' + w.no + '" onclick="openWorkFromMine(' + i + ')">' +
+      '<div class="mc-photo"><div class="photo-bg" data-tpl="' + w.tpl + '"></div><div class="photo-person"></div></div>' +
+      '<div class="mc-info">' +
+        '<div class="mc-tpl">' + t.name + ' · ' + CAPABILITIES[t.cap].name + '</div>' +
+        '<div class="mc-num">' + w.no + ' · ' + w.time + '</div>' +
+        '<div class="mc-status">' + pill +
+          (w.status === 'skipped' ? '<button class="mc-op" onclick="event.stopPropagation();goTemplates()">重新生成</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+}
+function statusPill(s) {
+  if (s === 'wait')    return '<span class="status-pill wait">● 等待精选</span>';
+  if (s === 'selected') return '<span class="status-pill on">● 已被现场精选</span>';
+  if (s === 'skipped')  return '<span class="status-pill off">○ 本次暂未入选</span>';
+  if (s === 'block')    return '<span class="status-pill block">● 照片暂不符合展示要求</span>';
+  return '<span class="status-pill off">○ 未提交精选</span>';
+}
+function openWorkFromMine(idx) {
+  var w = MY_WORKS[idx];
+  state.curWork = w;
+  renderResult();
+}
+</script>

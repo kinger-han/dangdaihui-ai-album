@@ -2,9 +2,7 @@
 *.bak.*
 .bak.*
 .repo-payload.json
-
-# 旧 build.py 组件化原型目录（V2 已改为单文件，不再演进）
-prototype/
+pages-old-*
 
 # 项目内部分支（不进 GitHub 原型仓库）
 党代会知识库/

@@ -1,0 +1,67 @@
+<!-- PAGE_META: {"id": "gallery", "title": "精选照片墙"} -->
+<div class="page" id="page-gallery">
+  <div class="page-header">
+    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>现场精选</h2>
+    <span class="hdr-right" onclick="goCreate()">我要拍</span>
+  </div>
+  <div class="wall-toolbar">
+    <span class="wl">每一份认真记录，都值得被珍藏。</span>
+    <span class="wl">共 <b id="wall-count">0</b> 张</span>
+  </div>
+  <div class="page-body">
+    <div class="wall-grid" id="wall-grid"></div>
+  </div>
+
+  <!-- 照片墙详情 -->
+  <div class="wall-detail" id="wall-detail">
+    <span class="wd-close" onclick="closeWallDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+    <div class="wd-photo" id="wd-photo">
+      <div class="wall-bg"></div>
+      <div class="wall-person-d"></div>
+    </div>
+    <div class="wd-name" id="wd-name"></div>
+    <div class="wd-num" id="wd-num"></div>
+    <div class="wd-btns">
+      <button class="wd-btn primary" onclick="sameTemplateFromWall()">拍同款 ›</button>
+      <button class="wd-btn plain" onclick="closeWallDetail()">看看就好</button>
+    </div>
+  </div>
+</div>
+<script>
+/* ================= H09 精选照片墙 ================= */
+function renderWall() {
+  var grid = document.getElementById('wall-grid');
+  if (!grid) return;
+  var html = '';
+  GALLERY.forEach(function(p, idx) {
+    html += '<div class="wall-item" onclick="openWallDetail(' + idx + ')">' +
+      '<div class="wall-bg wb-' + p.bg + '"></div>' +
+      '<div class="wall-person"></div>' +
+      '<span class="wall-num">' + p.num + '</span>' +
+      '</div>';
+  });
+  grid.innerHTML = html;
+  document.getElementById('wall-count').textContent = GALLERY.length;
+}
+function openWallDetail(idx) {
+  var p = GALLERY[idx];
+  var d = document.getElementById('wall-detail');
+  var t = findByTpl(p.tpl);
+  d.classList.add('show');
+  var wp = document.getElementById('wd-photo');
+  wp.querySelector('.wall-bg').className = 'wall-bg wb-' + p.bg;
+  document.getElementById('wd-name').textContent = t.name + ' · ' + CAPABILITIES[t.cap].name;
+  document.getElementById('wd-num').textContent = p.num + ' · 点击可拍同款';
+  state.wallWork = p;
+}
+function sameTemplateFromWall() {
+  var p = state.wallWork;
+  closeWallDetail();
+  state.visitFromWall = true;
+  state.selectedTpl = p.tpl;
+  openTplDetail(p.tpl);
+  toast('已按该作品模板为你跳转，拍个同款吧', '✨');
+}
+function closeWallDetail() { document.getElementById('wall-detail').classList.remove('show'); }
+</script>

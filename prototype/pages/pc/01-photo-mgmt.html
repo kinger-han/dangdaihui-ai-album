@@ -1,0 +1,305 @@
+<!-- PAGE_META: {"id": "photo-mgmt", "title": "照片管理"} -->
+<div class="page" id="page-photo-mgmt">
+  <style>
+    /* 照片管理页局部样式（组件内 style 随页面注入保留） */
+    .photo-tbl th, .photo-tbl td { text-align: left; }
+    .photo-tbl .thumb-cell { width: 56px; }
+    .photo-thumb {
+      width: 44px; height: 58px; border-radius: 4px; overflow: hidden;
+      position: relative; cursor: zoom-in; display: inline-block;
+      background: #F0EAE0; vertical-align: middle;
+    }
+    .photo-thumb .pt-bg { position: absolute; inset: 0; }
+    .photo-thumb .pt-person {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 55%; aspect-ratio: 3/4; border-radius: 3px; z-index: 2;
+      background: linear-gradient(135deg, #F5D0A9, #D9A066);
+      border: 1.5px solid rgba(255,255,255,0.8);
+    }
+    .td-check { width: 36px; }
+    .selection-cell .badge-status { margin-right: 4px; }
+    /* 大图预览 */
+    .preview-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000;
+      display: none; align-items: center; justify-content: center;
+    }
+    .preview-overlay.show { display: flex; }
+    .preview-box {
+      background: #fff; border-radius: 8px; padding: 16px;
+      width: 420px; text-align: center; position: relative;
+    }
+    .preview-box .pv-img {
+      width: 100%; aspect-ratio: 3/4; border-radius: 6px; overflow: hidden;
+      position: relative; background: #26262A;
+    }
+    .preview-box .pv-img .photo-bg { position: absolute; inset: 0; }
+    .preview-box .pv-img .photo-person {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 60%; aspect-ratio: 3/4; border-radius: 8px; z-index: 2;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .preview-box .pv-meta { font-size: 13px; color: #666; margin-top: 12px; text-align: left; line-height: 1.8; }
+    .preview-box .pv-close { position: absolute; top: 10px; right: 14px; font-size: 20px; cursor: pointer; color: #999; }
+    .preview-box .pv-close:hover { color: #333; }
+    .batch-bar { display: none; margin: 0 0 12px; }
+  </style>
+
+  <div class="page-header">
+    <div class="page-title">照片管理 <span class="sub">活动内已产生的全部照片总台账</span></div>
+    <div>
+      <button class="toolbar-btn" id="btn-batch" onclick="batchSelect()">批量选择</button>
+      <button class="toolbar-btn" id="btn-batch-done" style="display:none" onclick="batchDone()">完成</button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-item">
+      <span class="filter-label">上屏状态</span>
+      <select class="filter-select" id="f-on-screen" onchange="applyFilter()">
+        <option value="">全部</option>
+        <option value="onscreen">已上屏</option>
+        <option value="off">未上屏</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">能力类型</span>
+      <select class="filter-select" id="f-cap" onchange="applyFilter()">
+        <option value="">全部</option>
+        <option value="A">经典纪念框</option>
+        <option value="B">智能主题海报</option>
+        <option value="C">AI 艺术创作</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">素材来源</span>
+      <select class="filter-select" id="f-source" onchange="applyFilter()">
+        <option value="">全部</option>
+        <option value="camera">拍照</option>
+        <option value="album">相册</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <button class="filter-btn primary" onclick="applyFilter()">查询</button>
+      <button class="filter-btn" onclick="resetFilter()">重置</button>
+    </div>
+  </div>
+
+  <div class="batch-bar" id="batch-bar">
+    <span>已选 <b id="batch-count">0</b> 张</span>
+    <button class="filter-btn primary" onclick="batchOnScreen()">批量上屏</button>
+  </div>
+
+  <div class="table-card">
+    <table class="photo-tbl" id="photo-table">
+      <thead>
+        <tr>
+          <th class="td-check"></th>
+          <th class="thumb-cell">图片</th>
+          <th>作品编号</th>
+          <th>访客编号</th>
+          <th>模板 / 能力</th>
+          <th>来源屏幕</th>
+          <th>素材来源</th>
+          <th>生成状态</th>
+          <th>AI 初审</th>
+          <th>精选状态</th>
+          <th>上屏状态</th>
+          <th>创建时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="photo-tbody"></tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    <div class="page-info" id="page-info"></div>
+    <div class="page-btns">
+      <button class="page-btn" onclick="prevPage()">‹</button>
+      <span class="page-btn active" id="page-num">1</span>
+      <button class="page-btn" onclick="nextPage()">›</button>
+    </div>
+  </div>
+
+  <!-- 大图预览 -->
+  <div class="preview-overlay" id="preview-overlay">
+    <div class="preview-box">
+      <span class="pv-close" onclick="closePreview()">×</span>
+      <div class="pv-img" id="pv-img"></div>
+      <div class="pv-meta" id="pv-meta"></div>
+    </div>
+  </div>
+
+  <div id="toast-area"></div>
+</div>
+
+<script>
+/* ================= 照片管理（B 端总台账） ================= */
+var PHOTO_LIST = [
+  { no: 'FJDH-0328-01', visitor: 'FJDH-0328', tpl: '党旗礼赞', cap: 'B', screen: '主会场 · 屏1', src: 'camera', gen: '成功', ai: '通过', sel: '已精选', on: true,  time: '09-30 10:21' },
+  { no: 'FJDH-0328-02', visitor: 'FJDH-0328', tpl: '工笔华章', cap: 'C', screen: '主会场 · 屏1', src: 'album',  gen: '成功', ai: '通过', sel: '待精选', on: false, time: '09-30 10:23' },
+  { no: 'FJDH-0002-01', visitor: 'FJDH-0002', tpl: '盛会留念框', cap: 'A', screen: '序厅 · 屏2', src: 'camera', gen: '成功', ai: '通过', sel: '已精选', on: true,  time: '09-30 09:12' },
+  { no: 'FJDH-0009-01', visitor: 'FJDH-0009', tpl: '工笔华章', cap: 'C', screen: '序厅 · 屏2', src: 'camera', gen: '成功', ai: '通过', sel: '已精选', on: true,  time: '09-30 09:20' },
+  { no: 'FJDH-0015-01', visitor: 'FJDH-0015', tpl: '盛世华章', cap: 'B', screen: '签到区 · 屏3', src: 'album',  gen: '成功', ai: '存疑', sel: '待精选', on: false, time: '09-30 09:31' },
+  { no: 'FJDH-0021-01', visitor: 'FJDH-0021', tpl: '水墨山河', cap: 'C', screen: '签到区 · 屏3', src: 'camera', gen: '成功', ai: '通过', sel: '未精选', on: false, time: '09-30 09:44' },
+  { no: 'FJDH-0033-01', visitor: 'FJDH-0033', tpl: '盛会留念框', cap: 'A', screen: '主会场 · 屏1', src: 'camera', gen: '成功', ai: '通过', sel: '已精选', on: true,  time: '09-30 10:02' },
+  { no: 'FJDH-0040-01', visitor: 'FJDH-0040', tpl: '古田星火', cap: 'B', screen: '序厅 · 屏2', src: 'album',  gen: '成功', ai: '拦截', sel: '未精选', on: false, time: '09-30 10:08' },
+  { no: 'FJDH-0052-01', visitor: 'FJDH-0052', tpl: '福见山海', cap: 'B', screen: '签到区 · 屏3', src: 'camera', gen: '成功', ai: '通过', sel: '已精选', on: true,  time: '09-30 10:15' },
+  { no: 'FJDH-0061-01', visitor: 'FJDH-0061', tpl: 'Q版先锋', cap: 'C', screen: '主会场 · 屏1', src: 'album',  gen: '失败', ai: '—',    sel: '—',      on: false, time: '09-30 10:17' },
+  { no: 'FJDH-0068-01', visitor: 'FJDH-0068', tpl: '奋进新征程', cap: 'A', screen: '序厅 · 屏2', src: 'camera', gen: '成功', ai: '通过', sel: '未精选', on: false, time: '09-30 10:26' },
+  { no: 'FJDH-0077-01', visitor: 'FJDH-0077', tpl: '工笔华章', cap: 'C', screen: '签到区 · 屏3', src: 'camera', gen: '成功', ai: '通过', sel: '待精选', on: false, time: '09-30 10:30' }
+];
+
+var MGMT_BATCH_MODE = false;
+var MGMT_SELECTED = {};
+var MGMT_PAGE = 1;
+var MGMT_PAGE_SIZE = 8;
+
+function getTplBgIdx(no) {
+  var n = parseInt(no.replace(/\D/g, ''), 10) || 1;
+  return (n % 8) + 1;
+}
+function renderPhotoTable() {
+  var capF = document.getElementById('f-cap').value;
+  var osF = document.getElementById('f-on-screen').value;
+  var srcF = document.getElementById('f-source').value;
+  var list = PHOTO_LIST.filter(function(p) {
+    if (osF === 'onscreen' && !p.on) return false;
+    if (osF === 'off' && p.on) return false;
+    if (capF && p.cap !== capF) return false;
+    if (srcF && p.src !== srcF) return false;
+    return true;
+  });
+  var tbody = document.getElementById('photo-tbody');
+  var start = (MGMT_PAGE - 1) * MGMT_PAGE_SIZE;
+  var pageList = list.slice(start, start + MGMT_PAGE_SIZE);
+  var html = '';
+  pageList.forEach(function(p, idx) {
+    var bg = getTplBgIdx(p.no);
+    var checked = MGMT_SELECTED[p.no] ? ' checked' : '';
+    html += '<tr>' +
+      '<td class="td-check"><input type="checkbox" class="row-check" data-no="' + p.no + '"' + checked + ' onclick="onRowCheck(this)"></td>' +
+      '<td><span class="photo-thumb" onclick="openPreview(\'' + p.no + '\')">' +
+        '<span class="pt-bg wb-' + bg + '"></span><span class="pt-person"></span></span></td>' +
+      '<td>' + p.no + '</td>' +
+      '<td>' + p.visitor + '</td>' +
+      '<td>' + p.tpl + ' <span class="type-badge">' + capName(p.cap) + '</span></td>' +
+      '<td>' + p.screen + '</td>' +
+      '<td>' + (p.src === 'camera' ? '拍照' : '相册') + '</td>' +
+      '<td><span class="badge-status ' + (p.gen === '成功' ? 'active' : 'disabled') + '">' + p.gen + '</span></td>' +
+      '<td>' + aiBadge(p.ai) + '</td>' +
+      '<td>' + selBadge(p.sel) + '</td>' +
+      '<td>' + onBadge(p.on) + '</td>' +
+      '<td>' + p.time + '</td>' +
+      '<td class="selection-cell">' + onAction(p) + '</td>' +
+      '</tr>';
+  });
+  if (!pageList.length) {
+    html = '<tr><td colspan="13" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+  }
+  tbody.innerHTML = html;
+  document.getElementById('page-info').textContent = '共 ' + list.length + ' 条';
+  document.getElementById('page-num').textContent = MGMT_PAGE;
+  var batchBar = document.getElementById('batch-bar');
+  var bc = Object.keys(MGMT_SELECTED).length;
+  document.getElementById('batch-count').textContent = bc;
+  if (MGMT_BATCH_MODE) {
+    batchBar.style.display = 'block';
+    document.querySelectorAll('.row-check').forEach(function(c) { c.style.display = 'inline-block'; });
+  } else {
+    batchBar.style.display = 'none';
+    document.querySelectorAll('.row-check').forEach(function(c) { c.style.display = 'none'; });
+  }
+}
+function capName(c) { return { A: '经典框', B: '智能海报', C: 'AI 艺术' }[c] || c; }
+function aiBadge(ai) {
+  if (ai === '通过') return '<span class="badge-status active">通过</span>';
+  if (ai === '存疑') return '<span class="badge-status" style="background:#fff7e6;color:#d48806">存疑</span>';
+  if (ai === '拦截') return '<span class="badge-status disabled">拦截</span>';
+  return '<span class="badge-status disabled">—</span>';
+}
+function selBadge(sel) {
+  if (sel === '已精选') return '<span class="badge-status active">已精选</span>';
+  if (sel === '待精选') return '<span class="badge-status" style="background:#e6f7ff;color:#1890ff">待精选</span>';
+  if (sel === '未精选') return '<span class="badge-status disabled">未精选</span>';
+  return '<span class="badge-status disabled">—</span>';
+}
+function onBadge(on) {
+  return on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">已上屏</span>'
+            : '<span class="badge-status disabled">未上屏</span>';
+}
+function onAction(p) {
+  if (p.on) return '<a class="action-btn" onclick="undoOnScreen(\'' + p.no + '\')">下屏</a>';
+  return '<a class="action-btn" onclick="singleOnScreen(\'' + p.no + '\')">上屏</a>';
+}
+function singleOnScreen(no) {
+  var p = PHOTO_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  p.on = true;
+  document.getElementById('toast-area').innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">已上屏：' + no + '</div>';
+  setTimeout(function(){ document.getElementById('toast-area').innerHTML = ''; }, 1600);
+  renderPhotoTable();
+}
+function undoOnScreen(no) {
+  var p = PHOTO_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  p.on = false;
+  renderPhotoTable();
+}
+/* ---- 批量 ---- */
+function batchSelect() {
+  MGMT_BATCH_MODE = true;
+  document.getElementById('btn-batch').style.display = 'none';
+  document.getElementById('btn-batch-done').style.display = 'inline-block';
+  document.querySelectorAll('.row-check').forEach(function(c) { c.style.display = 'inline-block'; });
+  renderPhotoTable();
+}
+function batchDone() {
+  MGMT_BATCH_MODE = false;
+  MGMT_SELECTED = {};
+  document.getElementById('btn-batch').style.display = 'inline-block';
+  document.getElementById('btn-batch-done').style.display = 'none';
+  renderPhotoTable();
+}
+function onRowCheck(el) {
+  var no = el.getAttribute('data-no');
+  if (el.checked) MGMT_SELECTED[no] = true; else delete MGMT_SELECTED[no];
+  document.getElementById('batch-count').textContent = Object.keys(MGMT_SELECTED).length;
+}
+function batchOnScreen() {
+  var keys = Object.keys(MGMT_SELECTED);
+  if (!keys.length) { alert('请先勾选照片'); return; }
+  PHOTO_LIST.forEach(function(p) { if (MGMT_SELECTED[p.no]) p.on = true; });
+  MGMT_SELECTED = {};
+  renderPhotoTable();
+  document.getElementById('toast-area').innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">已批量上屏 ' + keys.length + ' 张</div>';
+  setTimeout(function(){ document.getElementById('toast-area').innerHTML = ''; }, 1600);
+}
+/* ---- 大图预览 ---- */
+function openPreview(no) {
+  var p = PHOTO_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  var bg = getTplBgIdx(p.no);
+  var img = document.getElementById('pv-img');
+  img.setAttribute('data-tpl', '');
+  img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
+  document.getElementById('pv-meta').innerHTML =
+    '<b>作品编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + capName(p.cap) + '）<br>' +
+    '<b>访客编号：</b>' + p.visitor + '　<b>来源：</b>' + p.screen + '　<b>拍摄时间：</b>' + p.time +
+    '<br><span style="color:#999;font-size:12px">原型示意：正式版本展示真实生成图片</span>';
+  document.getElementById('preview-overlay').classList.add('show');
+}
+function closePreview() { document.getElementById('preview-overlay').classList.remove('show'); }
+/* ---- 筛选/分页 ---- */
+function applyFilter() { MGMT_PAGE = 1; renderPhotoTable(); }
+function resetFilter() {
+  document.getElementById('f-on-screen').value = '';
+  document.getElementById('f-cap').value = '';
+  document.getElementById('f-source').value = '';
+  MGMT_PAGE = 1;
+  renderPhotoTable();
+}
+function prevPage() { if (MGMT_PAGE > 1) { MGMT_PAGE--; renderPhotoTable(); } }
+function nextPage() { MGMT_PAGE++; renderPhotoTable(); }
+function init_photo_mgmt() { renderPhotoTable(); }
+init_photo_mgmt();
+</script>

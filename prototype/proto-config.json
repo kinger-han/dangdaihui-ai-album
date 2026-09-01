@@ -1,0 +1,22 @@
+{
+  "name": "党代会-AI纪念相册",
+  "template": "pc",
+  "primaryColor": "#B42318",
+  "tabBar": [
+    {
+      "pageId": "home",
+      "title": "首页",
+      "icon": "🏠"
+    },
+    {
+      "pageId": "gallery",
+      "title": "现场精选",
+      "icon": "⭐"
+    },
+    {
+      "pageId": "mine",
+      "title": "我的纪念",
+      "icon": "🎖"
+    }
+  ]
+}
