@@ -83,12 +83,12 @@ function renderResult() {
   var workStatus = state.curWork.status || 'notsub';
   var sbTitle = document.getElementById('sb-title');
   if (workStatus === 'selected') {
-    sbTitle.textContent = '正在现场大屏展示';
+    sbTitle.textContent = '正在展示';
     document.getElementById('sb-desc').textContent = '你的风采正在现场与参会者相遇。';
     document.getElementById('sb-check').style.display = 'none';
     document.getElementById('sb-submit').style.display = 'none';
   } else if (workStatus === 'wait') {
-    sbTitle.textContent = '已提交，等待安排展示';
+    sbTitle.textContent = '已提交，等待上屏';
     document.getElementById('sb-desc').textContent = '工作人员确认后，你的风采就有机会与现场参会者相遇，你可以在「我的纪念」查看状态。';
     document.getElementById('sb-check').style.display = 'none';
     document.getElementById('sb-submit').style.display = 'none';

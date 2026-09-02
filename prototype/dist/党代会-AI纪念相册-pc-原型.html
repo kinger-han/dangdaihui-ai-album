@@ -878,11 +878,12 @@ table tr { cursor: pointer; }
 
   <div class="filter-bar">
     <div class="filter-item">
-      <span class="filter-label">展示状态</span>
+      <span class="filter-label">上屏状态</span>
       <select class="filter-select" id="f-on-screen" onchange="applyFilter()">
         <option value="">全部</option>
-        <option value="onscreen">展示中</option>
-        <option value="off">未展示</option>
+        <option value="selected">正在展示</option>
+        <option value="wait">等待上屏</option>
+        <option value="notsub">暂未分享</option>
       </select>
     </div>
     <div class="filter-item">
@@ -922,7 +923,7 @@ table tr { cursor: pointer; }
           <th>模板</th>
           <th>微信号</th>
           <th>来源屏幕</th>
-          <th>展示状态</th>
+          <th>上屏状态</th>
           <th>创建时间</th>
           <th>操作</th>
         </tr>
@@ -1028,11 +1029,11 @@ table tr { cursor: pointer; }
 
   <div class="filter-bar">
     <div class="filter-item">
-      <span class="filter-label">展示状态</span>
+      <span class="filter-label">上屏状态</span>
       <select class="filter-select" id="f-sel-onscreen" onchange="selApplyFilter()">
         <option value="">全部</option>
-        <option value="onscreen">展示中</option>
-        <option value="off">未展示</option>
+        <option value="onscreen">正在展示</option>
+        <option value="off">等待上屏</option>
       </select>
     </div>
     <div class="filter-item">
@@ -1055,8 +1056,8 @@ table tr { cursor: pointer; }
     </div>
     <div class="filter-spacer" style="flex:1"></div>
     <div class="filter-item">
-      <button class="filter-btn disabled" id="btn-batch-on" onclick="selBatchOnScreen()">批量展示</button>
-      <button class="filter-btn disabled" id="btn-batch-off" onclick="selBatchOffScreen()">批量撤下</button>
+      <button class="filter-btn disabled" id="btn-batch-on" onclick="selBatchOnScreen()">批量上屏</button>
+      <button class="filter-btn disabled" id="btn-batch-off" onclick="selBatchOffScreen()">批量下屏</button>
     </div>
   </div>
 
@@ -1069,8 +1070,8 @@ table tr { cursor: pointer; }
           <th>编号</th>
           <th>模板</th>
           <th>微信号</th>
-          <th>展示状态</th>
-          <th>展示时间</th>
+          <th>上屏状态</th>
+          <th>上屏时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -1091,7 +1092,7 @@ table tr { cursor: pointer; }
   <div class="device-modal" id="device-modal" onclick="closeDeviceModal()">
     <div class="device-box" onclick="event.stopPropagation()">
       <div class="dv-title">选择展示屏幕</div>
-      <div class="dv-sub" id="dv-sub">将作品投放至目标大屏</div>
+      <div class="dv-sub" id="dv-sub">将作品上屏至目标大屏</div>
       <div class="device-group">
         <div class="dg-label">主会场</div>
         <div class="device-options" id="dev-main"></div>
@@ -1102,7 +1103,7 @@ table tr { cursor: pointer; }
       </div>
       <div class="dv-actions">
         <button class="dv-btn" onclick="closeDeviceModal()">取消</button>
-        <button class="dv-btn primary disabled" id="dv-confirm" onclick="confirmDevice()">确认展示</button>
+        <button class="dv-btn primary disabled" id="dv-confirm" onclick="confirmDevice()">确认上屏</button>
       </div>
     </div>
   </div>
@@ -1456,7 +1457,7 @@ function pdShowDetail(no) {
     ['模板', t.tpl || '—'],
     ['微信号', t.wx || '—'],
     ['来源屏幕', t.screen || '—'],
-    ['展示状态', t.on ? '<span class="badge-status active">展示中</span>' : '<span class="badge-status disabled">未展示</span>'],
+    ['上屏状态', t.status === 'selected' ? '<span class="badge-status active">正在展示</span>' : (t.status === 'wait' ? '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>' : '<span class="badge-status disabled">暂未分享</span>')],
     ['创建时间', t.time || '—'],
     ['上屏展示时间', t.onTime || '—'],
     ['下屏时间', t.offTime || '—']
@@ -1505,18 +1506,18 @@ switchPage = function(pageTitle, element) {
 // ---- 页面组件脚本 ----
 /* ================= 照片管理（B 端总台账） ================= */
 var PHOTO_LIST = [
-  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', on: true,  time: '09-30 10:21', onTime: '09-30 10:22', offTime: null },
-  { no: 'FJDH-0328-02', wx: '138****0328', tpl: '工笔华章', screen: '1号屏', on: false, time: '09-30 10:23', onTime: null, offTime: null },
-  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', on: true,  time: '09-30 09:12', onTime: '09-30 09:13', offTime: null },
-  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', on: true,  time: '09-30 09:20', onTime: '09-30 09:21', offTime: null },
-  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', on: false, time: '09-30 09:31', onTime: null, offTime: '09-30 09:58' },
-  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', on: false, time: '09-30 09:44', onTime: null, offTime: null },
-  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '1号屏', on: true,  time: '09-30 10:02', onTime: '09-30 10:03', offTime: null },
-  { no: 'FJDH-0040-01', wx: '138****0040', tpl: '古田星火', screen: '2号屏', on: false, time: '09-30 10:08', onTime: null, offTime: null },
-  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '2号屏', on: true,  time: '09-30 10:15', onTime: '09-30 10:16', offTime: null },
-  { no: 'FJDH-0061-01', wx: '137****0061', tpl: 'Q版先锋', screen: '1号屏', on: false, time: '09-30 10:17', onTime: null, offTime: null },
-  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '2号屏', on: false, time: '09-30 10:26', onTime: null, offTime: '09-30 11:02' },
-  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '2号屏', on: false, time: '09-30 10:30', onTime: null, offTime: null }
+  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', on: true, status: 'selected',  time: '09-30 10:21', onTime: '09-30 10:22', offTime: null },
+  { no: 'FJDH-0328-02', wx: '138****0328', tpl: '工笔华章', screen: '1号屏', on: false, status: 'notsub', time: '09-30 10:23', onTime: null, offTime: null },
+  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', on: true, status: 'selected',  time: '09-30 09:12', onTime: '09-30 09:13', offTime: null },
+  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', on: true, status: 'selected',  time: '09-30 09:20', onTime: '09-30 09:21', offTime: null },
+  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', on: false, status: 'wait', time: '09-30 09:31', onTime: null, offTime: '09-30 09:58' },
+  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', on: false, status: 'wait', time: '09-30 09:44', onTime: null, offTime: null },
+  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '1号屏', on: true, status: 'selected',  time: '09-30 10:02', onTime: '09-30 10:03', offTime: null },
+  { no: 'FJDH-0040-01', wx: '138****0040', tpl: '古田星火', screen: '2号屏', on: false, status: 'notsub', time: '09-30 10:08', onTime: null, offTime: null },
+  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '2号屏', on: true, status: 'selected',  time: '09-30 10:15', onTime: '09-30 10:16', offTime: null },
+  { no: 'FJDH-0061-01', wx: '137****0061', tpl: 'Q版先锋', screen: '1号屏', on: false, status: 'notsub', time: '09-30 10:17', onTime: null, offTime: null },
+  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '2号屏', on: false, status: 'wait', time: '09-30 10:26', onTime: null, offTime: '09-30 11:02' },
+  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '2号屏', on: false, status: 'wait', time: '09-30 10:30', onTime: null, offTime: null }
 ];
 
 var MGMT_SELECTED = {};
@@ -1538,15 +1539,16 @@ function renderStatCards() {
     if (!visitors[k]) visitors[k] = 1;
   });
   document.getElementById('stat-total').textContent = PHOTO_LIST.length;
-  document.getElementById('stat-onscreen').textContent = PHOTO_LIST.filter(function(p){ return p.on; }).length;
+  document.getElementById('stat-onscreen').textContent = PHOTO_LIST.filter(function(p){ return p.status === 'selected'; }).length;
   document.getElementById('stat-visitors').textContent = Object.keys(visitors).length;
 }
 function renderPhotoTable() {
   var tplF = document.getElementById('f-tpl').value;
   var osF = document.getElementById('f-on-screen').value;
   var list = PHOTO_LIST.filter(function(p) {
-    if (osF === 'onscreen' && !p.on) return false;
-    if (osF === 'off' && p.on) return false;
+    if (osF === 'selected' && p.status !== 'selected') return false;
+    if (osF === 'wait' && p.status !== 'wait') return false;
+    if (osF === 'notsub' && p.status !== 'notsub') return false;
     if (tplF && p.tpl !== tplF) return false;
     return true;
   });
@@ -1565,7 +1567,7 @@ function renderPhotoTable() {
       '<td>' + p.tpl + '</td>' +
       '<td>' + p.wx + '</td>' +
       '<td>' + p.screen + '</td>' +
-      '<td>' + onBadge(p.on) + '</td>' +
+      '<td>' + statusBadge(p.status) + '</td>' +
       '<td>' + p.time + '</td>' +
       '<td class="selection-cell">' + onAction(p) + '</td>' +
       '</tr>';
@@ -1581,9 +1583,10 @@ function renderPhotoTable() {
   var batchBar = document.getElementById('batch-bar');
   if (bc > 0) batchBar.style.display = 'block'; else batchBar.style.display = 'none';
 }
-function onBadge(on) {
-  return on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">展示中</span>'
-            : '<span class="badge-status disabled">未展示</span>';
+function statusBadge(st) {
+  if (st === 'selected') return '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">正在展示</span>';
+  if (st === 'wait')    return '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>';
+  return '<span class="badge-status disabled">暂未分享</span>';
 }
 function onAction(p) {
   return '<a class="action-btn" onclick="openPhotoDetail(\'' + p.no + '\')">详情</a>';
@@ -1638,7 +1641,7 @@ function buildPhotoDetails() {
     try { tpl = TPL_LIST ? TPL_LIST.filter(function(x){ return x.name === p.tpl; })[0] : null; } catch(e) {}
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen,
-      on: p.on, time: p.time,
+      status: p.status || (p.on ? 'selected' : 'notsub'), time: p.time,
       onTime: p.onTime || (p.on ? p.time : null),
       offTime: p.offTime || null,
       bg: ((p.no.length + 3) % 8) + 1
@@ -1705,13 +1708,13 @@ function renderSelTable() {
       '<td>' + p.no + '</td>' +
       '<td>' + p.tpl + '</td>' +
       '<td>' + p.wx + '</td>' +
-      '<td>' + (p.on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">展示中</span>'
-                    : '<span class="badge-status disabled">未展示</span>') + '</td>' +
+      '<td>' + (p.on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">正在展示</span>'
+                    : '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>') + '</td>' +
       '<td>' + (p.onTime || '—') + '</td>' +
       '<td>' +
         '<a class="action-btn" onclick="selOpenDetail(\'' + p.no + '\')">详情</a>' +
-        (p.on ? '<a class="action-btn" onclick="askOffScreen(\'' + p.no + '\')">撤下</a>'
-              : '<a class="action-btn" onclick="askOnScreen(\'' + p.no + '\')">展示</a>') + '</td>' +
+        (p.on ? '<a class="action-btn" onclick="askOffScreen(\'' + p.no + '\')">下屏</a>'
+              : '<a class="action-btn" onclick="askOnScreen(\'' + p.no + '\')">上屏</a>') + '</td>' +
       '</tr>';
   });
   if (!list.length) {
@@ -1746,14 +1749,14 @@ function onSelRowCheck(el) {
 function askOnScreen(no) {
   CURRENT_DEVICE_NO = no;
   CURRENT_DEVICE_MODE = 'single';
-  openDeviceModal('展示：' + no);
+  openDeviceModal('上屏：' + no);
 }
 function askOffScreen(no) {
   var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
   if (!p) return;
   p.on = false;
   p.onTime = null;
-  selShowToast('已撤下：' + no);
+  selShowToast('已下屏：' + no);
   renderSelTable();
 }
 /* ---- 批量操作（也走设备选择） ---- */
@@ -1762,21 +1765,21 @@ function selBatchOnScreen() {
   if (!keys.length) { selShowToast('请先勾选照片'); return; }
   /* 只对未上屏的照片执行批量上屏（按钮已按类型禁用，这里兜底） */
   var unsel = SEL_LIST.filter(function(x){ return SEL_SELECTED[x.no] && !x.on; });
-  if (!unsel.length) { selShowToast('勾选的照片均已展示'); return; }
+  if (!unsel.length) { selShowToast('勾选的照片均已上屏'); return; }
   CURRENT_DEVICE_NO = null;
   CURRENT_DEVICE_MODE = 'batch';
-  openDeviceModal('批量展示 ' + unsel.length + ' 张');
+  openDeviceModal('批量上屏 ' + unsel.length + ' 张');
 }
 function selBatchOffScreen() {
   var keys = Object.keys(SEL_SELECTED);
   if (!keys.length) { selShowToast('请先勾选照片'); return; }
   /* 只对已上屏的照片执行批量下屏（按钮已按类型禁用，这里兜底） */
   var onlist = SEL_LIST.filter(function(x){ return SEL_SELECTED[x.no] && x.on; });
-  if (!onlist.length) { selShowToast('勾选的照片均未展示'); return; }
+  if (!onlist.length) { selShowToast('勾选的照片均未上屏'); return; }
   onlist.forEach(function(p) { p.on = false; p.onTime = null; });
   var n = onlist.length;
   SEL_SELECTED = {};
-  selShowToast('已批量撤下 ' + n + ' 张');
+  selShowToast('已批量下屏 ' + n + ' 张');
   renderSelTable();
 }
 /* ---- 设备选择弹窗 ---- */
@@ -1785,7 +1788,7 @@ var SUB_DEVICES  = ['分会场 · 屏1', '分会场 · 屏2'];
 var CURRENT_DEVICE = null;
 function openDeviceModal(sub) {
   CURRENT_DEVICE = null;
-  document.getElementById('dv-sub').textContent = sub || '将作品投放至目标屏幕';
+  document.getElementById('dv-sub').textContent = sub || '将作品上屏至目标屏幕';
   document.getElementById('dv-confirm').className = 'dv-btn primary disabled';
   var mainWrap = document.getElementById('dev-main');
   mainWrap.innerHTML = '';
@@ -1824,11 +1827,11 @@ function confirmDevice() {
     var keys = Object.keys(SEL_SELECTED);
     SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) { p.on = true; p.onTime = hm; } });
     SEL_SELECTED = {};
-    selShowToast('已批量展示 ' + keys.length + ' 张 → ' + dev);
+    selShowToast('已批量上屏 ' + keys.length + ' 张 → ' + dev);
   } else {
     var p = SEL_LIST.filter(function(x){ return x.no === CURRENT_DEVICE_NO; })[0];
     if (p) { p.on = true; p.onTime = hm; }
-    selShowToast('已展示：' + CURRENT_DEVICE_NO + ' → ' + dev);
+    selShowToast('已上屏：' + CURRENT_DEVICE_NO + ' → ' + dev);
   }
   closeDeviceModal();
   renderSelTable();
@@ -1857,7 +1860,7 @@ function selBuildDetails() {
   SEL_LIST.forEach(function(p) {
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen || '—',
-      on: p.on, time: p.time || '—',
+      status: p.on ? 'selected' : 'wait', time: p.time || '—',
       onTime: p.onTime || (p.on ? p.onTime : null),
       offTime: p.offTime || null,
       bg: ((p.no.length + 3) % 8) + 1

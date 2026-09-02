@@ -1020,7 +1020,7 @@ function pdShowDetail(no) {
     ['模板', t.tpl || '—'],
     ['微信号', t.wx || '—'],
     ['来源屏幕', t.screen || '—'],
-    ['展示状态', t.on ? '<span class="badge-status active">展示中</span>' : '<span class="badge-status disabled">未展示</span>'],
+    ['上屏状态', t.status === 'selected' ? '<span class="badge-status active">正在展示</span>' : (t.status === 'wait' ? '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>' : '<span class="badge-status disabled">暂未分享</span>')],
     ['创建时间', t.time || '—'],
     ['上屏展示时间', t.onTime || '—'],
     ['下屏时间', t.offTime || '—']
