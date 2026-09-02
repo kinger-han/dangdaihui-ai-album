@@ -303,8 +303,7 @@ function openPreview(no) {
   img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
   document.getElementById('pv-meta').innerHTML =
     '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + capNameOf(p.tpl) + '）<br>' +
-    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>创建时间：</b>' + p.time +
-    '<br><b>上屏状态：</b>' + (p.on ? '已上屏' : '未上屏') +
+    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time +
     '<br><span style="color:#999;font-size:12px">原型示意：正式版本展示真实生成图片</span>';
   document.getElementById('preview-overlay').classList.add('show');
 }
