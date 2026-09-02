@@ -3,7 +3,7 @@
   <div class="page-header">
     <button class="back-btn" onclick="onResultBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
     <h2>我的纪念作品</h2>
-    <span class="hdr-right" onclick="goMine()">我的纪念</span>
+    <span class="hdr-right" onclick="showPage('mine'); renderMine();">我的纪念</span>
   </div>
   <div class="page-body">
     <div class="result-hero">
@@ -33,7 +33,7 @@
         <span>我同意将这张照片用于现场大屏展示</span>
       </div>
       <button class="sb-btn disabled" id="sb-submit" onclick="submitSelection()">分享这份美好</button>
-      <div class="sb-link" onclick="goTerms()">查看展示说明</div>
+      <div class="sb-link" onclick="showPage('terms')">查看展示说明</div>
     </div>
   </div>
 
@@ -127,7 +127,7 @@ function submitSelection() {
 }
 function closeSubmitGoMine() {
   document.getElementById('submit-modal').classList.remove('show');
-  goMine();
+  showPage('mine'); renderMine();
 }
 function retryCreate() { goTemplates(); }
 function onResultBack() { goHome(); }

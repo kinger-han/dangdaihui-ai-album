@@ -129,13 +129,13 @@ function refreshTabs(id) {
   tabBar.style.display = 'flex';
   tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
 }
-function goHome()   { state.visitFromWall = false; showPage('home'); }
-function goTemplates() { state.visitFromWall = false; renderTplTabs(); renderTplGrid(); showPage('templates'); }
+function goHome()   { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('home'); }
+function goTemplates() { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderTplTabs(); renderTplGrid(); showPage('templates'); }
 function goPhoto()  { showPage('photo'); }
 function goGenerating() { showPage('generating'); }
-function goGallery() { renderWall(); showPage('gallery'); }
-function goMine()   { renderMine(); showPage('mine'); }
-function goTerms()  { showPage('terms'); }
+function goGallery() { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderWall(); showPage('gallery'); }
+function goMine()   { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderMine(); showPage('mine'); }
+function goTerms()  { PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('terms'); }
 function goStatus() { showPage('status'); }
 
 /* ================= Toast ================= */
