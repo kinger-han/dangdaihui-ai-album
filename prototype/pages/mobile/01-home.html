@@ -17,14 +17,10 @@
       <div class="stat-card"><div class="stat-num gold" id="stat-work"></div><div class="stat-label">张纪念作品</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">份纪念档案</div></div>
     </div>
-    <div class="cap-chip-row">
-      <div class="cap-chip"><b>经典纪念框</b>快速合成</div>
-      <div class="cap-chip"><b>智能主题海报</b>推荐</div>
-      <div class="cap-chip"><b>AI 艺术创作</b>国风创意</div>
-    </div>
     <div class="home-main">
-      <button class="entry-btn primary" onclick="goCreate()">立即创作纪念照</button>
+      <button class="entry-btn primary" onclick="goTemplates()">立即创作纪念照</button>
       <button class="entry-btn ghost" onclick="goGallery()">看看现场精选</button>
+      <button class="entry-btn my" onclick="goMine()">我的纪念照</button>
       <div class="home-tip"><span class="dot"></span> AI 已生成 <b id="home-tip-num"></b> 张现场纪念作品</div>
     </div>
   </div>
@@ -93,7 +89,6 @@ var GALLERY = [
 var state = {
   curTplGroup: 'classic',
   selectedTpl: 'dangqi',
-  consentAgreed: false,
   sbChecked: false,
   photoTaken: false,
   photoSrc: null,
@@ -136,24 +131,13 @@ function refreshTabs(id) {
   tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
 }
 function goHome()   { state.visitFromWall = false; showPage('home'); }
-function goCreate() { showPage('create'); }
 function goTemplates() { renderTplTabs(); renderTplGrid(); showPage('templates'); }
-function goTplDetail() { showPage('tpl-detail'); }
 function goPhoto()  { showPage('photo'); }
-function goPhotoConfirm() { showPage('photo-confirm'); }
 function goGenerating() { showPage('generating'); }
 function goGallery() { renderWall(); showPage('gallery'); }
 function goMine()   { renderMine(); showPage('mine'); }
 function goTerms()  { showPage('terms'); }
 function goStatus() { showPage('status'); }
-
-/* H02：按能力进入模板列表 */
-function pickCap(cap) {
-  var map = { A: 'classic', B: 'smart', C: 'aiguofeng' };
-  state.curTplGroup = map[cap];
-  if (cap === 'C') state.curTplGroup = 'aiguofeng';
-  goTemplates();
-}
 
 /* ================= Toast ================= */
 var toastTimer = null;

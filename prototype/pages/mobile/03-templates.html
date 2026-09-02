@@ -1,4 +1,4 @@
-<!-- PAGE_META: {"id": "templates", "title": "模板列表"} -->
+<!-- PAGE_META: {"id": "templates", "title": "选择纪念模板"} -->
 <div class="page" id="page-templates">
   <div class="page-header">
     <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
@@ -8,6 +8,22 @@
   <div class="tpl-tabs" id="tpl-tabs"></div>
   <div class="page-body">
     <div class="tpl-grid" id="tpl-grid"></div>
+  </div>
+
+  <!-- 照片使用说明弹窗（仅首次选择模板时弹出，确认后不再弹） -->
+  <div class="consent-modal" id="consent-modal">
+    <div class="cm-card">
+      <div class="cm-title">照片使用说明</div>
+      <div class="cm-caption">AI 纪念相册 · 现场互动</div>
+      <div class="cm-body">
+        你拍摄/上传的照片仅用于生成本次活动纪念作品。<br><br>
+        未经你主动提交，作品不会进入现场精选展示；提交精选需另行勾选同意。
+      </div>
+      <div class="cm-btns">
+        <button class="btn plain" onclick="closeNotice()">暂不使用</button>
+        <button class="btn primary" onclick="agreeNotice()">同意并使用</button>
+      </div>
+    </div>
   </div>
 </div>
 <script>
@@ -32,7 +48,7 @@ function renderTplGrid() {
   var html = '';
   list.forEach(function(t) {
     var cap = CAPABILITIES[t.cap];
-    html += '<div class="tpl-card" data-id="' + t.id + '" onclick="openTplDetail(\'' + t.id + '\')">' +
+    html += '<div class="tpl-card" data-id="' + t.id + '" onclick="chooseTpl(\'' + t.id + '\')">' +
       '<div class="tpl-thumb"><div class="tpl-inner"><div class="tpl-' + t.id + '"><div class="avatar-dummy"></div></div></div></div>' +
       '<div class="tpl-name">' + t.name + '<span class="cap-tag cap-' + t.cap.toLowerCase() + '">' + cap.name + '</span></div>' +
       '<div class="tpl-desc">' + t.guide + '<div class="tpl-cap-line">人数 ' + t.people + ' · ' + t.time + '</div></div>' +
@@ -40,5 +56,23 @@ function renderTplGrid() {
   });
   if (list.length === 0) html = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray);font-size:13px">该分类暂无模板</div>';
   grid.innerHTML = html;
+}
+/* 选模板：首次弹出照片使用说明，确认后进拍照页 */
+function chooseTpl(id) {
+  state.selectedTpl = id;
+  if (sessionStorage.getItem('ddh_notice_agreed') === '1') {
+    goPhoto();
+    return;
+  }
+  document.getElementById('consent-modal').classList.add('show');
+}
+function agreeNotice() {
+  sessionStorage.setItem('ddh_notice_agreed', '1');
+  document.getElementById('consent-modal').classList.remove('show');
+  goPhoto();
+}
+function closeNotice() {
+  document.getElementById('consent-modal').classList.remove('show');
+  toast('已取消，可重新选择模板');
 }
 </script>

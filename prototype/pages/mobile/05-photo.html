@@ -1,17 +1,9 @@
 <!-- PAGE_META: {"id": "photo", "title": "获取照片"} -->
 <div class="page" id="page-photo">
   <div class="page-header">
-    <button class="back-btn" onclick="goTplDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <button class="back-btn" onclick="goTemplates()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
     <h2>获取照片</h2>
     <span class="hdr-right"></span>
-  </div>
-  <div class="photo-top">
-    <div class="pt-thumb" id="pt-thumb"><div class="photo-bg"></div><div class="photo-person"></div></div>
-    <div class="pt-info">
-      <div class="pt-name" id="pt-name"></div>
-      <div class="pt-cap" id="pt-cap"></div>
-    </div>
-    <span class="pt-change" onclick="goTemplates()">更换</span>
   </div>
   <div class="camera-area" id="camera-area">
     <div class="face-guide" id="face-guide"></div>
@@ -35,36 +27,13 @@
     <button class="camera-flip" onclick="toast('演示环境已默认前置摄像头')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
   </div>
   <div class="confirm-bar" id="confirm-bar" style="display:none">
-    <button class="btn primary" id="confirm-go-btn" onclick="goPhotoConfirm()">下一步 ›</button>
+    <button class="btn primary" id="confirm-go-btn" onclick="startGenerate()">立即生成纪念照片</button>
   </div>
   <input type="file" id="file-input" accept="image/*" style="display:none">
-  <div class="photo-guide-tip" id="photo-guide-tip">正面看向镜头 · 光线充足 · 避免遮挡面部</div>
-  <div class="photo-guide-tip ai" id="photo-guide-tip-ai" style="display:none">请上传本人照片，单人半身效果最佳。</div>
-
-  <!-- 授权弹层（H05） -->
-  <div class="consent-modal" id="consent-modal">
-    <div class="cm-card">
-      <div class="cm-title">照片使用说明</div>
-      <div class="cm-caption">AI 纪念相册 · 现场互动</div>
-      <div class="cm-body">
-        你上传的照片将用于生成本次活动纪念作品。未经你主动提交，作品不会进入现场精选。<br><br>
-        作品保存在云端并与当前浏览器关联；清理浏览器数据或更换设备后，可能无法找回。
-      </div>
-      <div class="cm-check" id="cm-check" onclick="toggleConsentCheck()">
-        <span class="ck-box" id="cm-ck-box">✓</span>
-        <span>我已阅读并同意《隐私说明》和《肖像授权说明》</span>
-      </div>
-      <div class="cm-btns">
-        <button class="btn plain" onclick="closeConsent()">暂不使用</button>
-        <button class="btn primary disabled" id="cm-agree" onclick="agreeConsent()">同意并继续</button>
-      </div>
-    </div>
-  </div>
 </div>
 <script>
-/* ================= H05 获取照片 ================= */
+/* ================= H05 获取照片（纯拍照页） ================= */
 function takePhoto() {
-  if (!checkConsentFirst()) return;
   var area = document.getElementById('camera-area');
   var pv = document.getElementById('preview-wrap');
   var bar = document.getElementById('confirm-bar');
@@ -73,10 +42,10 @@ function takePhoto() {
   document.getElementById('preview-img').src = makePortraitSVG();
   bar.style.display = 'flex';
   state.photoTaken = true;
+  state.photoSrc = makePortraitSVG();
   toast('咔嚓！请确认照片');
 }
 function pickAlbum() {
-  if (!checkConsentFirst()) return;
   document.getElementById('file-input').click();
 }
 function retake() {
@@ -84,29 +53,24 @@ function retake() {
   document.getElementById('camera-area').style.display = 'flex';
   document.getElementById('confirm-bar').style.display = 'none';
   state.photoTaken = false;
+  state.photoSrc = null;
 }
-function checkConsentFirst() {
-  if (state.consentAgreed) return true;
-  document.getElementById('consent-modal').classList.add('show');
-  return false;
-}
-function toggleConsentCheck() {
-  var box = document.getElementById('cm-ck-box');
-  var wrap = document.getElementById('cm-check');
-  var agree = document.getElementById('cm-agree');
-  wrap.classList.toggle('checked');
-  agree.classList.toggle('disabled', !wrap.classList.contains('checked'));
-}
-function agreeConsent() {
-  if (!document.getElementById('cm-check').classList.contains('checked')) { toast('请先阅读并同意授权说明', '⚠️'); return; }
-  state.consentAgreed = true;
-  document.getElementById('consent-modal').classList.remove('show');
-  toast('授权已记录', '✓');
-}
-function closeConsent() {
-  document.getElementById('consent-modal').classList.remove('show');
-  toast('未授权前不会使用你的照片', '✓');
-}
+/* 相册选择 */
+document.getElementById('file-input').addEventListener('change', function(e) {
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById('preview-img').src = ev.target.result;
+    document.getElementById('camera-area').style.display = 'none';
+    document.getElementById('preview-wrap').style.display = 'block';
+    document.getElementById('confirm-bar').style.display = 'flex';
+    state.photoTaken = true;
+    state.photoSrc = ev.target.result;
+    toast('照片已就绪');
+  };
+  reader.readAsDataURL(file);
+});
 function makePortraitSVG() {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500">' +
@@ -118,9 +82,10 @@ function makePortraitSVG() {
     '</svg>'
   );
 }
-/* 演示：跳过授权直接拍照（demoFail 使用） */
+/* 演示：跳过拍照直接取照片（demoFail 使用，仅演示生成失败时） */
 function takePhotoNoConsent() {
-  state.consentAgreed = true;
+  state.photoTaken = true;
+  state.photoSrc = makePortraitSVG();
   var area = document.getElementById('camera-area');
   var pv = document.getElementById('preview-wrap');
   var bar = document.getElementById('confirm-bar');
@@ -128,12 +93,47 @@ function takePhotoNoConsent() {
   pv.style.display = 'block';
   document.getElementById('preview-img').src = makePortraitSVG();
   bar.style.display = 'flex';
-  state.photoTaken = true;
 }
-/* H05 → H06 */
-function goPhotoConfirm() {
-  showPage('photo-confirm');
-  document.getElementById('crop-img').src = state.photoSrc || makePortraitSVG();
-  renderCheck();
+/* H05 → H07 立即生成（带过渡动画） */
+function startGenerate() {
+  if (!state.photoTaken) { toast('请先拍摄或选择照片'); return; }
+  var t = findByTpl(state.selectedTpl);
+  var steps = [];
+  if (t.cap === 'A') steps = ['正在排版纪念信息', '正在合成高清作品'];
+  else if (t.cap === 'B') steps = ['正在识别人像', '正在融合主题场景', '正在优化光影细节'];
+  else steps = ['正在分析人物特征', '正在创作艺术画面', '正在完成细节优化'];
+  var stepsWrap = document.getElementById('gen-steps');
+  stepsWrap.innerHTML = '';
+  steps.forEach(function(s, i) {
+    var div = document.createElement('div');
+    div.className = 'gen-step' + (i === 0 ? ' active' : '');
+    div.id = 'gs-' + i;
+    div.innerHTML = '<span class="s-dot"></span><span>' + s + '</span>';
+    stepsWrap.appendChild(div);
+  });
+  document.getElementById('gen-title').textContent = '正在创作你的纪念照';
+  document.getElementById('gen-sub').textContent = '预计 ' + t.time + ' 完成，请稍候';
+  document.getElementById('gen-overtime').style.display = 'none';
+  document.getElementById('gen-fail').classList.remove('show');
+  document.getElementById('gen-working').style.display = 'block';
+  var bgThumb = document.getElementById('gen-bg-thumb');
+  bgThumb.style.background = 'linear-gradient(170deg, #50100F 0%, #7A1712 60%, #B42318 100%)';
+  if (state.generationFail) {
+    var fail = state.generationFail;
+    state.generationFail = null;
+    showPage('generating');
+    var fi = 0;
+    var ftimer = setInterval(function() {
+      fi++;
+      if (fi < steps.length && document.getElementById('gs-' + (fi-1))) document.getElementById('gs-' + (fi-1)).className = 'gen-step done';
+      if (fi >= 2) {
+        clearInterval(ftimer);
+        setTimeout(function() { showGenFail(fail); }, 600);
+      }
+    }, 500);
+    return;
+  }
+  showPage('generating');
+  startGenTimer(steps);
 }
 </script>

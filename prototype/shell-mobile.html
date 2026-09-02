@@ -875,8 +875,6 @@ body {
       <div class="dm-item" onclick="demoStatus('ended')">活动已结束</div>
       <div class="dm-item" onclick="demoStatus('invalid')">链接无效</div>
       <div class="dm-item" onclick="demoStatus('network')">网络异常</div>
-      <div class="dm-item" onclick="demoQuality('warn')">质量检测 · 可继续</div>
-      <div class="dm-item" onclick="demoQuality('block')">质量检测 · 阻断</div>
       <div class="dm-item" onclick="demoFail('common')">生成失败</div>
       <div class="dm-item" onclick="demoFail('safety')">生成失败 · 内容安全</div>
     </div>
@@ -919,21 +917,11 @@ body {
       toggleDemoMenu();
       goStatus();
     }
-    function demoQuality(level) {
-      if (typeof takePhotoNoConsent === 'function' && !window.__qcPhotoReady) {
-        takePhotoNoConsent();
-        window.__qcPhotoReady = true;
-      }
-      state.qcLevel = level;
-      toggleDemoMenu();
-      toast(level === 'block' ? '已切换到“质量阻断”演示，请从照片确认页查看' : '已切换到“轻微问题”演示，请从照片确认页查看');
-      goPhotoConfirm();
-    }
     function demoFail(type) {
       state.generationFail = type;
       if (!state.photoTaken) takePhotoNoConsent();
       toggleDemoMenu();
-      confirmGenerate();
+      startGenerate();
     }
   </script>
   <script>

@@ -3,7 +3,7 @@
   <div class="page-header">
     <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
     <h2>现场精选</h2>
-    <span class="hdr-right" onclick="goCreate()">我要拍</span>
+    <span class="hdr-right" onclick="goTemplates()">我要拍</span>
   </div>
   <div class="wall-toolbar">
     <span class="wl">每一份认真记录，都值得被珍藏。</span>
@@ -60,7 +60,7 @@ function sameTemplateFromWall() {
   closeWallDetail();
   state.visitFromWall = true;
   state.selectedTpl = p.tpl;
-  openTplDetail(p.tpl);
+  goPhoto();
   toast('已按该作品模板为你跳转，拍个同款吧');
 }
 function closeWallDetail() { document.getElementById('wall-detail').classList.remove('show'); }

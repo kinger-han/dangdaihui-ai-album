@@ -11,7 +11,6 @@
       <div class="mh-sub" id="mh-sub">访客编号 FJDH-0328</div>
       <div class="mh-count" id="mh-count">共 0 张作品</div>
     </div>
-    <div class="mine-tip" id="mine-tip">作品保存在云端并与当前浏览器关联。清理浏览器数据或更换设备后，可能无法在这里找回。</div>
     <div id="mine-list" class="mine-list"></div>
   </div>
 </div>
@@ -23,7 +22,7 @@ function renderMine() {
   document.getElementById('mh-count').textContent = '共 ' + MY_WORKS.length + ' 张作品';
   var list = document.getElementById('mine-list');
   if (MY_WORKS.length === 0) {
-    list.innerHTML = '<div class="mine-empty"><div class="big"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg></div><p>还没有生成纪念作品</p><p><button class="gen-btn" onclick="goCreate()">创作第一张纪念照</button></p></div>';
+    list.innerHTML = '<div class="mine-empty"><div class="big"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg></div><p>还没有生成纪念作品</p><p><button class="gen-btn" onclick="goTemplates()">创作第一张纪念照</button></p></div>';
     return;
   }
   var html = '';
@@ -44,11 +43,9 @@ function renderMine() {
   list.innerHTML = html;
 }
 function statusPill(s) {
-  if (s === 'wait')    return '<span class="status-pill wait">● 等待精选</span>';
-  if (s === 'selected') return '<span class="status-pill on">● 已被现场精选</span>';
-  if (s === 'skipped')  return '<span class="status-pill off">○ 本次暂未入选</span>';
-  if (s === 'block')    return '<span class="status-pill block">● 照片暂不符合展示要求</span>';
-  return '<span class="status-pill off">○ 未提交精选</span>';
+  if (s === 'selected') return '<span class="status-pill on">● 已被精选上屏</span>';
+  if (s === 'wait')    return '<span class="status-pill wait">● 等待上屏</span>';
+  return '<span class="status-pill off">○ 不提交精选</span>';
 }
 function openWorkFromMine(idx) {
   var w = MY_WORKS[idx];

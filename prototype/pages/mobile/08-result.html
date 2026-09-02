@@ -19,16 +19,15 @@
     </div>
     <div class="result-actions">
       <button class="ra-btn primary" onclick="saveResult()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存纪念照</button>
-      <button class="ra-btn gold" onclick="genShare()">生成朋友圈分享图</button>
       <div class="ra-secondary">
-        <span class="ra-link" onclick="retryCreate()">↻ 换个模板再创作</span>
-        <span class="ra-link" onclick="goPhoto()">换一张照片</span>
+        <span class="ra-link" onclick="retryCreate()">↻ 试试其他模板</span>
+        <span class="ra-link" onclick="goPhoto()">再拍一张</span>
       </div>
     </div>
     <!-- 精选邀请区 -->
     <div class="selection-box">
-      <div class="sb-title">⭐ 有机会亮相现场大屏</div>
-      <div class="sb-desc">提交后，作品将经过内容检查和工作人员精选。入选作品可能在现场大屏展示。</div>
+      <div class="sb-title" id="sb-title">有机会亮相现场大屏</div>
+      <div class="sb-desc" id="sb-desc">提交后，作品将经过内容检查和工作人员精选。入选作品可能在现场大屏展示。</div>
       <div class="sb-check" id="sb-check" onclick="toggleSbCheck()">
         <span class="ck-box" id="sb-ck-box">✓</span>
         <span>我同意将这张作品用于本次活动现场展示</span>
@@ -45,26 +44,6 @@
     <div class="sv-tip">长按图片，选择“保存图片”</div>
   </div>
 
-  <!-- 分享海报弹层 -->
-  <div class="share-modal" id="share-modal">
-    <span class="sh-close" onclick="closeModal('share-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-    <div class="share-poster">
-      <div class="sp-top">
-        <div class="sp-party">中国共产党福建省第十二次代表大会</div>
-        <div class="sp-name">AI 纪念相册</div>
-      </div>
-      <div class="sp-photo" id="sp-photo">
-        <div class="photo-bg"></div>
-        <div class="photo-person"></div>
-      </div>
-      <div class="sp-slogan">定格奋斗身影 · 共绘时代华章</div>
-      <div class="sp-bottom">
-        <div class="sp-num" id="sp-num">第 328 号纪念档案<br>FJDH-0328-01</div>
-        <div class="sp-qr">扫码<br>留纪念</div>
-      </div>
-    </div>
-    <div class="sh-tip">长按海报保存，可分享至朋友圈</div>
-  </div>
 
   <!-- 精选提交成功弹层 -->
   <div class="submit-modal" id="submit-modal">
@@ -100,6 +79,25 @@ function renderResult() {
   state.sbChecked = false;
   document.getElementById('sb-check').classList.remove('checked');
   document.getElementById('sb-submit').className = 'sb-btn disabled';
+  var st = t;
+  var workStatus = state.curWork.status || 'notsub';
+  var sbTitle = document.getElementById('sb-title');
+  if (workStatus === 'selected') {
+    sbTitle.textContent = '已精选上屏';
+    document.getElementById('sb-desc').textContent = '这张纪念照已被精选，正在现场大屏展示。';
+    document.getElementById('sb-check').style.display = 'none';
+    document.getElementById('sb-submit').style.display = 'none';
+  } else if (workStatus === 'wait') {
+    sbTitle.textContent = '已提交，等待精选';
+    document.getElementById('sb-desc').textContent = '工作人员将从符合展示要求的作品中进行精选，你可以在「我的纪念」查看状态。';
+    document.getElementById('sb-check').style.display = 'none';
+    document.getElementById('sb-submit').style.display = 'none';
+  } else {
+    sbTitle.textContent = '有机会亮相现场大屏';
+    document.getElementById('sb-desc').textContent = '提交后，作品将经过内容检查和工作人员精选。入选作品可能在现场大屏展示。';
+    document.getElementById('sb-check').style.display = '';
+    document.getElementById('sb-submit').style.display = '';
+  }
   showPage('result');
   toast('纪念作品生成完成');
 }
@@ -114,13 +112,6 @@ function saveResult() {
   var sv = document.getElementById('sv-photo');
   sv.innerHTML = '<div class="photo-bg" data-tpl="' + t.id + '"></div><div class="photo-person" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:58%;aspect-ratio:3/4;border-radius:8px;z-index:2;box-shadow:0 4px 20px rgba(0,0,0,0.3)"></div>';
   document.getElementById('save-modal').classList.add('show');
-}
-function genShare() {
-  var t = findByTpl(state.curWork.tpl);
-  var sp = document.getElementById('sp-photo');
-  sp.querySelector('.photo-bg').setAttribute('data-tpl', t.id);
-  document.getElementById('sp-num').innerHTML = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案<br>' + state.curWork.no;
-  document.getElementById('share-modal').classList.add('show');
 }
 function toggleSbCheck() {
   var wrap = document.getElementById('sb-check');
