@@ -42,9 +42,9 @@ function renderMine() {
   list.innerHTML = html;
 }
 function statusPill(s) {
-  if (s === 'selected') return '<span class="status-pill on">● 已被精选上屏</span>';
-  if (s === 'wait')    return '<span class="status-pill wait">● 等待上屏</span>';
-  return '<span class="status-pill off">○ 不提交精选</span>';
+  if (s === 'selected') return '<span class="status-pill on">● 正在现场大屏展示</span>';
+  if (s === 'wait')    return '<span class="status-pill wait">● 等待亮相</span>';
+  return '<span class="status-pill off">○ 暂未分享</span>';
 }
 function openWorkFromMine(idx) {
   var w = MY_WORKS[idx];

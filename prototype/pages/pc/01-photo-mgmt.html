@@ -55,7 +55,7 @@
 
   <div class="stat-cards">
     <div class="stat-card"><div class="sc-num" id="stat-total">0</div><div class="sc-label">全部照片</div></div>
-    <div class="stat-card"><div class="sc-num" id="stat-onscreen">0</div><div class="sc-label">已上屏</div></div>
+    <div class="stat-card"><div class="sc-num" id="stat-onscreen">0</div><div class="sc-label">展示中</div></div>
     <div class="stat-card"><div class="sc-num" id="stat-visitors">0</div><div class="sc-label">留影人数</div></div>
   </div>
 
@@ -69,11 +69,11 @@
 
   <div class="filter-bar">
     <div class="filter-item">
-      <span class="filter-label">上屏状态</span>
+      <span class="filter-label">展示状态</span>
       <select class="filter-select" id="f-on-screen" onchange="applyFilter()">
         <option value="">全部</option>
-        <option value="onscreen">已上屏</option>
-        <option value="off">未上屏</option>
+        <option value="onscreen">展示中</option>
+        <option value="off">未展示</option>
       </select>
     </div>
     <div class="filter-item">
@@ -113,7 +113,7 @@
           <th>来源屏幕</th>
           <th>生成状态</th>
           <th>AI 初审</th>
-          <th>上屏状态</th>
+          <th>展示状态</th>
           <th>创建时间</th>
           <th>操作</th>
         </tr>
@@ -237,12 +237,12 @@ function aiBadge(ai) {
   return '<span class="badge-status disabled">—</span>';
 }
 function onBadge(on) {
-  return on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">已上屏</span>'
-            : '<span class="badge-status disabled">未上屏</span>';
+  return on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">展示中</span>'
+            : '<span class="badge-status disabled">未展示</span>';
 }
 function onAction(p) {
-  if (p.on) return '<a class="action-btn" onclick="undoOnScreen(\'' + p.no + '\')">下屏</a>';
-  return '<a class="action-btn" onclick="singleOnScreen(\'' + p.no + '\')">上屏</a>';
+  if (p.on) return '<a class="action-btn" onclick="undoOnScreen(\'' + p.no + '\')">撤下</a>';
+  return '<a class="action-btn" onclick="singleOnScreen(\'' + p.no + '\')">展示</a>';
 }
 function showToast(msg) {
   var ta = document.getElementById('toast-area');
@@ -253,7 +253,7 @@ function singleOnScreen(no) {
   var p = PHOTO_LIST.filter(function(x){ return x.no === no; })[0];
   if (!p) return showToast('未找到该照片');
   p.on = true;
-  showToast('已上屏：' + no);
+  showToast('已展示：' + no);
   renderStatCards();
   renderPhotoTable();
 }
