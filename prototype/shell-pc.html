@@ -835,7 +835,7 @@ table tr { cursor: pointer; }
 
 <!-- ====== 照片详情弹窗（照片管理/上屏展示审核 共用） ====== -->
 <div class="pd-modal" id="pd-modal" style="display:none">
-  <div class="pd-modal-mask" onclick="closePhotoDetail()"></div>
+  <div class="pd-modal-mask" onclick="pdCloseDetail()"></div>
   <div class="pd-modal-box">
     <div class="pd-modal-title">照片详情 <span class="pd-modal-sub" id="pd-no"></span></div>
     <div class="pd-modal-body">
@@ -846,7 +846,7 @@ table tr { cursor: pointer; }
       <div class="pd-fields" id="pd-fields"></div>
     </div>
     <div class="pd-modal-footer">
-      <button class="dv-btn" onclick="closePhotoDetail()">关闭</button>
+      <button class="dv-btn" onclick="pdCloseDetail()">关闭</button>
     </div>
   </div>
 </div>
@@ -982,7 +982,7 @@ function updateBreadcrumb(title) {
 }
 
 /* ===== 照片详情弹窗（全局，照片管理/上屏展示审核共用） ===== */
-function openPhotoDetail(no) {
+function pdShowDetail(no) {
   if (!window.__PHOTO_DETAILS) window.__PHOTO_DETAILS = {};
   var t = window.__PHOTO_DETAILS[no] || null;
   document.getElementById('pd-no').textContent = t ? t.no : '';
@@ -1007,7 +1007,7 @@ function openPhotoDetail(no) {
   document.getElementById('pd-fields').innerHTML = html;
   document.getElementById('pd-modal').style.display = 'flex';
 }
-function closePhotoDetail() { document.getElementById('pd-modal').style.display = 'none'; }
+function pdCloseDetail() { document.getElementById('pd-modal').style.display = 'none'; }
 </script>
 </body>
 </html>

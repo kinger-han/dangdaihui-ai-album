@@ -373,7 +373,7 @@ function selBuildDetails() {
 }
 function selOpenDetail(no) {
   selBuildDetails();
-  if (typeof window.openPhotoDetail === 'function') window.openPhotoDetail(no);
+  if (typeof window.pdShowDetail === 'function') window.pdShowDetail(no);
 }
 function init_selection_mgmt() { renderSelTable(); }
 init_selection_mgmt();

@@ -319,7 +319,7 @@ function buildPhotoDetails() {
 }
 function openPhotoDetail(no) {
   if (!window.__PHOTO_DETAILS) buildPhotoDetails();
-  if (typeof window.openPhotoDetail === 'function') window.openPhotoDetail(no);
+  if (typeof window.pdShowDetail === 'function') window.pdShowDetail(no);
 }
 function init_photo_mgmt() { renderStatCards(); renderPhotoTable(); }
   buildPhotoDetails();
