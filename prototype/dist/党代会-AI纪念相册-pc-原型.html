@@ -750,7 +750,7 @@ table tr { cursor: pointer; }
       </div>
       <div class="sub-menu open">
         <div class="menu-item active" onclick="switchPage('照片管理', this)" id="menuPhotoMgmt">照片管理</div>
-        <div class="menu-item" onclick="switchPage('授权照片', this)" id="menuSelectionMgmt">授权照片</div>
+        <div class="menu-item" onclick="switchPage('申请上屏', this)" id="menuSelectionMgmt">申请上屏</div>
       </div>
     </div>
   </div>
@@ -932,7 +932,7 @@ table tr { cursor: pointer; }
 <div class="proto-page" data-page-id="selection-mgmt" style="display:none;">
 <div class="page" id="page-selection-mgmt">
   <style>
-    /* 授权照片页局部样式（组件内 style 随页面注入保留） */
+    /* 申请上屏页局部样式 */
     .sel-tbl th, .sel-tbl td { text-align: left; }
     .sel-tbl .thumb-cell { width: 56px; }
     .sel-thumb {
@@ -947,7 +947,14 @@ table tr { cursor: pointer; }
       background: linear-gradient(135deg, #F5D0A9, #D9A066);
       border: 1.5px solid rgba(255,255,255,0.8);
     }
-    .batch-bar { display: none; margin: 0 0 12px; }
+    .td-check { width: 36px; }
+    /* 选中行高亮蓝色底 */
+    .sel-tbl tbody tr.row-selected { background: #e6f4ff; }
+    /* 批量按钮 disabled 态：浅色不可点；勾选后高亮 */
+    .filter-btn.disabled {
+      background: #f5f5f5; color: #bfbfbf; border-color: #d9d9d9;
+      cursor: not-allowed; box-shadow: none;
+    }
     /* 大图预览 */
     .preview-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000;
@@ -971,14 +978,29 @@ table tr { cursor: pointer; }
     .preview-box .pv-meta { font-size: 13px; color: #666; margin-top: 12px; text-align: left; line-height: 1.8; }
     .preview-box .pv-close { position: absolute; top: 10px; right: 14px; font-size: 20px; cursor: pointer; color: #999; }
     .preview-box .pv-close:hover { color: #333; }
+    /* 上屏设备选择弹窗 */
+    .device-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1200; display: none; align-items: center; justify-content: center; }
+    .device-modal.show { display: flex; }
+    .device-box { background: #fff; border-radius: 8px; width: 420px; padding: 20px 24px; }
+    .device-box .dv-title { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 4px; }
+    .device-box .dv-sub { font-size: 12px; color: #999; margin-bottom: 14px; }
+    .device-group { margin-bottom: 12px; }
+    .device-group .dg-label { font-size: 13px; color: #333; margin-bottom: 8px; }
+    .device-options { display: flex; gap: 8px; flex-wrap: wrap; }
+    .device-opt {
+      padding: 6px 14px; border: 1px solid #d9d9d9; border-radius: 4px;
+      font-size: 13px; color: #333; cursor: pointer; transition: all 0.15s; background: #fff;
+    }
+    .device-opt:hover { border-color: #1677ff; color: #1677ff; }
+    .device-opt.active { border-color: #1677ff; color: #fff; background: #1677ff; }
+    .dv-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .dv-btn { padding: 7px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #333; }
+    .dv-btn.primary { background: #1677ff; border-color: #1677ff; color: #fff; }
+    .dv-btn.disabled { background: #f5f5f5; color: #bfbfbf; border-color: #d9d9d9; cursor: not-allowed; }
   </style>
 
   <div class="page-header">
-    <div class="page-title">授权照片 <span class="sub">用户已授权同意上屏的照片</span></div>
-    <div>
-      <button class="toolbar-btn" id="btn-sel-batch" onclick="selBatchSelect()">批量选择</button>
-      <button class="toolbar-btn" id="btn-sel-batch-done" style="display:none" onclick="selBatchDone()">完成</button>
-    </div>
+    <div class="page-title">申请上屏 <span class="sub">用户已授权同意上屏的照片</span></div>
   </div>
 
   <div class="filter-bar">
@@ -1008,12 +1030,11 @@ table tr { cursor: pointer; }
       <button class="filter-btn primary" onclick="selApplyFilter()">查询</button>
       <button class="filter-btn" onclick="selResetFilter()">重置</button>
     </div>
-  </div>
-
-  <div class="batch-bar" id="sel-batch-bar">
-    <span>已选 <b id="sel-batch-count">0</b> 张</span>
-    <button class="filter-btn primary" onclick="selBatchOnScreen()">批量上屏</button>
-    <button class="filter-btn" onclick="selBatchOffScreen()">批量下屏</button>
+    <div class="filter-spacer" style="flex:1"></div>
+    <div class="filter-item">
+      <button class="filter-btn disabled" id="btn-batch-on" onclick="selBatchOnScreen()">批量上屏</button>
+      <button class="filter-btn disabled" id="btn-batch-off" onclick="selBatchOffScreen()">批量下屏</button>
+    </div>
   </div>
 
   <div class="table-card">
@@ -1026,6 +1047,7 @@ table tr { cursor: pointer; }
           <th>模板</th>
           <th>微信号</th>
           <th>上屏状态</th>
+          <th>上屏时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -1039,6 +1061,26 @@ table tr { cursor: pointer; }
       <span class="pv-close" onclick="closeSelPreview()">×</span>
       <div class="pv-img" id="sel-pv-img"></div>
       <div class="pv-meta" id="sel-pv-meta"></div>
+    </div>
+  </div>
+
+  <!-- 上屏设备选择弹窗 -->
+  <div class="device-modal" id="device-modal" onclick="closeDeviceModal()">
+    <div class="device-box" onclick="event.stopPropagation()">
+      <div class="dv-title">选择上屏设备</div>
+      <div class="dv-sub" id="dv-sub">将作品投放至目标屏幕</div>
+      <div class="device-group">
+        <div class="dg-label">主会场</div>
+        <div class="device-options" id="dev-main"></div>
+      </div>
+      <div class="device-group">
+        <div class="dg-label">分会场</div>
+        <div class="device-options" id="dev-sub"></div>
+      </div>
+      <div class="dv-actions">
+        <button class="dv-btn" onclick="closeDeviceModal()">取消</button>
+        <button class="dv-btn primary disabled" id="dv-confirm" onclick="confirmDevice()">确认上屏</button>
+      </div>
     </div>
   </div>
 
@@ -1195,7 +1237,7 @@ function updateBreadcrumb(title) {
 
 // ---- ProtoKit 页面路由 ----
 var _protoPages = document.querySelectorAll('.proto-page');
-var _pageTitleToId = {"照片管理": "photo-mgmt", "授权照片": "selection-mgmt"};
+var _pageTitleToId = {"照片管理": "photo-mgmt", "申请上屏": "selection-mgmt"};
 
 function protoShowPage(pageId) {
   _protoPages.forEach(function(p) {
@@ -1395,23 +1437,22 @@ function nextPage() { MGMT_PAGE++; renderPhotoTable(); }
 function init_photo_mgmt() { renderStatCards(); renderPhotoTable(); }
 init_photo_mgmt();
 
-/* ================= 授权照片（用户已授权同意上屏） ================= */
+/* ================= 申请上屏（用户已授权同意上屏） ================= */
 var SEL_LIST = [
-  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '主会场 · 屏1', on: true,  time: '09-30 10:21' },
-  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '序厅 · 屏2', on: true,  time: '09-30 09:12' },
-  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '序厅 · 屏2', on: true,  time: '09-30 09:20' },
-  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '签到区 · 屏3', on: false, time: '09-30 09:31' },
-  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '签到区 · 屏3', on: false, time: '09-30 09:44' },
-  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '主会场 · 屏1', on: true,  time: '09-30 10:02' },
-  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '签到区 · 屏3', on: true,  time: '09-30 10:15' },
-  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '序厅 · 屏2', on: false, time: '09-30 10:26' },
-  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '签到区 · 屏3', on: false, time: '09-30 10:30' },
-  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章', on: false, time: '09-30 10:35' }
+  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '主会场 · 屏1', time: '09-30 10:21', on: true,  onTime: '09-30 10:21' },
+  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '序厅 · 屏2', time: '09-30 09:12', on: true,  onTime: '09-30 09:12' },
+  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '序厅 · 屏2', time: '09-30 09:20', on: true,  onTime: '09-30 09:20' },
+  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '签到区 · 屏3', time: '09-30 09:31', on: false, onTime: null },
+  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '签到区 · 屏3', time: '09-30 09:44', on: false, onTime: null },
+  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '主会场 · 屏1', time: '09-30 10:02', on: true,  onTime: '09-30 10:02' },
+  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '签到区 · 屏3', time: '09-30 10:15', on: true,  onTime: '09-30 10:15' },
+  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '序厅 · 屏2', time: '09-30 10:26', on: false, onTime: null },
+  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '签到区 · 屏3', time: '09-30 10:30', on: false, onTime: null },
+  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章', screen: '主会场 · 屏1', time: '09-30 10:35', on: false, onTime: null }
 ];
-var SEL_BATCH_MODE = false;
 var SEL_SELECTED = {};
-var SEL_PAGE = 1;
-var SEL_PAGE_SIZE = 8;
+var CURRENT_DEVICE_NO = null;   /* 上屏操作目标 */
+var CURRENT_DEVICE_MODE = 'single'; /* single / batch */
 
 function selTplBg(no) {
   var n = parseInt(no.replace(/\D/g, ''), 10) || 1;
@@ -1436,13 +1477,12 @@ function renderSelTable() {
     return true;
   });
   var tbody = document.getElementById('sel-tbody');
-  var start = (SEL_PAGE - 1) * SEL_PAGE_SIZE;
-  var pageList = list.slice(start, start + SEL_PAGE_SIZE);
   var html = '';
-  pageList.forEach(function(p) {
+  list.forEach(function(p) {
     var bg = selTplBg(p.no);
     var checked = SEL_SELECTED[p.no] ? ' checked' : '';
-    html += '<tr>' +
+    var rowCls = SEL_SELECTED[p.no] ? ' class="row-selected"' : '';
+    html += '<tr' + rowCls + '>' +
       '<td class="td-check"><input type="checkbox" class="sel-row-check" data-no="' + p.no + '"' + checked + ' onclick="onSelRowCheck(this)"></td>' +
       '<td><span class="sel-thumb" onclick="openSelPreview(\'' + p.no + '\')">' +
         '<span class="pt-bg wb-' + bg + '"></span><span class="pt-person"></span></span></td>' +
@@ -1451,72 +1491,114 @@ function renderSelTable() {
       '<td>' + p.wx + '</td>' +
       '<td>' + (p.on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">已上屏</span>'
                     : '<span class="badge-status disabled">未上屏</span>') + '</td>' +
-      '<td>' + (p.on ? '<a class="action-btn" onclick="selOffScreen(\'' + p.no + '\')">下屏</a>'
-                     : '<a class="action-btn" onclick="selOnScreen(\'' + p.no + '\')">上屏</a>') + '</td>' +
+      '<td>' + (p.onTime || '—') + '</td>' +
+      '<td>' + (p.on ? '<a class="action-btn" onclick="askOffScreen(\'' + p.no + '\')">下屏</a>'
+                     : '<a class="action-btn" onclick="askOnScreen(\'' + p.no + '\')">上屏</a>') + '</td>' +
       '</tr>';
   });
-  if (!pageList.length) {
-    html = '<tr><td colspan="7" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+  if (!list.length) {
+    html = '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
   }
   tbody.innerHTML = html;
-  var bc = Object.keys(SEL_SELECTED).length;
-  document.getElementById('sel-batch-count').textContent = bc;
-  if (SEL_BATCH_MODE) {
-    document.getElementById('sel-batch-bar').style.display = 'flex';
-    document.querySelectorAll('.sel-row-check').forEach(function(c) { c.style.display = 'inline-block'; });
-  } else {
-    document.getElementById('sel-batch-bar').style.display = 'none';
-    document.querySelectorAll('.sel-row-check').forEach(function(c) { c.style.display = 'none'; });
-  }
+  updateBatchBtns();
 }
-function selOnScreen(no) {
-  var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
-  if (!p) return;
-  p.on = true;
-  selShowToast('已上屏：' + no);
-  renderSelTable();
-}
-function selOffScreen(no) {
-  var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
-  if (!p) return;
-  p.on = false;
-  selShowToast('已下屏：' + no);
-  renderSelTable();
-}
-function selBatchSelect() {
-  SEL_BATCH_MODE = true;
-  document.getElementById('btn-sel-batch').style.display = 'none';
-  document.getElementById('btn-sel-batch-done').style.display = 'inline-block';
-  renderSelTable();
-}
-function selBatchDone() {
-  SEL_BATCH_MODE = false;
-  SEL_SELECTED = {};
-  document.getElementById('btn-sel-batch').style.display = 'inline-block';
-  document.getElementById('btn-sel-batch-done').style.display = 'none';
-  renderSelTable();
+/* 批量按钮：勾选数据后高亮可点 */
+function updateBatchBtns() {
+  var hasSel = Object.keys(SEL_SELECTED).length > 0;
+  document.getElementById('btn-batch-on').className = 'filter-btn' + (hasSel ? ' primary' : ' disabled');
+  document.getElementById('btn-batch-off').className = 'filter-btn' + (hasSel ? '' : ' disabled');
 }
 function onSelRowCheck(el) {
   var no = el.getAttribute('data-no');
   if (el.checked) SEL_SELECTED[no] = true; else delete SEL_SELECTED[no];
-  document.getElementById('sel-batch-count').textContent = Object.keys(SEL_SELECTED).length;
+  renderSelTable();
 }
+/* ---- 单个操作 ---- */
+function askOnScreen(no) {
+  CURRENT_DEVICE_NO = no;
+  CURRENT_DEVICE_MODE = 'single';
+  openDeviceModal('上屏：' + no);
+}
+function askOffScreen(no) {
+  var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  p.on = false;
+  p.onTime = null;
+  selShowToast('已下屏：' + no);
+  renderSelTable();
+}
+/* ---- 批量操作（也走设备选择） ---- */
 function selBatchOnScreen() {
   var keys = Object.keys(SEL_SELECTED);
   if (!keys.length) { selShowToast('请先勾选照片'); return; }
-  SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) p.on = true; });
-  SEL_SELECTED = {};
-  selShowToast('已批量上屏 ' + keys.length + ' 张');
-  renderSelTable();
+  CURRENT_DEVICE_NO = null;
+  CURRENT_DEVICE_MODE = 'batch';
+  openDeviceModal('批量上屏 ' + keys.length + ' 张');
 }
 function selBatchOffScreen() {
   var keys = Object.keys(SEL_SELECTED);
   if (!keys.length) { selShowToast('请先勾选照片'); return; }
-  SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) p.on = false; });
+  SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) { p.on = false; p.onTime = null; } });
+  var n = keys.length;
   SEL_SELECTED = {};
-  selShowToast('已批量下屏 ' + keys.length + ' 张');
+  selShowToast('已批量下屏 ' + n + ' 张');
   renderSelTable();
 }
+/* ---- 设备选择弹窗 ---- */
+var MAIN_DEVICES = ['主会场 · 屏1', '主会场 · 屏2', '主会场 · 屏3', '主会场 · 屏4'];
+var SUB_DEVICES  = ['分会场 · 屏1', '分会场 · 屏2'];
+var CURRENT_DEVICE = null;
+function openDeviceModal(sub) {
+  CURRENT_DEVICE = null;
+  document.getElementById('dv-sub').textContent = sub || '将作品投放至目标屏幕';
+  document.getElementById('dv-confirm').className = 'dv-btn primary disabled';
+  var mainWrap = document.getElementById('dev-main');
+  mainWrap.innerHTML = '';
+  MAIN_DEVICES.forEach(function(d) {
+    var b = document.createElement('div');
+    b.className = 'device-opt';
+    b.textContent = d;
+    b.setAttribute('data-dev', d);
+    b.onclick = function() { pickDevice(d); };
+    mainWrap.appendChild(b);
+  });
+  var subWrap = document.getElementById('dev-sub');
+  subWrap.innerHTML = '';
+  SUB_DEVICES.forEach(function(d) {
+    var b = document.createElement('div');
+    b.className = 'device-opt';
+    b.textContent = d;
+    b.setAttribute('data-dev', d);
+    b.onclick = function() { pickDevice(d); };
+    subWrap.appendChild(b);
+  });
+  document.getElementById('device-modal').classList.add('show');
+}
+function pickDevice(dev) {
+  CURRENT_DEVICE = dev;
+  document.querySelectorAll('.device-opt').forEach(function(o) { o.classList.toggle('active', o.getAttribute('data-dev') === dev); });
+  document.getElementById('dv-confirm').className = 'dv-btn primary';
+}
+function closeDeviceModal() { document.getElementById('device-modal').classList.remove('show'); }
+function confirmDevice() {
+  if (!CURRENT_DEVICE) return;
+  var dev = CURRENT_DEVICE;
+  var now = new Date();
+  var hm = ('0' + now.getHours()).slice(-2) + '-' + ('0' + ('0' + now.getMinutes()).slice(-2)).slice(-2);
+  if (CURRENT_DEVICE_MODE === 'batch') {
+    var keys = Object.keys(SEL_SELECTED);
+    SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) { p.on = true; p.onTime = hm; } });
+    SEL_SELECTED = {};
+    selShowToast('已批量上屏 ' + keys.length + ' 张 → ' + dev);
+  } else {
+    var p = SEL_LIST.filter(function(x){ return x.no === CURRENT_DEVICE_NO; })[0];
+    if (p) { p.on = true; p.onTime = hm; }
+    selShowToast('已上屏：' + CURRENT_DEVICE_NO + ' → ' + dev);
+  }
+  closeDeviceModal();
+  renderSelTable();
+}
+/* ---- 大图预览 ---- */
 function openSelPreview(no) {
   var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
   if (!p) return;
@@ -1530,11 +1612,10 @@ function openSelPreview(no) {
   document.getElementById('sel-preview-overlay').classList.add('show');
 }
 function closeSelPreview() { document.getElementById('sel-preview-overlay').classList.remove('show'); }
-function selApplyFilter() { SEL_PAGE = 1; renderSelTable(); }
+function selApplyFilter() { renderSelTable(); }
 function selResetFilter() {
   document.getElementById('f-sel-onscreen').value = '';
   document.getElementById('f-sel-tpl').value = '';
-  SEL_PAGE = 1;
   renderSelTable();
 }
 function init_selection_mgmt() { renderSelTable(); }
