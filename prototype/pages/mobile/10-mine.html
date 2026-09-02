@@ -35,7 +35,6 @@ function renderMine() {
         '<div class="mc-tpl">' + t.name + ' · ' + CAPABILITIES[t.cap].name + '</div>' +
         '<div class="mc-num">' + w.no + ' · ' + w.time + '</div>' +
         '<div class="mc-status">' + pill +
-          (w.status === 'skipped' ? '<button class="mc-op" onclick="event.stopPropagation();goTemplates()">重新生成</button>' : '') +
         '</div>' +
       '</div>' +
       '</div>';
