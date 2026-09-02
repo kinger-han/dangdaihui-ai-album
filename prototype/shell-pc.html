@@ -747,7 +747,7 @@ table tr { cursor: pointer; }
     .pd-modal-sub { font-size: 12px; color: #999; font-weight: 400; margin-left: 8px; }
     .pd-modal-body { display: flex; gap: 24px; margin-top: 16px; }
     .pd-photo { width: 220px; flex-shrink: 0; }
-    .pd-img { width: 100%; aspect-ratio: 3/4; border-radius: 6px; overflow: hidden; position: relative; background: #26262A; }
+    .pd-img { width: 100%; aspect-ratio: 3/4; border-radius: 6px; overflow: hidden; position: relative; background: #26262A; cursor: zoom-in; }
     .pd-img .photo-bg { position: absolute; inset: 0; }
     .pd-img .photo-person {
       position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
@@ -851,14 +851,21 @@ table tr { cursor: pointer; }
     <div class="pd-modal-title">照片详情 <span class="pd-modal-sub" id="pd-no"></span></div>
     <div class="pd-modal-body">
       <div class="pd-photo">
-        <div class="pd-img" id="pd-img"><div class="photo-bg wb-1"></div><div class="photo-person"></div></div>
-        <div class="pd-note">原型示意 · 正式版本展示真实生成图片</div>
+        <div class="pd-img" id="pd-img" onclick="pdZoomPhoto()" title="点击查看大图"><div class="photo-bg wb-1"></div><div class="photo-person"></div></div>
       </div>
       <div class="pd-fields" id="pd-fields"></div>
     </div>
     <div class="pd-modal-footer">
       <button class="dv-btn" onclick="pdCloseDetail()">关闭</button>
     </div>
+  </div>
+</div>
+
+<!-- 照片详情大图遮罩（点击详情照片放大） -->
+<div class="preview-overlay" id="pd-zoom-overlay" onclick="pdCloseZoom()">
+  <div class="preview-box" onclick="event.stopPropagation()">
+    <span class="pv-close" onclick="pdCloseZoom()">×</span>
+    <div class="pv-img" id="pd-zoom-img"></div>
   </div>
 </div>
 
@@ -1010,12 +1017,13 @@ function pdShowDetail(no) {
   }
   document.getElementById('pd-img').innerHTML = '<div class="photo-bg wb-' + (t.bg || 1) + '"></div><div class="photo-person"></div>';
   var rows = [
-    ['编号', t.no], ['模板', t.tpl], ['能力类型', t.capName || '—'], ['选用分类', t.groupName || '—'],
-    ['微信号', t.wx], ['来源屏幕', t.screen || '—'],
-    ['生成状态', t.gen ? '<span class="badge-status ' + (t.gen === '成功' ? 'active' : 'disabled') + '">' + t.gen + '</span>' : '—'],
-    ['AI 初审', t.ai || '—'],
+    ['模板', t.tpl || '—'],
+    ['微信号', t.wx || '—'],
+    ['来源屏幕', t.screen || '—'],
     ['展示状态', t.on ? '<span class="badge-status active">展示中</span>' : '<span class="badge-status disabled">未展示</span>'],
-    ['展示时间', t.onTime || '—'], ['创建时间', t.time || '—'], ['使用次数', t.uses != null ? t.uses : '—']
+    ['创建时间', t.time || '—'],
+    ['上屏展示时间', t.onTime || '—'],
+    ['下屏时间', t.offTime || '—']
   ];
   var html = '';
   rows.forEach(function(r) {
@@ -1025,6 +1033,15 @@ function pdShowDetail(no) {
   document.getElementById('pd-modal').style.display = 'flex';
 }
 function pdCloseDetail() { document.getElementById('pd-modal').style.display = 'none'; }
+/* 详情照片点击查看大图（shell 级全屏遮罩，跨页面可用） */
+function pdZoomPhoto() {
+  var no = document.getElementById('pd-no').textContent;
+  var t = (window.__PHOTO_DETAILS || {})[no];
+  var bg = t ? (t.bg || 1) : 1;
+  document.getElementById('pd-zoom-img').innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
+  document.getElementById('pd-zoom-overlay').classList.add('show');
+}
+function pdCloseZoom() { document.getElementById('pd-zoom-overlay').classList.remove('show'); }
 </script>
 </body>
 </html>

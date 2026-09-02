@@ -64,14 +64,8 @@
       </select>
     </div>
     <div class="filter-item">
-      <span class="filter-label">分类</span>
-      <select class="filter-select" id="f-tpl-group" onchange="renderTplMgmt()">
-        <option value="">全部</option>
-        <option value="classic">庄重经典</option>
-        <option value="smart">智能海报</option>
-        <option value="aiguofeng">AI 国风</option>
-        <option value="aichuangyi">AI 创意</option>
-      </select>
+      <span class="filter-label">模板名称</span>
+      <input class="filter-input" id="f-tpl-name" placeholder="输入模板名称" oninput="renderTplMgmt()">
     </div>
     <div class="filter-item">
       <button class="filter-btn primary" onclick="renderTplMgmt()">查询</button>
@@ -85,10 +79,7 @@
         <tr>
           <th class="tpl-thumb-cell">模板图片</th>
           <th>模板名称</th>
-          <th>分类</th>
           <th>适用建议</th>
-          <th>人数支持</th>
-          <th>预计耗时</th>
           <th>状态</th>
           <th>使用次数</th>
           <th>更新时间</th>
@@ -112,7 +103,7 @@
           <div class="tpl-img-ops">
             <button class="dv-btn" onclick="document.getElementById('tpl-img-file').click()">上传图片</button>
             <button class="dv-btn" onclick="tplRemoveImg()">移除</button>
-            <div class="tpl-img-tip">建议尺寸 600×800（3:4），jpg/png，控制在 2MB 内<br>移动端模板卡片使用该图片</div>
+            <div class="tpl-img-tip">建议控制在 2MB 内，移动端模板卡片使用该图片</div>
             <input type="file" id="tpl-img-file" accept="image/*" style="display:none" onchange="tplImgChosen(this)">
           </div>
         </div>
@@ -120,26 +111,6 @@
           <div class="tf-field">
             <label class="tf-label">模板名称 <span class="req">*</span></label>
             <input class="tf-input" id="tpl-name" placeholder="如：党旗礼赞">
-          </div>
-          <div class="tf-field">
-            <label class="tf-label">分类 <span class="req">*</span></label>
-            <select class="tf-input" id="tpl-group">
-              <option value="classic">庄重经典</option>
-              <option value="smart">智能海报</option>
-              <option value="aiguofeng">AI 国风</option>
-              <option value="aichuangyi">AI 创意</option>
-            </select>
-          </div>
-        </div>
-        <div class="tf-row">
-          <div class="tf-field">
-            <label class="tf-label">人数支持</label>
-            <select class="tf-input" id="tpl-people">
-              <option>1 人</option>
-              <option>1-2 人</option>
-              <option>1-4 人</option>
-              <option>1-6 人</option>
-            </select>
           </div>
           <div class="tf-field">
             <label class="tf-label">状态</label>
@@ -150,14 +121,6 @@
           </div>
         </div>
         <div class="tf-row">
-          <div class="tf-field">
-            <label class="tf-label">预计耗时</label>
-            <select class="tf-input" id="tpl-estTime">
-              <option>约 3 秒</option>
-              <option>约 10 秒</option>
-              <option>约 30 秒</option>
-            </select>
-          </div>
           <div class="tf-field">
             <label class="tf-label">适用建议 <span class="req">*</span></label>
             <input class="tf-input" id="tpl-guide" placeholder="如：建议单人、正面、半身，光线充足">
@@ -200,11 +163,11 @@ function tplShowToast(msg) {
 }
 function renderTplMgmt() {
   var st = document.getElementById('f-tpl-state').value;
-  var gp = document.getElementById('f-tpl-group').value;
+  var kw = (document.getElementById('f-tpl-name').value || '').trim();
   var list = TPL_LIST.filter(function(t) {
     if (st === 'on' && t.state !== 'on') return false;
     if (st === 'off' && t.state !== 'off') return false;
-    if (gp && t.group !== gp) return false;
+    if (kw && t.name.indexOf(kw) < 0) return false;
     return true;
   });
   var tbody = document.getElementById('tpl-tbody');
@@ -215,10 +178,7 @@ function renderTplMgmt() {
         ? '<img src="' + t.img + '" style="width:100%;height:100%;object-fit:cover;display:block">'
         : '<span class="pt-bg2 wb-' + tplBgOf(t.id) + '"></span><span class="pt-person2"></span>') + '</span></td>' +
       '<td>' + t.name + (t.uses >= 150 ? ' <span class="tag-hot" style="color:#C0392B;background:#FDE6E4;font-size:12px;padding:1px 6px;border-radius:3px">热门</span>' : '') + '</td>' +
-      '<td class="tpl-leaf">' + t.groupName + '</td>' +
       '<td class="tpl-leaf">' + (t.guide || '—') + '</td>' +
-      '<td class="tpl-leaf">' + t.people + '</td>' +
-      '<td class="tpl-leaf">' + (t.estTime || '—') + '</td>' +
       '<td>' + (t.state === 'on'
         ? '<span class="tpl-state-tag s-on">启用</span>'
         : '<span class="tpl-state-tag s-off">禁用</span>') + '</td>' +
@@ -232,7 +192,7 @@ function renderTplMgmt() {
       '</tr>';
   });
   if (!list.length) {
-    html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的模板</td></tr>';
+    html = '<tr><td colspan="7" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的模板</td></tr>';
   }
   tbody.innerHTML = html;
 }
@@ -245,7 +205,7 @@ function tplToggle(id) {
 }
 function resetTplFilter() {
   document.getElementById('f-tpl-state').value = '';
-  document.getElementById('f-tpl-group').value = '';
+  document.getElementById('f-tpl-name').value = '';
   renderTplMgmt();
 }
 function init_template_mgmt() { renderTplMgmt(); }
@@ -259,9 +219,6 @@ function openTplModal(id) {
   if (id) t = TPL_LIST.filter(function(x){ return x.id === id; })[0];
   document.getElementById('tpl-modal-title').textContent = id ? '编辑模板' : '新增模板';
   document.getElementById('tpl-name').value = t ? t.name : '';
-  document.getElementById('tpl-group').value = t ? t.group : 'classic';
-  document.getElementById('tpl-people').value = t ? t.people : '1-2 人';
-  document.getElementById('tpl-estTime').value = t ? t.estTime : '约 10 秒';
   document.getElementById('tpl-state').value = t ? t.state : 'on';
   document.getElementById('tpl-guide').value = t ? t.guide : '';
   tplRenderImg(t ? t.img : null);
@@ -298,10 +255,6 @@ function saveTplModal() {
   var data = {
     name: name,
     img: img,
-    group: document.getElementById('tpl-group').value,
-    groupName: { classic: '庄重经典', smart: '智能海报', aiguofeng: 'AI 国风', aichuangyi: 'AI 创意' }[document.getElementById('tpl-group').value],
-    people: document.getElementById('tpl-people').value,
-    estTime: document.getElementById('tpl-estTime').value,
     state: document.getElementById('tpl-state').value,
     guide: guide,
   };
@@ -315,8 +268,7 @@ function saveTplModal() {
     TPL_LIST.push({
       id: 'tpl' + (TPL_LIST.length + 1), uses: 0, time: '09-02 现在',
       img: data.img,
-      group: data.group, groupName: data.groupName,
-      people: data.people, estTime: data.estTime, state: data.state,
+      state: data.state,
       name: data.name, guide: data.guide
     });
     showToast('模板已新增：' + name, 'success');

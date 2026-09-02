@@ -159,16 +159,16 @@
 <script>
 /* ================= 申请上屏（用户已授权同意上屏） ================= */
 var SEL_LIST = [
-  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '主会场 · 屏1', time: '09-30 10:21', on: true,  onTime: '09-30 10:21' },
-  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '序厅 · 屏2', time: '09-30 09:12', on: true,  onTime: '09-30 09:12' },
-  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '序厅 · 屏2', time: '09-30 09:20', on: true,  onTime: '09-30 09:20' },
-  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '签到区 · 屏3', time: '09-30 09:31', on: false, onTime: null },
-  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '签到区 · 屏3', time: '09-30 09:44', on: false, onTime: null },
-  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '主会场 · 屏1', time: '09-30 10:02', on: true,  onTime: '09-30 10:02' },
-  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '签到区 · 屏3', time: '09-30 10:15', on: true,  onTime: '09-30 10:15' },
-  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '序厅 · 屏2', time: '09-30 10:26', on: false, onTime: null },
-  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '签到区 · 屏3', time: '09-30 10:30', on: false, onTime: null },
-  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章', screen: '主会场 · 屏1', time: '09-30 10:35', on: false, onTime: null }
+  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', time: '09-30 10:21', on: true,  onTime: '09-30 10:21', offTime: null },
+  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', time: '09-30 09:12', on: true,  onTime: '09-30 09:12', offTime: null },
+  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', time: '09-30 09:20', on: true,  onTime: '09-30 09:20', offTime: null },
+  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', time: '09-30 09:31', on: false, onTime: null, offTime: null },
+  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', time: '09-30 09:44', on: false, onTime: null, offTime: null },
+  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '1号屏', time: '09-30 10:02', on: true,  onTime: '09-30 10:02', offTime: null },
+  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '2号屏', time: '09-30 10:15', on: true,  onTime: '09-30 10:15', offTime: null },
+  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '2号屏', time: '09-30 10:26', on: false, onTime: null, offTime: null },
+  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '2号屏', time: '09-30 10:30', on: false, onTime: null, offTime: null },
+  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章', screen: '1号屏', time: '09-30 10:35', on: false, onTime: null, offTime: null }
 ];
 var SEL_SELECTED = {};
 var CURRENT_DEVICE_NO = null;   /* 上屏操作目标 */
@@ -346,8 +346,7 @@ function openSelPreview(no) {
   img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
   document.getElementById('sel-pv-meta').innerHTML =
     '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + selCapNameOf(p.tpl) + '）<br>' +
-    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time +
-    '<br><span style="color:#999;font-size:12px">原型示意：正式版本展示真实生成图片</span>';
+    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time;
   document.getElementById('sel-preview-overlay').classList.add('show');
 }
 function closeSelPreview() { document.getElementById('sel-preview-overlay').classList.remove('show'); }
@@ -362,11 +361,9 @@ function selBuildDetails() {
   SEL_LIST.forEach(function(p) {
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen || '—',
-      gen: '成功', ai: '通过', on: p.on, time: p.time || '—',
+      on: p.on, time: p.time || '—',
       onTime: p.onTime || (p.on ? p.onTime : null),
-      capName: ({ '党旗礼赞': '智能主题海报', '盛会留念框': '经典纪念框', '工笔华章': 'AI 艺术创作', '盛世华章': '智能主题海报', '水墨山河': 'AI 艺术创作' })[p.tpl] || '—',
-      groupName: ({ '党旗礼赞': '智能海报', '盛会留念框': '庄重经典', '工笔华章': 'AI 国风', '盛世华章': '智能海报', '水墨山河': 'AI 国风', '福见山海': '智能海报', '奋进新征程': '庄重经典' })[p.tpl] || '—',
-      uses: '—',
+      offTime: p.offTime || null,
       bg: ((p.no.length + 3) % 8) + 1
     };
   });

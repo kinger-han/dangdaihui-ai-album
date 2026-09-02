@@ -55,16 +55,8 @@
 
   <div class="stat-cards">
     <div class="stat-card"><div class="sc-num" id="stat-total">0</div><div class="sc-label">全部照片</div></div>
-    <div class="stat-card"><div class="sc-num" id="stat-onscreen">0</div><div class="sc-label">展示中</div></div>
+    <div class="stat-card"><div class="sc-num" id="stat-onscreen">0</div><div class="sc-label">上屏展示中</div></div>
     <div class="stat-card"><div class="sc-num" id="stat-visitors">0</div><div class="sc-label">留影人数</div></div>
-  </div>
-
-  <div class="page-header">
-    <div class="page-title">照片管理</div>
-    <div>
-      <button class="toolbar-btn" id="btn-batch" onclick="batchSelect()">批量选择</button>
-      <button class="toolbar-btn" id="btn-batch-done" style="display:none" onclick="batchDone()">完成</button>
-    </div>
   </div>
 
   <div class="filter-bar">
@@ -94,11 +86,13 @@
       <button class="filter-btn primary" onclick="applyFilter()">查询</button>
       <button class="filter-btn" onclick="resetFilter()">重置</button>
     </div>
+    <div class="filter-item">
+      <button class="filter-btn danger" onclick="batchDelete()">批量删除</button>
+    </div>
   </div>
 
   <div class="batch-bar" id="batch-bar">
     <span>已选 <b id="batch-count">0</b> 张</span>
-    <button class="filter-btn danger" onclick="batchDelete()">批量删除</button>
   </div>
 
   <div class="table-card">
@@ -111,8 +105,6 @@
           <th>模板</th>
           <th>微信号</th>
           <th>来源屏幕</th>
-          <th>生成状态</th>
-          <th>AI 初审</th>
           <th>展示状态</th>
           <th>创建时间</th>
           <th>操作</th>
@@ -145,21 +137,20 @@
 <script>
 /* ================= 照片管理（B 端总台账） ================= */
 var PHOTO_LIST = [
-  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '主会场 · 屏1', gen: '成功', ai: '通过', on: true,  time: '09-30 10:21' },
-  { no: 'FJDH-0328-02', wx: '138****0328', tpl: '工笔华章', screen: '主会场 · 屏1', gen: '成功', ai: '通过', on: false, time: '09-30 10:23' },
-  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '序厅 · 屏2', gen: '成功', ai: '通过', on: true,  time: '09-30 09:12' },
-  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '序厅 · 屏2', gen: '成功', ai: '通过', on: true,  time: '09-30 09:20' },
-  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '签到区 · 屏3', gen: '成功', ai: '存疑', on: false, time: '09-30 09:31' },
-  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '签到区 · 屏3', gen: '成功', ai: '通过', on: false, time: '09-30 09:44' },
-  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '主会场 · 屏1', gen: '成功', ai: '通过', on: true,  time: '09-30 10:02' },
-  { no: 'FJDH-0040-01', wx: '138****0040', tpl: '古田星火', screen: '序厅 · 屏2', gen: '成功', ai: '拦截', on: false, time: '09-30 10:08' },
-  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '签到区 · 屏3', gen: '成功', ai: '通过', on: true,  time: '09-30 10:15' },
-  { no: 'FJDH-0061-01', wx: '137****0061', tpl: 'Q版先锋', screen: '主会场 · 屏1', gen: '失败', ai: '—',    on: false, time: '09-30 10:17' },
-  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '序厅 · 屏2', gen: '成功', ai: '通过', on: false, time: '09-30 10:26' },
-  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '签到区 · 屏3', gen: '成功', ai: '通过', on: false, time: '09-30 10:30' }
+  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', on: true,  time: '09-30 10:21', onTime: '09-30 10:22', offTime: null },
+  { no: 'FJDH-0328-02', wx: '138****0328', tpl: '工笔华章', screen: '1号屏', on: false, time: '09-30 10:23', onTime: null, offTime: null },
+  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', on: true,  time: '09-30 09:12', onTime: '09-30 09:13', offTime: null },
+  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', on: true,  time: '09-30 09:20', onTime: '09-30 09:21', offTime: null },
+  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', on: false, time: '09-30 09:31', onTime: null, offTime: '09-30 09:58' },
+  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', on: false, time: '09-30 09:44', onTime: null, offTime: null },
+  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '1号屏', on: true,  time: '09-30 10:02', onTime: '09-30 10:03', offTime: null },
+  { no: 'FJDH-0040-01', wx: '138****0040', tpl: '古田星火', screen: '2号屏', on: false, time: '09-30 10:08', onTime: null, offTime: null },
+  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '2号屏', on: true,  time: '09-30 10:15', onTime: '09-30 10:16', offTime: null },
+  { no: 'FJDH-0061-01', wx: '137****0061', tpl: 'Q版先锋', screen: '1号屏', on: false, time: '09-30 10:17', onTime: null, offTime: null },
+  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '2号屏', on: false, time: '09-30 10:26', onTime: null, offTime: '09-30 11:02' },
+  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '2号屏', on: false, time: '09-30 10:30', onTime: null, offTime: null }
 ];
 
-var MGMT_BATCH_MODE = false;
 var MGMT_SELECTED = {};
 var MGMT_PAGE = 1;
 var MGMT_PAGE_SIZE = 8;
@@ -206,35 +197,21 @@ function renderPhotoTable() {
       '<td>' + p.tpl + '</td>' +
       '<td>' + p.wx + '</td>' +
       '<td>' + p.screen + '</td>' +
-      '<td><span class="badge-status ' + (p.gen === '成功' ? 'active' : 'disabled') + '">' + p.gen + '</span></td>' +
-      '<td>' + aiBadge(p.ai) + '</td>' +
       '<td>' + onBadge(p.on) + '</td>' +
       '<td>' + p.time + '</td>' +
       '<td class="selection-cell">' + onAction(p) + '</td>' +
       '</tr>';
   });
   if (!pageList.length) {
-    html = '<tr><td colspan="11" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+    html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
   }
   tbody.innerHTML = html;
   document.getElementById('page-info').textContent = '共 ' + list.length + ' 张';
   document.getElementById('page-num').textContent = MGMT_PAGE;
-  var batchBar = document.getElementById('batch-bar');
   var bc = Object.keys(MGMT_SELECTED).length;
   document.getElementById('batch-count').textContent = bc;
-  if (MGMT_BATCH_MODE) {
-    batchBar.style.display = 'block';
-    document.querySelectorAll('.row-check').forEach(function(c) { c.style.display = 'inline-block'; });
-  } else {
-    batchBar.style.display = 'none';
-    document.querySelectorAll('.row-check').forEach(function(c) { c.style.display = 'none'; });
-  }
-}
-function aiBadge(ai) {
-  if (ai === '通过') return '<span class="badge-status active">通过</span>';
-  if (ai === '存疑') return '<span class="badge-status" style="background:#fff7e6;color:#d48806">存疑</span>';
-  if (ai === '拦截') return '<span class="badge-status disabled">拦截</span>';
-  return '<span class="badge-status disabled">—</span>';
+  var batchBar = document.getElementById('batch-bar');
+  if (bc > 0) batchBar.style.display = 'block'; else batchBar.style.display = 'none';
 }
 function onBadge(on) {
   return on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">展示中</span>'
@@ -247,20 +224,6 @@ function showToast(msg) {
   var ta = document.getElementById('toast-area');
   ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
   setTimeout(function(){ ta.innerHTML = ''; }, 1600);
-}
-function batchSelect() {
-  MGMT_BATCH_MODE = true;
-  document.getElementById('btn-batch').style.display = 'none';
-  document.getElementById('btn-batch-done').style.display = 'inline-block';
-  document.querySelectorAll('.row-check').forEach(function(c) { c.style.display = 'inline-block'; });
-  renderPhotoTable();
-}
-function batchDone() {
-  MGMT_BATCH_MODE = false;
-  MGMT_SELECTED = {};
-  document.getElementById('btn-batch').style.display = 'inline-block';
-  document.getElementById('btn-batch-done').style.display = 'none';
-  renderPhotoTable();
 }
 function onRowCheck(el) {
   var no = el.getAttribute('data-no');
@@ -286,8 +249,7 @@ function openPreview(no) {
   img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
   document.getElementById('pv-meta').innerHTML =
     '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + capNameOf(p.tpl) + '）<br>' +
-    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time +
-    '<br><span style="color:#999;font-size:12px">原型示意：正式版本展示真实生成图片</span>';
+    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time;
   document.getElementById('preview-overlay').classList.add('show');
 }
 function closePreview() { document.getElementById('preview-overlay').classList.remove('show'); }
@@ -308,11 +270,9 @@ function buildPhotoDetails() {
     try { tpl = TPL_LIST ? TPL_LIST.filter(function(x){ return x.name === p.tpl; })[0] : null; } catch(e) {}
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen,
-      gen: p.gen, ai: p.ai, on: p.on, time: p.time,
+      on: p.on, time: p.time,
       onTime: p.onTime || (p.on ? p.time : null),
-      capName: tpl ? ({ A: '经典纪念框', B: '智能主题海报', C: 'AI 艺术创作' })[tpl.cap] : '—',
-      groupName: tpl ? tpl.groupName : '—',
-      uses: tpl ? tpl.uses : '—',
+      offTime: p.offTime || null,
       bg: ((p.no.length + 3) % 8) + 1
     };
   });
