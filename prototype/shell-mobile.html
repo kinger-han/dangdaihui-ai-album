@@ -864,6 +864,20 @@ body {
       <div class="app-root" id="app-root">
         <!-- 组件 page div 注入处 -->
       </div>
+      <!-- 照片使用说明弹窗（全局：选模板 / 拍同款 首次提醒，确认后不再弹） -->
+      <div class="consent-modal" id="consent-modal">
+        <div class="cm-card">
+          <div class="cm-title">照片使用说明</div>
+          <div class="cm-caption">AI 纪念相册 · 现场互动</div>
+          <div class="cm-body">
+            你拍摄/上传的照片仅用于生成本次活动纪念作品。<br><br>
+            未经你主动提交，作品不会进入现场精选展示；提交精选需另行勾选同意。
+          </div>
+          <div class="cm-btns">
+            <button class="btn primary" onclick="agreeNotice()">我已了解</button>
+          </div>
+        </div>
+      </div>
       <div class="toast" id="toast"><span class="t-icon" id="toast-icon"></span><span id="toast-text"></span></div>
       <div class="home-indicator"></div>
     </div>

@@ -131,7 +131,7 @@ function refreshTabs(id) {
   tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
 }
 function goHome()   { state.visitFromWall = false; showPage('home'); }
-function goTemplates() { renderTplTabs(); renderTplGrid(); showPage('templates'); }
+function goTemplates() { state.visitFromWall = false; renderTplTabs(); renderTplGrid(); showPage('templates'); }
 function goPhoto()  { showPage('photo'); }
 function goGenerating() { showPage('generating'); }
 function goGallery() { renderWall(); showPage('gallery'); }

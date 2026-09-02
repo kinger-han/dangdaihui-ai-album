@@ -10,20 +10,6 @@
     <div class="tpl-grid" id="tpl-grid"></div>
   </div>
 
-  <!-- 照片使用说明弹窗（仅首次选择模板时弹出，确认后不再弹） -->
-  <div class="consent-modal" id="consent-modal">
-    <div class="cm-card">
-      <div class="cm-title">照片使用说明</div>
-      <div class="cm-caption">AI 纪念相册 · 现场互动</div>
-      <div class="cm-body">
-        你拍摄/上传的照片仅用于生成本次活动纪念作品。<br><br>
-        未经你主动提交，作品不会进入现场精选展示；提交精选需另行勾选同意。
-      </div>
-      <div class="cm-btns">
-        <button class="btn primary" onclick="agreeNotice()">我已了解</button>
-      </div>
-    </div>
-  </div>
 </div>
 <script>
 /* ================= H03 模板列表 ================= */
@@ -69,6 +55,7 @@ function agreeNotice() {
   sessionStorage.setItem('ddh_notice_agreed', '1');
   document.getElementById('consent-modal').classList.remove('show');
   goPhoto();
+  if (state.visitFromWall) toast('已按该作品模板为你跳转，拍个同款吧');
 }
 function closeNotice() {
   document.getElementById('consent-modal').classList.remove('show');

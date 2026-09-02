@@ -60,6 +60,11 @@ function sameTemplateFromWall() {
   closeWallDetail();
   state.visitFromWall = true;
   state.selectedTpl = p.tpl;
+  /* 首次（未在任何位置点过"我已了解"）→ 先弹照片使用说明，确认后再进拍照页 */
+  if (sessionStorage.getItem('ddh_notice_agreed') !== '1') {
+    document.getElementById('consent-modal').classList.add('show');
+    return;
+  }
   goPhoto();
   toast('已按该作品模板为你跳转，拍个同款吧');
 }
