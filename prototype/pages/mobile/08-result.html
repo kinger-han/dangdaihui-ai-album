@@ -19,10 +19,10 @@
     </div>
     <div class="result-actions">
       <button class="ra-btn primary" onclick="saveResult()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存纪念照</button>
-      <button class="ra-btn gold" onclick="genShare()">✨ 生成朋友圈分享图</button>
+      <button class="ra-btn gold" onclick="genShare()">生成朋友圈分享图</button>
       <div class="ra-secondary">
         <span class="ra-link" onclick="retryCreate()">↻ 换个模板再创作</span>
-        <span class="ra-link" onclick="goPhoto()">🖼 换一张照片</span>
+        <span class="ra-link" onclick="goPhoto()">换一张照片</span>
       </div>
     </div>
     <!-- 精选邀请区 -->
@@ -101,7 +101,7 @@ function renderResult() {
   document.getElementById('sb-check').classList.remove('checked');
   document.getElementById('sb-submit').className = 'sb-btn disabled';
   showPage('result');
-  toast('纪念作品生成完成', '🎉');
+  toast('纪念作品生成完成');
 }
 function openFullPhoto() {
   var t = findByTpl(state.curWork.tpl);

@@ -827,14 +827,7 @@ body {
       height: 52px; border-top: 1px solid #f0f0f0; display: flex;
       background: #fff; flex-shrink: 0;
     }
-    .tab-bar-item {
-      flex: 1; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; font-size: 10px; color: #999;
-      cursor: pointer; text-decoration: none; gap: 2px;
-    }
-    .tab-bar-item.active { color: {{PRIMARY_COLOR}}; }
-    .tab-bar-item .tab-icon { font-size: 20px; line-height: 1; }
-    /* 页面容器：flex 纵向布局，壳内滚动（页面组件自带业务样式时按需覆盖） */
+                /* 页面容器：flex 纵向布局，壳内滚动（页面组件自带业务样式时按需覆盖） */
     .page { display: none; height: 100%; background: #fff; }
     .page.active { display: flex; flex-direction: column; }
     .page-body { flex: 1; overflow-y: auto; min-height: 0; }
@@ -871,10 +864,7 @@ body {
       <div class="app-root" id="app-root">
         <!-- 组件 page div 注入处 -->
       </div>
-      <nav class="tab-bar" id="tab-bar">
-        <!-- build.py 根据 config.json 生成 -->
-      </nav>
-      <div class="home-indicator"></div>
+            <div class="home-indicator"></div>
     </div>
     <div class="toast" id="toast"><span class="t-icon" id="toast-icon"></span><span id="toast-text"></span></div>
     <button class="demo-fab" onclick="toggleDemoMenu()">演示</button>
@@ -915,11 +905,11 @@ body {
     });
     function demoStatus(type) {
       var states = {
-        notstart: { icon: '🕗', title: '活动即将开始', desc: '敬请期待现场 AI 纪念相册', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
-        paused:   { icon: '⏸', title: '系统正在准备中', desc: '请稍后再次扫码体验', btns: '<button class="status-btn primary" onclick="demoStatus(\'paused\')">刷新</button>' },
-        ended:    { icon: '🎖', title: '本次活动已结束', desc: '感谢参与，共同珍藏这份大会记忆', btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button>' },
-        invalid:  { icon: '⚠', title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码', btns: '' },
-        network:  { icon: '📡', title: '网络连接不稳定', desc: '请检查网络后重试', btns: '<button class="status-btn primary" onclick="goHome()">重新加载</button>' }
+        notstart: { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`, title: '活动即将开始', desc: '敬请期待现场 AI 纪念相册', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
+        paused:   { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>`, title: '系统正在准备中', desc: '请稍后再次扫码体验', btns: '<button class="status-btn primary" onclick="demoStatus(\'paused\')">刷新</button>' },
+        ended:    { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg>`, title: '本次活动已结束', desc: '感谢参与，共同珍藏这份大会记忆', btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button>' },
+        invalid:  { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/></svg>`, title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码', btns: '' },
+        network:  { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8a15 15 0 0 1 22 0"/><path d="M5 12a10 10 0 0 1 14 0"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></svg>`, title: '网络连接不稳定', desc: '请检查网络后重试', btns: '<button class="status-btn primary" onclick="goHome()">重新加载</button>' }
       };
       var st = states[type];
       document.getElementById('status-icon').textContent = st.icon;
@@ -936,7 +926,7 @@ body {
       }
       state.qcLevel = level;
       toggleDemoMenu();
-      toast(level === 'block' ? '已切换到“质量阻断”演示，请从照片确认页查看' : '已切换到“轻微问题”演示，请从照片确认页查看', '🧪');
+      toast(level === 'block' ? '已切换到“质量阻断”演示，请从照片确认页查看' : '已切换到“轻微问题”演示，请从照片确认页查看');
       goPhotoConfirm();
     }
     function demoFail(type) {
@@ -945,6 +935,12 @@ body {
       toggleDemoMenu();
       confirmGenerate();
     }
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      window.PLATFORM = 'mobile';
+      ProtoRouter.init('{{DEFAULT_PAGE}}');
+    });
   </script>
 </body>
 </html>

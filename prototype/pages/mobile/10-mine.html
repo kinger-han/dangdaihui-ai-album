@@ -23,7 +23,7 @@ function renderMine() {
   document.getElementById('mh-count').textContent = '共 ' + MY_WORKS.length + ' 张作品';
   var list = document.getElementById('mine-list');
   if (MY_WORKS.length === 0) {
-    list.innerHTML = '<div class="mine-empty"><div class="big">🎖</div><p>还没有生成纪念作品</p><p><button class="gen-btn" onclick="goCreate()">创作第一张纪念照</button></p></div>';
+    list.innerHTML = '<div class="mine-empty"><div class="big"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg></div><p>还没有生成纪念作品</p><p><button class="gen-btn" onclick="goCreate()">创作第一张纪念照</button></p></div>';
     return;
   }
   var html = '';
