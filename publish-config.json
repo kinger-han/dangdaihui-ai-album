@@ -1,0 +1,18 @@
+{
+  "prototypes": [
+    {
+      "slug": "dangdaihui-mobile",
+      "name": "党代会AI纪念相册-移动端",
+      "desc": "中国共产党福建省第十二次代表大会 AI 纪念相册 · 手机端",
+      "dist_glob": "prototype/dist/*mobile*.html",
+      "assets_dir": "prototype/assets"
+    },
+    {
+      "slug": "dangdaihui-pc",
+      "name": "党代会AI纪念相册-PC端",
+      "desc": "中国共产党福建省第十二次代表大会 AI 纪念相册 · 管理端",
+      "dist_glob": "prototype/dist/*pc*.html",
+      "assets_dir": "prototype/assets"
+    }
+  ]
+}
