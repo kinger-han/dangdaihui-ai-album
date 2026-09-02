@@ -241,30 +241,13 @@ function onBadge(on) {
             : '<span class="badge-status disabled">未展示</span>';
 }
 function onAction(p) {
-  if (p.on) return '<a class="action-btn" onclick="undoOnScreen(\'' + p.no + '\')">撤下</a>';
-  return '<a class="action-btn" onclick="singleOnScreen(\'' + p.no + '\')">展示</a>';
+  return '<a class="action-btn" onclick="openPhotoDetail(\'' + p.no + '\')">详情</a>';
 }
 function showToast(msg) {
   var ta = document.getElementById('toast-area');
   ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
   setTimeout(function(){ ta.innerHTML = ''; }, 1600);
 }
-function singleOnScreen(no) {
-  var p = PHOTO_LIST.filter(function(x){ return x.no === no; })[0];
-  if (!p) return showToast('未找到该照片');
-  p.on = true;
-  showToast('已展示：' + no);
-  renderStatCards();
-  renderPhotoTable();
-}
-function undoOnScreen(no) {
-  var p = PHOTO_LIST.filter(function(x){ return x.no === no; })[0];
-  if (!p) return;
-  p.on = false;
-  renderStatCards();
-  renderPhotoTable();
-}
-/* ---- 批量 ---- */
 function batchSelect() {
   MGMT_BATCH_MODE = true;
   document.getElementById('btn-batch').style.display = 'none';
@@ -318,6 +301,31 @@ function resetFilter() {
 }
 function prevPage() { if (MGMT_PAGE > 1) { MGMT_PAGE--; renderPhotoTable(); } }
 function nextPage() { MGMT_PAGE++; renderPhotoTable(); }
+function buildPhotoDetails() {
+  window.__PHOTO_DETAILS = {};
+  PHOTO_LIST.forEach(function(p) {
+    var tpl = null;
+    try { tpl = TPL_LIST ? TPL_LIST.filter(function(x){ return x.name === p.tpl; })[0] : null; } catch(e) {}
+    window.__PHOTO_DETAILS[p.no] = {
+      no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen,
+      gen: p.gen, ai: p.ai, on: p.on, time: p.time,
+      onTime: p.onTime || (p.on ? p.time : null),
+      capName: tpl ? ({ A: '经典纪念框', B: '智能主题海报', C: 'AI 艺术创作' })[tpl.cap] : '—',
+      groupName: tpl ? tpl.groupName : '—',
+      uses: tpl ? tpl.uses : '—',
+      bg: ((p.no.length + 3) % 8) + 1
+    };
+  });
+}
+function openPhotoDetail(no) {
+  if (!window.__PHOTO_DETAILS) buildPhotoDetails();
+  window.__DETAIL_BACK = 'photo-mgmt';
+  protoShowPage('photo-detail');
+  document.getElementById('page-photo-detail').setAttribute('data-page-id', 'photo-detail');
+  if (typeof init_photo_detail === 'function') init_photo_detail({ no: no });
+  updateBreadcrumb('照片详情');
+}
 function init_photo_mgmt() { renderStatCards(); renderPhotoTable(); }
+  buildPhotoDetails();
 init_photo_mgmt();
 </script>

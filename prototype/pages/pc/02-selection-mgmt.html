@@ -212,8 +212,10 @@ function renderSelTable() {
       '<td>' + (p.on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">展示中</span>'
                     : '<span class="badge-status disabled">未展示</span>') + '</td>' +
       '<td>' + (p.onTime || '—') + '</td>' +
-      '<td>' + (p.on ? '<a class="action-btn" onclick="askOffScreen(\'' + p.no + '\')">撤下</a>'
-                     : '<a class="action-btn" onclick="askOnScreen(\'' + p.no + '\')">展示</a>') + '</td>' +
+      '<td>' +
+        '<a class="action-btn" onclick="selOpenDetail(\'' + p.no + '\')">详情</a>' +
+        (p.on ? '<a class="action-btn" onclick="askOffScreen(\'' + p.no + '\')">撤下</a>'
+              : '<a class="action-btn" onclick="askOnScreen(\'' + p.no + '\')">展示</a>') + '</td>' +
       '</tr>';
   });
   if (!list.length) {
@@ -354,6 +356,28 @@ function selResetFilter() {
   document.getElementById('f-sel-onscreen').value = '';
   document.getElementById('f-sel-tpl').value = '';
   renderSelTable();
+}
+function selBuildDetails() {
+  if (!window.__PHOTO_DETAILS) window.__PHOTO_DETAILS = {};
+  SEL_LIST.forEach(function(p) {
+    window.__PHOTO_DETAILS[p.no] = {
+      no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen || '—',
+      gen: '成功', ai: '通过', on: p.on, time: p.time || '—',
+      onTime: p.onTime || (p.on ? p.onTime : null),
+      capName: ({ '党旗礼赞': '智能主题海报', '盛会留念框': '经典纪念框', '工笔华章': 'AI 艺术创作', '盛世华章': '智能主题海报', '水墨山河': 'AI 艺术创作' })[p.tpl] || '—',
+      groupName: ({ '党旗礼赞': '智能海报', '盛会留念框': '庄重经典', '工笔华章': 'AI 国风', '盛世华章': '智能海报', '水墨山河': 'AI 国风', '福见山海': '智能海报', '奋进新征程': '庄重经典' })[p.tpl] || '—',
+      uses: '—',
+      bg: ((p.no.length + 3) % 8) + 1
+    };
+  });
+}
+function selOpenDetail(no) {
+  selBuildDetails();
+  window.__DETAIL_BACK = 'selection-mgmt';
+  protoShowPage('photo-detail');
+  document.getElementById('page-photo-detail').setAttribute('data-page-id', 'photo-detail');
+  if (typeof init_photo_detail === 'function') init_photo_detail({ no: no });
+  updateBreadcrumb('照片详情');
 }
 function init_selection_mgmt() { renderSelTable(); }
 init_selection_mgmt();
