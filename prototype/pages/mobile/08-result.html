@@ -74,7 +74,7 @@ function renderResult() {
   document.getElementById('result-number').textContent = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案 · ' + state.curWork.no;
   var photo = document.getElementById('result-photo');
   photo.querySelector('.photo-bg').setAttribute('data-tpl', t.id);
-  document.getElementById('result-tpl-name').textContent = t.name + ' · ' + CAPABILITIES[t.cap].name;
+  document.getElementById('result-tpl-name').textContent = t.name;
   document.getElementById('result-tip').textContent = CAPABILITIES[t.cap].desc;
   state.sbChecked = false;
   document.getElementById('sb-check').classList.remove('checked');

@@ -32,10 +32,9 @@ function renderTplGrid() {
   var list = TEMPLATES.filter(function(t){ return t.group === state.curTplGroup; });
   var html = '';
   list.forEach(function(t) {
-    var cap = CAPABILITIES[t.cap];
     html += '<div class="tpl-card" data-id="' + t.id + '" onclick="chooseTpl(\'' + t.id + '\')">' +
       '<div class="tpl-thumb"><div class="tpl-inner"><div class="tpl-' + t.id + '"><div class="avatar-dummy"></div></div></div></div>' +
-      '<div class="tpl-name">' + t.name + '<span class="cap-tag cap-' + t.cap.toLowerCase() + '">' + cap.name + '</span></div>' +
+      '<div class="tpl-name">' + t.name + '</div>' +
       '<div class="tpl-desc">' + t.guide + '<div class="tpl-cap-line">人数 ' + t.people + ' · ' + t.time + '</div></div>' +
       '</div>';
   });

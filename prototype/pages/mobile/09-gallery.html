@@ -51,7 +51,7 @@ function openWallDetail(idx) {
   d.classList.add('show');
   var wp = document.getElementById('wd-photo');
   wp.querySelector('.wall-bg').className = 'wall-bg wb-' + p.bg;
-  document.getElementById('wd-name').textContent = t.name + ' · ' + CAPABILITIES[t.cap].name;
+  document.getElementById('wd-name').textContent = t.name;
   document.getElementById('wd-num').textContent = p.num + ' · 点击可拍同款';
   state.wallWork = p;
 }
