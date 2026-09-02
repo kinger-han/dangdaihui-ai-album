@@ -222,11 +222,22 @@ function renderSelTable() {
   tbody.innerHTML = html;
   updateBatchBtns();
 }
-/* 批量按钮：勾选数据后高亮可点 */
+/* 批量按钮：按勾选数据类型精确判断
+   全部未上屏 → 批量上屏可点；全部已上屏 → 批量下屏可点；
+   混合勾选（含已上屏+未上屏）→ 两个按钮都禁用 */
 function updateBatchBtns() {
-  var hasSel = Object.keys(SEL_SELECTED).length > 0;
-  document.getElementById('btn-batch-on').className = 'filter-btn' + (hasSel ? ' primary' : ' disabled');
-  document.getElementById('btn-batch-off').className = 'filter-btn' + (hasSel ? '' : ' disabled');
+  var keys = Object.keys(SEL_SELECTED);
+  var hasSel = keys.length > 0;
+  var allOff = true, allOn = true;
+  keys.forEach(function(no) {
+    var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
+    if (!p) return;
+    if (p.on) allOff = false; else allOn = false;
+  });
+  var canOn = hasSel && allOff;    /* 勾选的都为未上屏 → 批量上屏可点 */
+  var canOff = hasSel && allOn;    /* 勾选的都为已上屏 → 批量下屏可点 */
+  document.getElementById('btn-batch-on').className = 'filter-btn' + (canOn ? ' primary' : ' disabled');
+  document.getElementById('btn-batch-off').className = 'filter-btn' + (canOff ? '' : ' disabled');
 }
 function onSelRowCheck(el) {
   var no = el.getAttribute('data-no');
@@ -251,15 +262,21 @@ function askOffScreen(no) {
 function selBatchOnScreen() {
   var keys = Object.keys(SEL_SELECTED);
   if (!keys.length) { selShowToast('请先勾选照片'); return; }
+  /* 只对未上屏的照片执行批量上屏（按钮已按类型禁用，这里兜底） */
+  var unsel = SEL_LIST.filter(function(x){ return SEL_SELECTED[x.no] && !x.on; });
+  if (!unsel.length) { selShowToast('勾选的照片均已上屏'); return; }
   CURRENT_DEVICE_NO = null;
   CURRENT_DEVICE_MODE = 'batch';
-  openDeviceModal('批量上屏 ' + keys.length + ' 张');
+  openDeviceModal('批量上屏 ' + unsel.length + ' 张');
 }
 function selBatchOffScreen() {
   var keys = Object.keys(SEL_SELECTED);
   if (!keys.length) { selShowToast('请先勾选照片'); return; }
-  SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) { p.on = false; p.onTime = null; } });
-  var n = keys.length;
+  /* 只对已上屏的照片执行批量下屏（按钮已按类型禁用，这里兜底） */
+  var onlist = SEL_LIST.filter(function(x){ return SEL_SELECTED[x.no] && x.on; });
+  if (!onlist.length) { selShowToast('勾选的照片均未上屏'); return; }
+  onlist.forEach(function(p) { p.on = false; p.onTime = null; });
+  var n = onlist.length;
   SEL_SELECTED = {};
   selShowToast('已批量下屏 ' + n + ' 张');
   renderSelTable();
