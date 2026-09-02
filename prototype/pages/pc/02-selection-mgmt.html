@@ -373,11 +373,7 @@ function selBuildDetails() {
 }
 function selOpenDetail(no) {
   selBuildDetails();
-  window.__DETAIL_BACK = 'selection-mgmt';
-  protoShowPage('photo-detail');
-  document.getElementById('page-photo-detail').setAttribute('data-page-id', 'photo-detail');
-  if (typeof init_photo_detail === 'function') init_photo_detail({ no: no });
-  updateBreadcrumb('照片详情');
+  if (typeof window.openPhotoDetail === 'function') window.openPhotoDetail(no);
 }
 function init_selection_mgmt() { renderSelTable(); }
 init_selection_mgmt();
