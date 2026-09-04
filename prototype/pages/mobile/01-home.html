@@ -1,176 +1,176 @@
-<!-- PAGE_META: {"id": "home", "title": "首页"} -->
-<div class="page" id="page-home">
-  <div class="page-body">
-    <div class="home-hero">
-      <div class="badge-party">★ 中国共产党福建省第十二次代表大会</div>
-      <div class="home-title">AI 纪念相册</div>
-      <div class="home-sub">定格奋斗身影　共绘时代华章</div>
-      <div class="home-slogan">扫码拍一张　带走专属纪念</div>
-    </div>
-    <div class="spot-scroll">
-      <div class="ss-title">★ 现场风采</div>
-      <div class="spot-track" id="spot-track"></div>
-      <div class="spot-empty" id="spot-empty" style="display:none">成为首批留下纪念的参与者</div>
-    </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" id="stat-joiner"></div><div class="stat-label">人留下纪念</div></div>
-      <div class="stat-card"><div class="stat-num gold" id="stat-work"></div><div class="stat-label">张纪念照片</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">人分享上屏</div></div>
-    </div>
-    <div class="home-main">
-      <button class="entry-btn primary" onclick="goTemplates()">立即创作纪念照</button>
-      <button class="entry-btn ghost" onclick="goMine()">我的纪念照</button>
-      <div class="home-tip"><span class="dot"></span> AI 已生成 <b id="home-tip-num"></b> 张现场纪念作品</div>
-    </div>
-  </div>
-</div>
-<script>
-/* ================= 共享数据（PRD 3.2 首期 9 模板 · 全部数据驱动） ================= */
-var ACTIVITY = {
-  fullName: '中国共产党福建省第十二次代表大会',
-  productName: 'AI 纪念相册',
-  slogan: '定格奋斗身影 共绘时代华章',
-  joinerCount: 328,
-  workCount: 612,
-  archiveIndex: 328,
-  shareCount: 28
-};
-
-var CAPABILITIES = {
-  A: { name: '经典纪念框', tag: '多人友好 · 约 3 秒', desc: '原片自然呈现 · 快速合成', confirmBtn: '确认合成', genBtn: '立即合成' },
-  B: { name: '智能主题海报', tag: '推荐 · 约 10 秒', desc: '智能识别人像 · 融入大会主题场景', confirmBtn: '确认生成', genBtn: '开始生成' },
-  C: { name: 'AI 艺术创作', tag: '单人正面照 · 约 30 秒', desc: '生成国风或创意形象', confirmBtn: '确认生成', genBtn: '开始生成' }
-};
-
-var TPL_GROUPS = [
-  { id: 'classic', name: '庄重经典' },
-  { id: 'smart',   name: '智能海报' },
-  { id: 'aiguofeng', name: 'AI 国风' },
-  { id: 'aichuangyi', name: 'AI 创意' }
-];
-
-var TEMPLATES = [
-  { id: 'shenghui', name: '盛会留念框', group: 'classic', cap: 'A', people: '1-6 人', time: '约 3 秒', guide: '建议多人合照，原图居中，红金边框', prime: true },
-  { id: 'fenjin',   name: '奋进新征程', group: 'classic', cap: 'A', people: '1-4 人', time: '约 3 秒', guide: '竖版照片 + 金色题字 + 福建剪影', prime: false },
-  { id: 'dangqi',   name: '党旗礼赞', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '建议单人、正面、半身，红色主题场景', prime: true },
-  { id: 'shengshi', name: '盛世华章', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '人物居中，金色光影与山河纹理', prime: true },
-  { id: 'gutian',   name: '古田星火', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '人物前景 + 红色文化场景', prime: true },
-  { id: 'fujian',   name: '福见山海', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '人物前景 + 福建山海与城市意象', prime: false },
-  { id: 'gongbi',   name: '工笔华章', group: 'aiguofeng', cap: 'C', people: '1 人', time: '约 30 秒', guide: '建议单人、正面、半身，光线充足', prime: true },
-  { id: 'shuimo',   name: '水墨山河', group: 'aiguofeng', cap: 'C', people: '1 人', time: '约 30 秒', guide: '建议单人、正面、半身，淡彩水墨', prime: false },
-  { id: 'qban',     name: 'Q版先锋', group: 'aichuangyi', cap: 'C', people: '1 人', time: '约 30 秒', guide: '得体正装半身照，创意风格', prime: false }
-];
-var TPL_NAMES = {}; TEMPLATES.forEach(function(t){ TPL_NAMES[t.id] = t.name; });
-var findByTpl = function(id) { return TEMPLATES.filter(function(t){ return t.id === id; })[0]; };
-
-/* 我的作品（H10 数据源） */
-var MY_WORKS = [
-  { no: 'FJDH-0328-01', tpl: 'dangqi', status: 'selected', time: '今天 10:21', num: 1 },
-  { no: 'FJDH-0328-02', tpl: 'gongbi', status: 'wait',     time: '今天 10:23', num: 2 },
-  { no: 'FJDH-0328-03', tpl: 'shuimo', status: 'skipped',  time: '今天 10:25', num: 3 }
-];
-
-/* 精选照片墙（H09，不含姓名/微信信息） */
-var GALLERY = [
-  { num: 'FJDH-0002', tpl: 'dangqi',  bg: 1 },
-  { num: 'FJDH-0009', tpl: 'gongbi',  bg: 4 },
-  { num: 'FJDH-0015', tpl: 'shengshi', bg: 2 },
-  { num: 'FJDH-0021', tpl: 'shuimo',  bg: 5 },
-  { num: 'FJDH-0033', tpl: 'shenghui', bg: 1 },
-  { num: 'FJDH-0040', tpl: 'gutian',  bg: 7 },
-  { num: 'FJDH-0052', tpl: 'fujian',  bg: 8 },
-  { num: 'FJDH-0061', tpl: 'qban',    bg: 6 },
-  { num: 'FJDH-0068', tpl: 'fenjin',  bg: 2 },
-  { num: 'FJDH-0077', tpl: 'gongbi',  bg: 4 },
-  { num: 'FJDH-0084', tpl: 'dangqi',  bg: 1 },
-  { num: 'FJDH-0090', tpl: 'shuimo',  bg: 5 }
-];
-
-var state = {
-  curTplGroup: 'classic',
-  selectedTpl: 'dangqi',
-  sbChecked: false,
-  photoTaken: false,
-  photoSrc: null,
-  qcLevel: 'ok',
-  generating: false,
-  generationFail: null,
-  curWork: null,
-  wallWork: null,
-  visitFromWall: false
-};
-
-/* ================= 页面切换 ================= */
-var PAGE_STACK = ['home'];
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-  var el = document.getElementById('page-' + id);
-  if (el) el.classList.add('active');
-  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
-  var tabBar = document.getElementById('tab-bar');
-  if (tabBar) {
-    if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; }
-    else { tabBar.style.display = 'flex'; tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); }); }
-  }
-  if (PAGE_STACK[PAGE_STACK.length-1] !== id) PAGE_STACK.push(id);
-  return id;
-}
-function historyBack() {
-  PAGE_STACK.pop();
-  var to = PAGE_STACK[PAGE_STACK.length-1] || 'home';
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-  document.getElementById('page-' + to).classList.add('active');
-  refreshTabs(to);
-}
-function refreshTabs(id) {
-  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
-  var tabBar = document.getElementById('tab-bar');
-  if (!tabBar) return;
-  if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; return; }
-  tabBar.style.display = 'flex';
-  tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
-}
-function goHome()   { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('home'); }
-function goTemplates() { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderTplGrid(); showPage('templates'); }
-function goPhoto()  { showPage('photo'); }
-function goGenerating() { showPage('generating'); }
-function goGallery() { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderWall(); showPage('gallery'); }
-function goMine()   { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderMine(); showPage('mine'); }
-function goTerms()  { PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('terms'); }
-function goStatus() { showPage('status'); }
-
-/* ================= Toast ================= */
-var toastTimer = null;
-function toast(text, icon) {
-  var t = document.getElementById('toast');
-  if (!t) return;
-  document.getElementById('toast-icon').textContent = icon || '✓';
-  document.getElementById('toast-text').textContent = text;
-  t.classList.add('show');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
-}
-function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
-
-/* ================= 首页精选轮播 ================= */
-function renderSpot() {
-  var track = document.getElementById('spot-track');
-  if (!track) return;
-  var html = '';
-  GALLERY.slice(0, 5).forEach(function(p) {
-    html += '<div class="spot-card" onclick="goGallery()">' +
-      '<div class="photo-bg wb-' + p.bg + '"></div>' +
-      '<div class="photo-person"></div>' +
-      '<span class="spot-num">' + p.num + '</span>' +
-      '</div>';
-  });
-  track.innerHTML = html;
-}
-
-/* ================= 初始化 ================= */
-document.getElementById('stat-joiner').textContent = ACTIVITY.joinerCount;
-document.getElementById('stat-work').textContent = ACTIVITY.workCount;
-document.getElementById('stat-archive').textContent = ACTIVITY.shareCount;
-document.getElementById('home-tip-num').textContent = ACTIVITY.workCount;
-renderSpot();
+<!-- PAGE_META: {"id": "home", "title": "首页"} -->
+<div class="page" id="page-home">
+  <div class="page-body">
+    <div class="home-hero">
+      <div class="badge-party">★ 中国共产党福建省第十二次代表大会</div>
+      <div class="home-title">纪念相册</div>
+      <div class="home-sub">定格奋斗身影　共绘时代华章</div>
+      <div class="home-slogan">扫码拍一张　带走专属纪念</div>
+    </div>
+    <div class="spot-scroll">
+      <div class="ss-title">★ 现场风采</div>
+      <div class="spot-track" id="spot-track"></div>
+      <div class="spot-empty" id="spot-empty" style="display:none">成为首批留下纪念的参与者</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="stat-joiner"></div><div class="stat-label">人留下纪念</div></div>
+      <div class="stat-card"><div class="stat-num gold" id="stat-work"></div><div class="stat-label">张纪念照片</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">人分享上屏</div></div>
+    </div>
+    <div class="home-main">
+      <button class="entry-btn primary" onclick="goTemplates()">立即创作纪念照</button>
+      <button class="entry-btn ghost" onclick="goMine()">我的纪念照</button>
+      <div class="home-tip"><span class="dot"></span> 已留下 <b id="home-tip-num"></b> 张现场纪念作品</div>
+    </div>
+  </div>
+</div>
+<script>
+/* ================= 共享数据（PRD 3.2 首期 9 模板 · 全部数据驱动） ================= */
+var ACTIVITY = {
+  fullName: '中国共产党福建省第十二次代表大会',
+  productName: '纪念相册',
+  slogan: '定格奋斗身影 共绘时代华章',
+  joinerCount: 328,
+  workCount: 612,
+  archiveIndex: 328,
+  shareCount: 28
+};
+
+var CAPABILITIES = {
+  A: { name: '经典纪念框', tag: '多人友好 · 约 3 秒', desc: '原片自然呈现 · 快速合成', confirmBtn: '确认合成', genBtn: '立即合成' },
+  B: { name: '智能主题海报', tag: '推荐 · 约 10 秒', desc: '智能识别人像 · 融入大会主题场景', confirmBtn: '确认生成', genBtn: '开始生成' },
+  C: { name: 'AI 艺术创作', tag: '单人正面照 · 约 30 秒', desc: '生成国风或创意形象', confirmBtn: '确认生成', genBtn: '开始生成' }
+};
+
+var TPL_GROUPS = [
+  { id: 'classic', name: '庄重经典' },
+  { id: 'smart',   name: '智能海报' },
+  { id: 'aiguofeng', name: 'AI 国风' },
+  { id: 'aichuangyi', name: 'AI 创意' }
+];
+
+var TEMPLATES = [
+  { id: 'shenghui', name: '盛会留念框', group: 'classic', cap: 'A', people: '1-6 人', time: '约 3 秒', guide: '建议多人合照，原图居中，红金边框', prime: true },
+  { id: 'fenjin',   name: '奋进新征程', group: 'classic', cap: 'A', people: '1-4 人', time: '约 3 秒', guide: '竖版照片 + 金色题字 + 福建剪影', prime: false },
+  { id: 'dangqi',   name: '党旗礼赞', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '建议单人、正面、半身，红色主题场景', prime: true },
+  { id: 'shengshi', name: '盛世华章', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '人物居中，金色光影与山河纹理', prime: true },
+  { id: 'gutian',   name: '古田星火', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '人物前景 + 红色文化场景', prime: true },
+  { id: 'fujian',   name: '福见山海', group: 'smart', cap: 'B', people: '1-2 人', time: '约 10 秒', guide: '人物前景 + 福建山海与城市意象', prime: false },
+  { id: 'gongbi',   name: '工笔华章', group: 'aiguofeng', cap: 'C', people: '1 人', time: '约 30 秒', guide: '建议单人、正面、半身，光线充足', prime: true },
+  { id: 'shuimo',   name: '水墨山河', group: 'aiguofeng', cap: 'C', people: '1 人', time: '约 30 秒', guide: '建议单人、正面、半身，淡彩水墨', prime: false },
+  { id: 'qban',     name: 'Q版先锋', group: 'aichuangyi', cap: 'C', people: '1 人', time: '约 30 秒', guide: '得体正装半身照，创意风格', prime: false }
+];
+var TPL_NAMES = {}; TEMPLATES.forEach(function(t){ TPL_NAMES[t.id] = t.name; });
+var findByTpl = function(id) { return TEMPLATES.filter(function(t){ return t.id === id; })[0]; };
+
+/* 我的作品（H10 数据源） */
+var MY_WORKS = [
+  { no: 'FJDH-0328-01', tpl: 'dangqi', status: 'selected', time: '今天 10:21', num: 1 },
+  { no: 'FJDH-0328-02', tpl: 'gongbi', status: 'wait',     time: '今天 10:23', num: 2 },
+  { no: 'FJDH-0328-03', tpl: 'shuimo', status: 'skipped',  time: '今天 10:25', num: 3 }
+];
+
+/* 精选照片墙（H09，不含姓名/微信信息） */
+var GALLERY = [
+  { num: 'FJDH-0002', tpl: 'dangqi',  bg: 1 },
+  { num: 'FJDH-0009', tpl: 'gongbi',  bg: 4 },
+  { num: 'FJDH-0015', tpl: 'shengshi', bg: 2 },
+  { num: 'FJDH-0021', tpl: 'shuimo',  bg: 5 },
+  { num: 'FJDH-0033', tpl: 'shenghui', bg: 1 },
+  { num: 'FJDH-0040', tpl: 'gutian',  bg: 7 },
+  { num: 'FJDH-0052', tpl: 'fujian',  bg: 8 },
+  { num: 'FJDH-0061', tpl: 'qban',    bg: 6 },
+  { num: 'FJDH-0068', tpl: 'fenjin',  bg: 2 },
+  { num: 'FJDH-0077', tpl: 'gongbi',  bg: 4 },
+  { num: 'FJDH-0084', tpl: 'dangqi',  bg: 1 },
+  { num: 'FJDH-0090', tpl: 'shuimo',  bg: 5 }
+];
+
+var state = {
+  curTplGroup: 'classic',
+  selectedTpl: 'dangqi',
+  sbChecked: false,
+  photoTaken: false,
+  photoSrc: null,
+  qcLevel: 'ok',
+  generating: false,
+  generationFail: null,
+  curWork: null,
+  wallWork: null,
+  visitFromWall: false
+};
+
+/* ================= 页面切换 ================= */
+var PAGE_STACK = ['home'];
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var el = document.getElementById('page-' + id);
+  if (el) el.classList.add('active');
+  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
+  var tabBar = document.getElementById('tab-bar');
+  if (tabBar) {
+    if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; }
+    else { tabBar.style.display = 'flex'; tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); }); }
+  }
+  if (PAGE_STACK[PAGE_STACK.length-1] !== id) PAGE_STACK.push(id);
+  return id;
+}
+function historyBack() {
+  PAGE_STACK.pop();
+  var to = PAGE_STACK[PAGE_STACK.length-1] || 'home';
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-' + to).classList.add('active');
+  refreshTabs(to);
+}
+function refreshTabs(id) {
+  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
+  var tabBar = document.getElementById('tab-bar');
+  if (!tabBar) return;
+  if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; return; }
+  tabBar.style.display = 'flex';
+  tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
+}
+function goHome()   { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('home'); }
+function goTemplates() { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderTplGrid(); showPage('templates'); }
+function goPhoto()  { showPage('photo'); }
+function goGenerating() { showPage('generating'); }
+function goGallery() { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderWall(); showPage('gallery'); }
+function goMine()   { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderMine(); showPage('mine'); }
+function goTerms()  { PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('terms'); }
+function goStatus() { showPage('status'); }
+
+/* ================= Toast ================= */
+var toastTimer = null;
+function toast(text, icon) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  document.getElementById('toast-icon').textContent = icon || '✓';
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
+
+/* ================= 首页精选轮播 ================= */
+function renderSpot() {
+  var track = document.getElementById('spot-track');
+  if (!track) return;
+  var html = '';
+  GALLERY.slice(0, 5).forEach(function(p) {
+    html += '<div class="spot-card" onclick="goGallery()">' +
+      '<div class="photo-bg wb-' + p.bg + '"></div>' +
+      '<div class="photo-person"></div>' +
+      '<span class="spot-num">' + p.num + '</span>' +
+      '</div>';
+  });
+  track.innerHTML = html;
+}
+
+/* ================= 初始化 ================= */
+document.getElementById('stat-joiner').textContent = ACTIVITY.joinerCount;
+document.getElementById('stat-work').textContent = ACTIVITY.workCount;
+document.getElementById('stat-archive').textContent = ACTIVITY.shareCount;
+document.getElementById('home-tip-num').textContent = ACTIVITY.workCount;
+renderSpot();
 </script>
