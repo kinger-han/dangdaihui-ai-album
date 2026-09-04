@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>党代会 · AI 纪念相册（手机端原型）</title>
+  <title>党代会 · 纪念相册（手机端原型）</title>
   <style>
 /* __BASE_CSS__ placeholder */
   </style>
@@ -855,7 +855,7 @@ body {
       <div class="consent-modal" id="consent-modal">
         <div class="cm-card">
           <div class="cm-title">照片使用说明</div>
-          <div class="cm-caption">AI 纪念相册 · 现场互动</div>
+          <div class="cm-caption">纪念相册 · 现场互动</div>
           <div class="cm-body">
             你拍摄/上传的照片仅用于生成本次活动纪念作品。<br><br>
             未经你主动提交，作品不会进入现场大屏展示；提交展示需另行勾选同意。
@@ -904,7 +904,7 @@ body {
     });
     function demoStatus(type) {
       var states = {
-        notstart: { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`, title: '活动即将开始', desc: '敬请期待现场 AI 纪念相册', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
+        notstart: { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`, title: '活动即将开始', desc: '敬请期待现场纪念相册', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
         paused:   { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>`, title: '系统正在准备中', desc: '请稍后再次扫码体验', btns: '<button class="status-btn primary" onclick="demoStatus(\'paused\')">刷新</button>' },
         ended:    { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg>`, title: '本次活动已结束', desc: '感谢参与，共同珍藏这份大会记忆', btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button>' },
         invalid:  { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/></svg>`, title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码', btns: '' },
