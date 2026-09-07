@@ -19,6 +19,7 @@
     <div class="wd-photo" id="wd-photo">
       <div class="wall-bg"></div>
       <div class="wall-person-d"></div>
+      <span class="wd-style-tag" id="wd-style-tag" style="display:none"></span>
     </div>
     <div class="wd-name" id="wd-name"></div>
     <div class="wd-num" id="wd-num"></div>
@@ -35,10 +36,15 @@ function renderWall() {
   if (!grid) return;
   var html = '';
   GALLERY.forEach(function(p, idx) {
+    var tag = '';
+    if (p.styleId) {
+      var sn = _sName(p.styleId);
+      tag = '<span class="wall-style-tag">' + sn + '</span>';
+    }
     html += '<div class="wall-item" onclick="openWallDetail(' + idx + ')">' +
       '<div class="wall-bg wb-' + p.bg + '"></div>' +
       '<div class="wall-person"></div>' +
-      '<span class="wall-num">' + p.num + '</span>' +
+      tag +
       '</div>';
   });
   grid.innerHTML = html;
@@ -52,7 +58,14 @@ function openWallDetail(idx) {
   var wp = document.getElementById('wd-photo');
   wp.querySelector('.wall-bg').className = 'wall-bg wb-' + p.bg;
   document.getElementById('wd-name').textContent = t.name;
-  document.getElementById('wd-num').textContent = p.num + ' · 点击可拍同款';
+  var stTag = document.getElementById('wd-style-tag');
+  if (p.styleId) {
+    stTag.textContent = _sName(p.styleId);
+    stTag.style.display = '';
+  } else {
+    stTag.style.display = 'none';
+  }
+  document.getElementById('wd-num').textContent = (p.styleId ? (_sName(p.styleId) + ' · ') : '') + '点击可拍同款';
   state.wallWork = p;
 }
 function sameTemplateFromWall() {

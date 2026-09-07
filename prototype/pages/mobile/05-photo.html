@@ -94,46 +94,16 @@ function takePhotoNoConsent() {
   document.getElementById('preview-img').src = makePortraitSVG();
   bar.style.display = 'flex';
 }
-/* H05 → H07 立即生成（带过渡动画） */
+/* H05 → 立即生成（无过渡动画：直出结果；失败演示仍保留失败页） */
 function startGenerate() {
   if (!state.photoTaken) { toast('请先拍摄或选择照片'); return; }
-  var t = findByTpl(state.selectedTpl);
-  var steps = [];
-  if (t.cap === 'A') steps = ['正在排版纪念信息', '正在合成高清作品'];
-  else if (t.cap === 'B') steps = ['正在识别人像', '正在融合主题场景', '正在优化光影细节'];
-  else steps = ['正在分析人物特征', '正在创作艺术画面', '正在完成细节优化'];
-  var stepsWrap = document.getElementById('gen-steps');
-  stepsWrap.innerHTML = '';
-  steps.forEach(function(s, i) {
-    var div = document.createElement('div');
-    div.className = 'gen-step' + (i === 0 ? ' active' : '');
-    div.id = 'gs-' + i;
-    div.innerHTML = '<span class="s-dot"></span><span>' + s + '</span>';
-    stepsWrap.appendChild(div);
-  });
-  document.getElementById('gen-title').textContent = '正在创作你的纪念照';
-  document.getElementById('gen-sub').textContent = '预计 ' + t.time + ' 完成，请稍候';
-  document.getElementById('gen-overtime').style.display = 'none';
-  document.getElementById('gen-fail').classList.remove('show');
-  document.getElementById('gen-working').style.display = 'block';
-  var bgThumb = document.getElementById('gen-bg-thumb');
-  bgThumb.style.background = 'linear-gradient(170deg, #50100F 0%, #7A1712 60%, #B42318 100%)';
   if (state.generationFail) {
     var fail = state.generationFail;
     state.generationFail = null;
     showPage('generating');
-    var fi = 0;
-    var ftimer = setInterval(function() {
-      fi++;
-      if (fi < steps.length && document.getElementById('gs-' + (fi-1))) document.getElementById('gs-' + (fi-1)).className = 'gen-step done';
-      if (fi >= 2) {
-        clearInterval(ftimer);
-        setTimeout(function() { showGenFail(fail); }, 600);
-      }
-    }, 500);
+    showGenFail(fail);
     return;
   }
-  showPage('generating');
-  startGenTimer(steps);
+  finishGenerate();
 }
 </script>

@@ -63,7 +63,7 @@ function finishGenerate() {
   };
   MY_WORKS.push(work);
   state.curWork = work;
-  renderResult();
+  renderResult(true);
 }
 function showGenFail(type) {
   document.getElementById('gen-working').style.display = 'none';

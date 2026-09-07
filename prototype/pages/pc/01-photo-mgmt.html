@@ -16,6 +16,17 @@
       background: linear-gradient(135deg, #F5D0A9, #D9A066);
       border: 1.5px solid rgba(255,255,255,0.8);
     }
+    /* V2.1 画风衍生：列表缩略带滤镜 + 组角标 */
+    .photo-thumb.effect-guangying .pt-bg, .photo-thumb.effect-guangying .pt-person { filter: brightness(1.08) contrast(1.06); }
+    .photo-thumb.effect-shuimo    .pt-bg, .photo-thumb.effect-shuimo    .pt-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
+    .photo-thumb.effect-shouhui  .pt-bg, .photo-thumb.effect-shouhui  .pt-person { filter: saturate(0.45) contrast(1.12); }
+    .tag-c { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 8px; font-size: 11px; border-radius: 3px; line-height: 1.5; }
+    .tag-c.origin { color: #1677ff; background: #e6f4ff; border: 1px solid #91caff; }
+    .tag-c.style { color: #8a641e; background: #fdf6e3; border: 1px solid #eadfc4; }
+    .pv-img.effect-guangying .photo-bg, .pv-img.effect-guangying .photo-person { filter: brightness(1.08) contrast(1.06); }
+    .pv-img.effect-shuimo    .photo-bg, .pv-img.effect-shuimo    .photo-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
+    .pv-img.effect-shouhui  .photo-bg, .pv-img.effect-shouhui  .photo-person { filter: saturate(0.45) contrast(1.12); }
+
     .td-check { width: 36px; }
     .selection-cell .badge-status { margin-right: 4px; }
     /* 统计看板 */
@@ -104,6 +115,7 @@
           <th class="thumb-cell">纪念照</th>
           <th>编号</th>
           <th>模板</th>
+          <th>成像风格</th>
           <th>微信号</th>
           <th>来源屏幕</th>
           <th>上屏状态</th>
@@ -137,10 +149,20 @@
 
 <script>
 /* ================= 照片管理（B 端总台账） ================= */
+if (!window.__STYLE_LIST) {
+  window.__STYLE_LIST = [
+    { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '', count: 6 },
+    { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '', count: 4 },
+    { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '', count: 2 }
+  ];
+}
+function _pStyleName(id) { var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; return s ? s.name : id; }
 var PHOTO_LIST = [
   { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', on: true, status: 'selected',  time: '09-30 10:21', onTime: '09-30 10:22', offTime: null },
   { no: 'FJDH-0328-02', wx: '138****0328', tpl: '工笔华章', screen: '1号屏', on: false, status: 'notsub', time: '09-30 10:23', onTime: null, offTime: null },
   { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', on: true, status: 'selected',  time: '09-30 09:12', onTime: '09-30 09:13', offTime: null },
+  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo',    on: false, status: 'wait',    time: '09-30 09:26', onTime: null, offTime: null },
+  { no: 'FJDH-0002-03', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', sourceWorkId: 'FJDH-0002-01', styleId: 'guangying', on: false, status: 'notsub',  time: '09-30 09:32', onTime: null, offTime: null },
   { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', on: true, status: 'selected',  time: '09-30 09:20', onTime: '09-30 09:21', offTime: null },
   { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', on: false, status: 'wait', time: '09-30 09:31', onTime: null, offTime: '09-30 09:58' },
   { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', on: false, status: 'wait', time: '09-30 09:44', onTime: null, offTime: null },
@@ -157,6 +179,8 @@ var MGMT_PAGE = 1;
 var MGMT_PAGE_SIZE = 8;
 
 function getTplBgIdx(no) {
+  var p = (PHOTO_LIST||[]).filter(function(x){ return x.no === no; })[0];
+  if (p && p.sourceWorkId) return getTplBgIdx(p.sourceWorkId);
   var n = parseInt(no.replace(/\D/g, ''), 10) || 1;
   return (n % 8) + 1;
 }
@@ -191,12 +215,15 @@ function renderPhotoTable() {
   pageList.forEach(function(p) {
     var bg = getTplBgIdx(p.no);
     var checked = MGMT_SELECTED[p.no] ? ' checked' : '';
+    var eff = p.styleId ? (' effect-' + p.styleId) : '';
+    var styleTags = styleTagsOf(p);
     html += '<tr>' +
       '<td class="td-check"><input type="checkbox" class="row-check" data-no="' + p.no + '"' + checked + ' onclick="onRowCheck(this)"></td>' +
-      '<td><span class="photo-thumb" onclick="openPreview(\'' + p.no + '\')">' +
+      '<td><span class="photo-thumb' + eff + '" onclick="openPreview(\'' + p.no + '\')">' +
         '<span class="pt-bg wb-' + bg + '"></span><span class="pt-person"></span></span></td>' +
       '<td>' + p.no + '</td>' +
       '<td>' + p.tpl + '</td>' +
+      '<td>' + styleTags + '</td>' +
       '<td>' + p.wx + '</td>' +
       '<td>' + p.screen + '</td>' +
       '<td>' + statusBadge(p.status) + '</td>' +
@@ -205,7 +232,7 @@ function renderPhotoTable() {
       '</tr>';
   });
   if (!pageList.length) {
-    html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+    html = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
   }
   tbody.innerHTML = html;
   document.getElementById('page-info').textContent = '共 ' + list.length + ' 张';
@@ -219,6 +246,11 @@ function statusBadge(st) {
   if (st === 'selected') return '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">正在展示</span>';
   if (st === 'wait')    return '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>';
   return '<span class="badge-status disabled">暂未分享</span>';
+}
+/* 成像风格列：每行单值（原图 / 画风名）；风格照片为独立数据行 */
+function styleTagsOf(p) {
+  if (p.styleId) return '<span class="tag-c style">' + _pStyleName(p.styleId) + '</span>';
+  return '<span class="tag-c origin">原图</span>';
 }
 function onAction(p) {
   return '<a class="action-btn" onclick="openPhotoDetail(\'' + p.no + '\')">详情</a>';
@@ -236,10 +268,15 @@ function onRowCheck(el) {
 function batchDelete() {
   var keys = Object.keys(MGMT_SELECTED);
   if (!keys.length) { showToast('请先勾选照片'); return; }
-  if (!confirm('确定删除所选 ' + keys.length + ' 张照片记录吗？')) return;
-  PHOTO_LIST = PHOTO_LIST.filter(function(p) { return !MGMT_SELECTED[p.no]; });
+  if (!confirm('确定删除所选 ' + keys.length + ' 张照片记录吗？（原图被删除时其风格衍生一并删除）')) return;
+  PHOTO_LIST = PHOTO_LIST.filter(function(p) {
+    if (MGMT_SELECTED[p.no]) return false;
+    if (p.sourceWorkId && MGMT_SELECTED[p.sourceWorkId]) return false;
+    return true;
+  });
   MGMT_SELECTED = {};
   showToast('已删除 ' + keys.length + ' 张照片');
+  buildPhotoDetails();
   renderStatCards();
   renderPhotoTable();
 }
@@ -249,9 +286,11 @@ function openPreview(no) {
   if (!p) return;
   var bg = getTplBgIdx(p.no);
   var img = document.getElementById('pv-img');
+  img.className = 'pv-img' + (p.styleId ? (' effect-' + p.styleId) : '');
   img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
+  var styleTxt = p.styleId ? '　<b>画风：</b>' + _pStyleName(p.styleId) : '';
   document.getElementById('pv-meta').innerHTML =
-    '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + capNameOf(p.tpl) + '）<br>' +
+    '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + capNameOf(p.tpl) + '）' + styleTxt + '<br>' +
     '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time;
   document.getElementById('preview-overlay').classList.add('show');
 }
@@ -269,19 +308,21 @@ function nextPage() { MGMT_PAGE++; renderPhotoTable(); }
 function buildPhotoDetails() {
   window.__PHOTO_DETAILS = {};
   PHOTO_LIST.forEach(function(p) {
-    var tpl = null;
-    try { tpl = TPL_LIST ? TPL_LIST.filter(function(x){ return x.name === p.tpl; })[0] : null; } catch(e) {}
+    var root = p;
+    if (p.sourceWorkId) { var r = PHOTO_LIST.filter(function(x){ return x.no === p.sourceWorkId; })[0]; if (r) root = r; }
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen,
       status: p.status || (p.on ? 'selected' : 'notsub'), time: p.time,
       onTime: p.onTime || (p.on ? p.time : null),
       offTime: p.offTime || null,
-      bg: ((p.no.length + 3) % 8) + 1
+      sourceWorkId: p.sourceWorkId || '',
+      styleId: p.styleId || '',
+      bg: ((root.no.length + 3) % 8) + 1
     };
   });
 }
 function openPhotoDetail(no) {
-  if (!window.__PHOTO_DETAILS) buildPhotoDetails();
+  buildPhotoDetails();
   if (typeof window.pdShowDetail === 'function') window.pdShowDetail(no);
 }
 function init_photo_mgmt() { renderStatCards(); renderPhotoTable(); }

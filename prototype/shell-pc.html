@@ -764,6 +764,11 @@ table tr { cursor: pointer; }
     .badge-status.active { background: #f6ffed; color: #52c41a; }
     .badge-status.disabled { background: #f5f5f5; color: #999; }
     .pd-modal-footer { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 1px solid #f0f0f0; }
+    /* V2.1 详情弹窗画风滤镜 */
+    .pd-img.effect-guangying .photo-bg, .pd-img.effect-guangying .photo-person { filter: brightness(1.08) contrast(1.06); }
+    .pd-img.effect-shuimo    .photo-bg, .pd-img.effect-shuimo    .photo-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
+    .pd-img.effect-shouhui  .photo-bg, .pd-img.effect-shouhui  .photo-person { filter: saturate(0.45) contrast(1.12); }
+    .pd-field-row .pd-label.pd-style { color: #8a641e; }
   </style></style>
 </head>
 <body>
@@ -781,6 +786,7 @@ table tr { cursor: pointer; }
         <div class="menu-item active" onclick="switchPage('照片管理', this)" id="menuPhotoMgmt">照片管理</div>
         <div class="menu-item" onclick="switchPage('上屏展示审核', this)" id="menuSelectionMgmt">上屏展示审核</div>
         <div class="menu-item" onclick="switchPage('模板管理', this)" id="menuTemplateMgmt">模板管理</div>
+        <div class="menu-item" onclick="switchPage('画风管理', this)" id="menuStyleMgmt">画风管理</div>
         <div class="menu-item" onclick="switchDeviceMgmt(this)" id="menuDeviceMgmt">设备管理</div>
       </div>
     </div>
@@ -1005,40 +1011,65 @@ function switchDeviceMgmt(element) {
   pages.forEach(function(p) { p.style.display = p.getAttribute('data-page-id') === 'device-mgmt' ? 'block' : 'none'; });
 }
 
-/* ===== 照片详情弹窗（全局，照片管理/上屏展示审核共用） ===== */
+/* 画风全局列表（PC 详情弹窗 / 画风管理页共用；字段含提示词） */
+window.__STYLE_LIST = window.__STYLE_LIST || [
+  { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', gen: 12, keep: 9, drop: 3 },
+  { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', gen: 9, keep: 6, drop: 3 },
+  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', gen: 5, keep: 2, drop: 3 }
+];
+function pcStyleOf(id) { return (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; }
+
+/* ===== 照片详情弹窗（全局，照片管理/上屏展示审核共用）V2.5 单作品视图 + 成像风格字段 ===== */
+function pdStyleName(id) {
+  var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0];
+  return s ? s.name : id;
+}
+function pdStatusBadge(st) {
+  if (st === 'selected') return '<span class="badge-status active">正在展示</span>';
+  if (st === 'wait')    return '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>';
+  return '<span class="badge-status disabled">暂未分享</span>';
+}
 function pdShowDetail(no) {
-  if (!window.__PHOTO_DETAILS) window.__PHOTO_DETAILS = {};
-  var t = window.__PHOTO_DETAILS[no] || null;
-  document.getElementById('pd-no').textContent = t ? t.no : '';
+  var map = window.__PHOTO_DETAILS || {};
+  var t = map[no] || null;
   if (!t) {
+    document.getElementById('pd-no').textContent = no || '';
     document.getElementById('pd-fields').innerHTML = '<div style="color:#999;padding:30px 0;text-align:center">未找到该照片</div>';
     document.getElementById('pd-modal').style.display = 'flex';
     return;
   }
-  document.getElementById('pd-img').innerHTML = '<div class="photo-bg wb-' + (t.bg || 1) + '"></div><div class="photo-person"></div>';
+  var img = document.getElementById('pd-img');
+  img.className = 'pd-img';
+  if (t.styleId) img.classList.add('effect-' + t.styleId);
+  img.innerHTML = '<div class="photo-bg wb-' + (t.bg || 1) + '"></div><div class="photo-person"></div>';
+  document.getElementById('pd-no').textContent = t.no;
   var rows = [
     ['模板', t.tpl || '—'],
+    ['成像风格', t.styleId ? '<span style="color:#8a641e;font-weight:600">' + pdStyleName(t.styleId) + '</span>' : '<span style="color:#1677ff">原图</span>'],
     ['微信号', t.wx || '—'],
     ['来源屏幕', t.screen || '—'],
-    ['上屏状态', t.status === 'selected' ? '<span class="badge-status active">正在展示</span>' : (t.status === 'wait' ? '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>' : '<span class="badge-status disabled">暂未分享</span>')],
+    ['上屏状态', pdStatusBadge(t.status)],
     ['创建时间', t.time || '—'],
     ['上屏展示时间', t.onTime || '—'],
     ['下屏时间', t.offTime || '—']
   ];
   var html = '';
   rows.forEach(function(r) {
-    html += '<div class="pd-field-row"><div class="pd-label">' + r[0] + '</div><div class="pd-value">' + r[1] + '</div></div>';
+    html += '<div class="pd-field-row"><div class="pd-label' + (r[0] === '成像风格' ? ' pd-style' : '') + '">' + r[0] + '</div><div class="pd-value">' + r[1] + '</div></div>';
   });
   document.getElementById('pd-fields').innerHTML = html;
   document.getElementById('pd-modal').style.display = 'flex';
 }
 function pdCloseDetail() { document.getElementById('pd-modal').style.display = 'none'; }
-/* 详情照片点击查看大图（shell 级全屏遮罩，跨页面可用） */
+/* 详情照片点击查看大图（shell 级全屏遮罩） */
 function pdZoomPhoto() {
-  var no = document.getElementById('pd-no').textContent;
-  var t = (window.__PHOTO_DETAILS || {})[no];
-  var bg = t ? (t.bg || 1) : 1;
-  document.getElementById('pd-zoom-img').innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
+  var map = window.__PHOTO_DETAILS || {};
+  var t = map[document.getElementById('pd-no').textContent] || null;
+  if (!t) return;
+  var zi = document.getElementById('pd-zoom-img');
+  zi.className = 'pv-img';
+  if (t.styleId) zi.classList.add('effect-' + t.styleId);
+  zi.innerHTML = '<div class="photo-bg wb-' + (t.bg || 1) + '"></div><div class="photo-person"></div>';
   document.getElementById('pd-zoom-overlay').classList.add('show');
 }
 function pdCloseZoom() { document.getElementById('pd-zoom-overlay').classList.remove('show'); }

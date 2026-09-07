@@ -19,7 +19,7 @@
     </div>
     <div class="home-main">
       <button class="entry-btn primary" onclick="goTemplates()">立即创作纪念照</button>
-      <button class="entry-btn ghost" onclick="goMine()">我的纪念照</button>
+      <button class="entry-btn ghost" onclick="goMine()">我的纪念照<i class="entry-dot" id="home-mine-dot" style="display:none"></i></button>
     </div>
   </div>
 </div>
@@ -50,18 +50,28 @@ var TEMPLATES = [
 var TPL_NAMES = {}; TEMPLATES.forEach(function(t){ TPL_NAMES[t.id] = t.name; });
 var findByTpl = function(id) { return TEMPLATES.filter(function(t){ return t.id === id; })[0]; };
 
-/* 我的作品（H10 数据源） */
+/* 画风列表（V2.1 风格化：照片详情页选择画风，字段含提示词/生成数量，PC 画风管理页数据源） */
+var STYLES = [
+  { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, desc: '提亮光影氛围，画面更通透', prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', count: 6  },
+  { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, desc: '背景写意水墨质感，晕染虚化', prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', count: 4 },
+  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, desc: '清新水彩插画质感，画面更艺术', prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', count: 2 }
+];
+var findStyle = function(id) { return (STYLES || []).filter(function(s){ return s.id === id; })[0]; };
+
+/* 我的作品（H10 数据源）
+   字段：sourceWorkId(风格作品指向来源原图；原图为空)、styleId(画风id；原图为空) */
 var MY_WORKS = [
-  { no: 'FJDH-0328-01', tpl: 'shenghui', status: 'selected', time: '今天 10:21', num: 1 },
-  { no: 'FJDH-0328-02', tpl: 'fenjin', status: 'wait',     time: '今天 10:23', num: 2 },
-  { no: 'FJDH-0328-03', tpl: 'fenjin', status: 'skipped',  time: '今天 10:25', num: 3 }
+  { no: 'FJDH-0328-01', tpl: 'shenghui', status: 'selected', time: '今天 10:21', num: 1, sourceWorkId: '', styleId: '' },
+  { no: 'FJDH-0328-04', tpl: 'shenghui', status: 'notsub',   time: '今天 10:30', num: 4, sourceWorkId: 'FJDH-0328-01', styleId: 'shuimo' },
+  { no: 'FJDH-0328-02', tpl: 'fenjin',   status: 'wait',     time: '今天 10:23', num: 2, sourceWorkId: '', styleId: '' },
+  { no: 'FJDH-0328-03', tpl: 'fenjin',   status: 'notsub',   time: '今天 10:25', num: 3, sourceWorkId: '', styleId: '' }
 ];
 
 /* 精选照片墙（H09，不含姓名/微信信息） */
 var GALLERY = [
   { num: 'FJDH-0002', tpl: 'shenghui',  bg: 1 },
   { num: 'FJDH-0009', tpl: 'fenjin',  bg: 4 },
-  { num: 'FJDH-0015', tpl: 'shenghui', bg: 2 },
+  { num: 'FJDH-0015', tpl: 'shenghui', bg: 2, styleId: 'shuimo' },
   { num: 'FJDH-0021', tpl: 'fenjin',  bg: 5 },
   { num: 'FJDH-0033', tpl: 'shenghui', bg: 1 },
   { num: 'FJDH-0040', tpl: 'shenghui',  bg: 7 },
@@ -84,8 +94,38 @@ var state = {
   generationFail: null,
   curWork: null,
   wallWork: null,
-  visitFromWall: false
-};
+  visitFromWall: false,
+  /* V2.6 风格异步生成：生成中 + 待确认池（未读 seen 控制提醒红点） */
+  genStyleId: '',
+  pendingStyles: [],
+  curTabIdx: 0,
+    curGroup: []
+  };
+
+  /* ================= V2.6 待确认风格提醒（红点/发光） ================= */
+  function styleUnreadCount(srcNo) {
+    var list = state.pendingStyles || [];
+    if (srcNo) list = list.filter(function(p){ return p.srcNo === srcNo; });
+    return list.filter(function(p){ return !p.seen; }).length;
+  }
+  /* 更新全局提醒：首页「我的纪念照」红点、详情页「更多风格」红点+生成中发光 */
+  function updateStyleDots() {
+    var un = styleUnreadCount();
+    var dot = document.getElementById('home-mine-dot');
+    if (dot) { dot.style.display = un ? '' : 'none'; dot.textContent = un > 1 ? un : ''; }
+    var md = document.getElementById('more-style-dot');
+    if (md) {
+      var u2 = styleUnreadCount(currentRootNo());
+      md.style.display = u2 ? '' : 'none';
+      md.textContent = u2 > 1 ? u2 : '';
+    }
+    var mbtn = document.getElementById('more-style-btn');
+    if (mbtn) mbtn.classList.toggle('generating', !!state.genStyleId);
+  }
+  function refreshMineIfActive() {
+    var mine = document.getElementById('page-mine');
+    if (mine && mine.classList.contains('active')) renderMine();
+  }
 
 /* ================= 页面切换 ================= */
 var PAGE_STACK = ['home'];

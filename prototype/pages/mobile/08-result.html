@@ -3,7 +3,7 @@
   <div class="page-header">
     <button class="back-btn" onclick="onResultBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
     <h2>我的纪念作品</h2>
-    <span class="hdr-right" onclick="showPage('mine'); renderMine();">我的纪念</span>
+    <span class="hdr-right" onclick="goMineFromResult()">我的纪念</span>
   </div>
   <div class="page-body">
     <div class="result-hero">
@@ -11,39 +11,32 @@
         <div class="photo-bg"></div>
         <div class="photo-person" id="result-person"></div>
       </div>
-      <div class="result-number" id="result-number">第 328 号纪念档案 · FJDH-0328-01</div>
+      <div class="result-number" id="result-number">第 328 号纪念档案</div>
     </div>
-    <div class="result-info">
-      <div class="r-title" id="result-tpl-name"></div>
-      <div class="r-tip" id="result-tip"></div>
+    <!-- 更多风格入口（常驻；生成中发光，待确认红点） -->
+    <div class="more-style-entry">
+      <button class="more-style-btn" id="more-style-btn" onclick="openStyleSheet()"><i class="me-icon">✦</i>更多风格<i class="more-style-dot" id="more-style-dot" style="display:none"></i></button>
     </div>
-    <div class="result-actions">
-      <button class="ra-btn primary" onclick="saveResult()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存纪念照</button>
-      <div class="ra-secondary">
-        <span class="ra-link" onclick="retryCreate()">↻ 试试其他模板</span>
-        <span class="ra-link" onclick="goPhoto()">再拍一张</span>
-      </div>
+    <!-- 主操作区 -->
+    <div class="ra-actions">
+      <button class="ra-btn primary" id="btn-save" onclick="handleSaveClick()">保存本地</button>
+      <button class="ra-btn sub" id="btn-share" onclick="handleSecondClick()">分享上屏</button>
     </div>
-    <!-- 风采邀请区 -->
-    <div class="selection-box">
+    <div class="ra-secondary">
+      <span class="ra-link" onclick="retryCreate()">↻ 试试其他模板</span>
+      <span class="ra-link" onclick="goPhoto()">再拍一张</span>
+    </div>
+    <!-- 分享上屏说明（三态文案随状态） -->
+    <div class="selection-box" id="selection-box">
       <div class="sb-title" id="sb-title">把这份美好，留在现场</div>
       <div class="sb-desc" id="sb-desc">大会现场大屏将轮播参会者的风采瞬间。提交你的纪念照，就有机会与全体参会者分享这份美好。</div>
       <div class="sb-check" id="sb-check" onclick="toggleSbCheck()">
         <span class="ck-box" id="sb-ck-box">✓</span>
         <span>我同意将这张照片用于现场大屏展示</span>
       </div>
-      <button class="sb-btn disabled" id="sb-submit" onclick="submitSelection()">分享这份美好</button>
       <div class="sb-link" onclick="showPage('terms')">查看展示说明</div>
     </div>
   </div>
-
-  <!-- 保存长按弹层 -->
-  <div class="save-modal" id="save-modal">
-    <span class="sv-close" onclick="closeModal('save-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-    <div class="sv-photo" id="sv-photo"></div>
-    <div class="sv-tip">长按图片，选择“保存图片”</div>
-  </div>
-
 
   <!-- 风采提交成功弹层 -->
   <div class="submit-modal" id="submit-modal">
@@ -58,76 +51,244 @@
     </div>
   </div>
 
+  <!-- 更多风格弹层（生成 / 生成中 / 查看待确认） -->
+  <div class="st-mask" id="st-mask" style="display:none" onclick="closeStyleSheet()"></div>
+  <div class="st-sheet" id="st-sheet" style="display:none">
+    <div class="st-title">更多风格</div>
+    <div id="st-list"></div>
+  </div>
+
   <!-- 沉浸预览 -->
   <div class="full-photo" id="full-photo">
     <span class="fp-close" onclick="closeModal('full-photo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-    <div class="fp-img">
+    <div class="fp-img" id="fp-img">
       <div class="photo-bg"></div>
       <div class="photo-person"></div>
     </div>
   </div>
 </div>
 <script>
-/* ================= H08 作品结果 ================= */
-function renderResult() {
-  var t = findByTpl(state.curWork.tpl);
-  document.getElementById('result-number').textContent = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案 · ' + state.curWork.no;
+/* ================= H08 作品结果（V2.6：风格生成异步化 → 待确认池 + 确认卡；入口按钮状态动效） ================= */
+function findWorkByNo(no) { return (MY_WORKS||[]).filter(function(x){ return x.no === no; })[0]; }
+function getRootWork(w) { return (w && w.sourceWorkId) ? (findWorkByNo(w.sourceWorkId) || w) : w; }
+function findStyle(id) { return (STYLES||[]).filter(function(x){ return x.id === id; })[0]; }
+function findByTpl(id) { return (TEMPLATES||[]).filter(function(x){ return x.id === id; })[0] || { name: '', cap: 'A', id: id }; }
+function currentRootNo() {
+  var w = state.curWork;
+  return (w && w.sourceWorkId) ? w.sourceWorkId : (w ? w.no : '');
+}
+/* 可生成画风：同底片同画风已保存的不出现；待确认/生成中的在列表内（显示查看/生成中） */
+function availableStyles() {
+  if (!STYLES) return [];
+  var rootNo = currentRootNo();
+  var saved = {};
+  (MY_WORKS||[]).forEach(function(w){
+    if (w.styleId && ((rootNo && w.sourceWorkId === rootNo) || w.no === rootNo)) saved[w.styleId] = true;
+  });
+  return STYLES.filter(function(s){ return s.enabled && !saved[s.id]; });
+}
+function pendingOf(styleId) {
+  var list = state.pendingStyles || [];
+  for (var i = 0; i < list.length; i++) { if (list[i].styleId === styleId && list[i].srcNo === currentRootNo()) return i; }
+  return -1;
+}
+function styleBtnHtml(s) {
+  if (state.genStyleId === s.id) return '<span class="st-gen"><span class="gen-spin"></span>生成中…</span>';
+  if (pendingOf(s.id) >= 0) return '<button class="st-btn2" onclick="openStyleConfirm(' + pendingOf(s.id) + ')">查看</button>';
+  return '<button class="st-btn2" onclick="startStyleGen(\'' + s.id + '\')">生成</button>';
+}
+function openStyleSheet() {
+  var list = availableStyles();
+  var html = '';
+  list.forEach(function(s){
+    html += '<div class="st-item"><span class="st-thumb effect-' + s.id + '"><span class="photo-bg" data-tpl="' + state.curWork.tpl + '"></span><span class="photo-person"></span></span>' +
+      '<span class="st-info"><span class="st-name">' + s.name + '</span><span class="st-time">' + s.time + '</span>' +
+        (s.desc ? '<span class="st-desc">' + s.desc + '</span>' : '') + '</span>' +
+      '<span class="st-go">' + styleBtnHtml(s) + '</span></div>';
+  });
+  if (!html) html = '<div class="st-empty">本张照片的全部风格已生成</div>';
+  document.getElementById('st-list').innerHTML = html;
+  document.getElementById('st-mask').style.display = '';
+  document.getElementById('st-sheet').style.display = '';
+}
+function closeStyleSheet() {
+  document.getElementById('st-mask').style.display = 'none';
+  document.getElementById('st-sheet').style.display = 'none';
+}
+/* ---- 风格生成：异步任务（原型 3s 模拟），完成入待确认池；一次一个 ---- */
+function startStyleGen(styleId) {
+  if (state.genStyleId) { toast('已有风格生成中，请稍后'); return; }
+  var s = findStyle(styleId);
+  if (!s) return;
+  var rootNo = currentRootNo();
+  toast(s.name + ' 生成中，完成后可在「更多风格」或我的纪念查看');
+  state.genStyleId = styleId;
+  updateStyleDots();
+  openStyleSheet(); /* 弹窗保持打开，该项按钮立刻变为“生成中…” */
+  setTimeout(function(){
+    if (state.genStyleId !== styleId) return;
+    state.genStyleId = '';
+    state.pendingStyles.push({ styleId: styleId, tpl: state.curWork.tpl, srcNo: rootNo, seen: false });
+    toast(s.name + ' 已生成，请确认保存');
+    updateStyleDots();
+    refreshMineIfActive();
+    openStyleSheetIfOpen();
+  }, 3000);
+}
+function openStyleSheetIfOpen() {
+  var sh = document.getElementById('st-sheet');
+  if (sh && sh.style.display !== 'none') openStyleSheet();
+}
+/* ---- 确认卡（查看待确认风格） ---- */
+var CK_IDX = -1;
+function openStyleConfirm(idx) {
+  var list = state.pendingStyles || [];
+  if (idx < 0 || idx >= list.length) return;
+  CK_IDX = idx;
+  var p = list[idx];
+  p.seen = true;
+  updateStyleDots();
+  var s = findStyle(p.styleId) || {};
+  var hero = document.getElementById('ck-hero');
+  ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+  hero.classList.add('effect-' + p.styleId);
+  hero.querySelector('.photo-bg').setAttribute('data-tpl', p.tpl);
+  document.getElementById('ck-name').textContent = s.name || p.styleId;
+  document.getElementById('ck-mask').style.display = '';
+  document.getElementById('ck-sheet').style.display = '';
+}
+function closeStyleConfirm() {
+  document.getElementById('ck-mask').style.display = 'none';
+  document.getElementById('ck-sheet').style.display = 'none';
+}
+function savePendingStyle() {
+  var list = state.pendingStyles || [];
+  if (CK_IDX < 0 || CK_IDX >= list.length) return;
+  var p = list[CK_IDX];
+  var s = findStyle(p.styleId) || {};
+  var root = findWorkByNo(p.srcNo);
+  var nextNum = 1;
+  (MY_WORKS||[]).forEach(function(x){ if ((x.num||1) > nextNum) nextNum = x.num; });
+  nextNum += 1;
+  var work = {
+    no: 'FJDH-0328-' + (nextNum < 10 ? '0' : '') + nextNum,
+    tpl: p.tpl, status: 'notsub', time: '刚刚', num: nextNum,
+    sourceWorkId: p.srcNo, styleId: p.styleId, 'new': true
+  };
+  MY_WORKS.push(work);
+  list.splice(CK_IDX, 1);
+  CK_IDX = -1;
+  toast((s.name || '风格') + ' 已保存到我的纪念');
+  closeStyleConfirm();
+  updateStyleDots();
+  state.curWork = work;
+  renderResult();
+}
+function regenPendingStyle() {
+  var list = state.pendingStyles || [];
+  if (CK_IDX < 0 || CK_IDX >= list.length) return;
+  var p = list[CK_IDX];
+  var s = findStyle(p.styleId) || {};
+  if (state.genStyleId) { toast('已有风格生成中，请稍后'); return; }
+  list.splice(CK_IDX, 1);
+  CK_IDX = -1;
+  toast((s.name || '风格') + ' 重新生成中');
+  state.genStyleId = p.styleId;
+  closeStyleConfirm();
+  updateStyleDots();
+  setTimeout(function(){
+    if (state.genStyleId !== p.styleId) return;
+    state.genStyleId = '';
+    state.pendingStyles.push({ styleId: p.styleId, tpl: p.tpl, srcNo: p.srcNo, seen: false });
+    toast((s.name || '风格') + ' 已重新生成，请确认');
+    updateStyleDots();
+    refreshMineIfActive();
+  }, 3000);
+}
+function dropPendingStyle() {
+  var list = state.pendingStyles || [];
+  if (CK_IDX < 0 || CK_IDX >= list.length) return;
+  var p = list.splice(CK_IDX, 1)[0];
+  CK_IDX = -1;
+  closeStyleConfirm();
+  updateStyleDots();
+  toast('已放弃该风格照');
+}
+/* ---- 渲染当前作品（正式态） ---- */
+function renderWork() {
+  var w = state.curWork;
+  if (!w) return;
+  var t = findByTpl(w.tpl);
   var photo = document.getElementById('result-photo');
+  ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ photo.classList.remove(c); });
+  if (w.styleId) photo.classList.add('effect-' + w.styleId);
   photo.querySelector('.photo-bg').setAttribute('data-tpl', t.id);
-  document.getElementById('result-tpl-name').textContent = t.name;
-  document.getElementById('result-tip').textContent = CAPABILITIES[t.cap].desc;
-  state.sbChecked = false;
-  document.getElementById('sb-check').classList.remove('checked');
-  document.getElementById('sb-submit').className = 'sb-btn disabled';
-  var st = t;
-  var workStatus = state.curWork.status || 'notsub';
-  var sbTitle = document.getElementById('sb-title');
-  if (workStatus === 'selected') {
-    sbTitle.textContent = '正在展示';
-    document.getElementById('sb-desc').textContent = '你的风采正在现场与参会者相遇。';
-    document.getElementById('sb-check').style.display = 'none';
-    document.getElementById('sb-submit').style.display = 'none';
-  } else if (workStatus === 'wait') {
-    sbTitle.textContent = '已提交，等待上屏';
-    document.getElementById('sb-desc').textContent = '工作人员确认后，你的风采就有机会与现场参会者相遇，你可以在「我的纪念」查看状态。';
-    document.getElementById('sb-check').style.display = 'none';
-    document.getElementById('sb-submit').style.display = 'none';
+  var numEl = document.getElementById('result-number');
+  if (w.styleId) {
+    var sn = (findStyle(w.styleId) || {}).name || w.styleId;
+    numEl.textContent = sn;
   } else {
-    sbTitle.textContent = '把这份美好，留在现场';
-    document.getElementById('sb-desc').textContent = '大会现场大屏将轮播参会者的风采瞬间。提交你的纪念照，就有机会与全体参会者分享这份美好。';
-    document.getElementById('sb-check').style.display = '';
-    document.getElementById('sb-submit').style.display = '';
+    numEl.textContent = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案';
   }
+  var st = w.status || '';
+  var sv = document.getElementById('btn-save');
+  var sh = document.getElementById('btn-share');
+  sv.textContent = '保存本地'; sv.disabled = false;
+  if (st === 'selected') { sh.textContent = '正在展示'; sh.disabled = true; }
+  else if (st === 'wait') { sh.textContent = '等待上屏'; sh.disabled = true; }
+  else { sh.textContent = '分享上屏'; sh.disabled = false; }
+  // 三态说明（PRD H08）
+  var title = '把这份美好，留在现场';
+  var desc = '大会现场大屏将轮播参会者的风采瞬间。提交你的纪念照，就有机会与全体参会者分享这份美好。';
+  var showCheck = true;
+  if (st === 'wait') { title = '已提交，等待上屏'; desc = '工作人员确认后，你的风采就有机会与现场参会者相遇，你可以在“我的纪念”查看状态。'; showCheck = false; }
+  else if (st === 'selected') { title = '正在展示'; desc = '你的风采正在现场与参会者相遇。'; showCheck = false; }
+  document.getElementById('sb-title').textContent = title;
+  document.getElementById('sb-desc').textContent = desc;
+  document.getElementById('sb-check').style.display = showCheck ? '' : 'none';
+  document.getElementById('selection-box').style.display = '';
+  updateStyleDots();
+}
+function renderResult(fromGen) {
+  renderWork();
   showPage('result');
-  toast('纪念作品生成完成');
+  if (fromGen) toast('纪念作品生成完成');
 }
-function openFullPhoto() {
-  var t = findByTpl(state.curWork.tpl);
-  var fp = document.getElementById('full-photo');
-  fp.querySelector('.fp-img .photo-bg').setAttribute('data-tpl', t.id);
-  fp.classList.add('show');
-}
-function saveResult() {
-  var t = findByTpl(state.curWork.tpl);
-  var sv = document.getElementById('sv-photo');
-  sv.innerHTML = '<div class="photo-bg" data-tpl="' + t.id + '"></div><div class="photo-person" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:58%;aspect-ratio:3/4;border-radius:8px;z-index:2;box-shadow:0 4px 20px rgba(0,0,0,0.3)"></div>';
-  document.getElementById('save-modal').classList.add('show');
+/* ---- 按钮分发 ---- */
+function handleSaveClick() { saveToLocal(); }
+function handleSecondClick() { shareToScreen(); }
+function saveToLocal() { toast('已保存'); }
+function resetCheckBox() {
+  var box = document.getElementById('sb-check');
+  box.classList.remove('checked');
+  box.querySelector('.ck-box').textContent = '✓';
 }
 function toggleSbCheck() {
   var wrap = document.getElementById('sb-check');
-  var btn = document.getElementById('sb-submit');
   wrap.classList.toggle('checked');
   state.sbChecked = wrap.classList.contains('checked');
-  btn.className = 'sb-btn' + (state.sbChecked ? '' : ' disabled');
 }
-function submitSelection() {
+function shareToScreen() {
+  var w = state.curWork;
+  if (!w || w.status === 'selected' || w.status === 'wait') return;
   if (!state.sbChecked) { toast('请先勾选同意展示授权', '⚠️'); return; }
-  if (state.curWork) state.curWork.status = 'wait';
+  w.status = 'wait';
   document.getElementById('submit-modal').classList.add('show');
+  renderWork();
 }
 function closeSubmitGoMine() {
   document.getElementById('submit-modal').classList.remove('show');
   showPage('mine'); renderMine();
+}
+function goMineFromResult() { showPage('mine'); renderMine(); }
+/* ---- 沉浸预览 ---- */
+function openFullPhoto() {
+  var t = findByTpl(state.curWork.tpl);
+  var fp = document.getElementById('fp-img');
+  ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ fp.classList.remove(c); });
+  if (state.curWork.styleId) fp.classList.add('effect-' + state.curWork.styleId);
+  fp.querySelector('.photo-bg').setAttribute('data-tpl', t.id);
+  document.getElementById('full-photo').classList.add('show');
 }
 function retryCreate() { goTemplates(); }
 function onResultBack() { goHome(); }

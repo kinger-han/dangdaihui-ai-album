@@ -128,6 +128,9 @@ body {
 .entry-btn.primary { background: linear-gradient(135deg, #7A1712, #B42318); color: #fff; box-shadow: 0 6px 16px rgba(180,35,24,0.28); min-height: 50px; }
 .entry-btn.ghost { background: #fff; color: var(--red-deep); border: 1.5px solid var(--red); margin-top: 12px; }
 .entry-btn.soft { background: #FAF6ED; color: var(--ink); border: 1px solid var(--line); margin-top: 12px; }
+/* 首页入口红点（待确认风格提醒） */
+.entry-btn { position: relative; }
+.entry-dot { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #C0362C; color: #fff; font-size: 10px; font-style: normal; line-height: 16px; text-align: center; animation: dotPulse 1.6s ease-in-out infinite; }
 .cap-chip-row { display: flex; gap: 8px; padding: 14px 24px 0; }
 .cap-chip {
   flex: 1; text-align: center; font-size: 11px; color: var(--gray);
@@ -502,6 +505,82 @@ body {
 .result-info { padding: 14px 20px 0; }
 .result-info .r-title { font-size: 16px; font-weight: 700; color: var(--ink); text-align: center; }
 .result-info .r-tip { font-size: 12px; color: var(--gray); text-align: center; margin-top: 4px; }
+/* ===== V2.1 风格化：画风滤镜 + 双主按钮 + 更多风格弹层 ===== */
+/* 画风滤镜示意（原型占位人物图 + 模板背景） */
+.effect-guangying .photo-bg, .effect-guangying .photo-person { filter: brightness(1.08) contrast(1.06); }
+.effect-shuimo    .photo-bg, .effect-shuimo    .photo-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
+.effect-shouhui  .photo-bg, .effect-shouhui  .photo-person { filter: saturate(0.45) contrast(1.12); }
+/* 双主按钮并列 */
+.ra-actions { display: flex; gap: 10px; padding: 14px 20px 4px; }
+.ra-actions .ra-btn { flex: 1; margin-bottom: 0; }
+.ra-actions .ra-btn.sub { background: #fff; border: 1.5px solid var(--red); color: var(--red-deep); box-shadow: none; }
+.ra-actions .ra-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+/* 加风格弹层（未生成风格轻量选择） */
+.st-mask { position: absolute; inset: 0; z-index: 96; background: rgba(0,0,0,0.35); }
+.st-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 97; background: #fff; border-radius: 14px 14px 0 0; box-shadow: 0 -6px 30px rgba(0,0,0,0.18); padding: 18px 18px 26px; }
+.st-sheet .st-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+.st-sheet .st-item { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; background: #fff; cursor: pointer; }
+.st-sheet .st-item:last-child { margin-bottom: 0; }
+.st-sheet .st-thumb { width: 52px; height: 68px; border-radius: 6px; overflow: hidden; position: relative; flex-shrink: 0; background: linear-gradient(140deg,#7A1712,#B42318); }
+.st-sheet .st-thumb .photo-bg { position: absolute; inset: 0; }
+.st-sheet .st-thumb .photo-person { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 55%; aspect-ratio: 3/4; border-radius: 4px; z-index: 2; background: linear-gradient(135deg,#F5D0A9,#D9A066); border: 1px solid rgba(255,255,255,0.7); }
+.st-sheet .st-thumb.effect-guangying { filter: brightness(1.08) contrast(1.06); }
+.st-sheet .st-thumb.effect-shuimo { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
+.st-sheet .st-thumb.effect-shouhui { filter: saturate(0.45) contrast(1.12); }
+.st-sheet .st-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.st-sheet .st-name { font-size: 14px; color: var(--ink); font-weight: 600; }
+.st-sheet .st-time { font-size: 11px; color: var(--gold-deep); margin-top: 2px; }
+.st-sheet .st-desc { font-size: 12px; color: var(--gray); margin-top: 4px; line-height: 1.5; }
+.st-sheet .st-go { font-size: 13px; color: var(--red); font-weight: 600; flex-shrink: 0; }
+.st-sheet .st-btn2 { height: 28px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--red); background: #fff; color: var(--red-deep); font-size: 12px; cursor: pointer; }
+.st-sheet .st-btn2:active { background: #FBEEEB; }
+.st-sheet .st-gen { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray); }
+.st-sheet .st-empty { text-align: center; padding: 34px 0; color: var(--gray); font-size: 13px; }
+.gen-spin { display: inline-block; width: 10px; height: 10px; border: 1.5px solid rgba(180,35,24,0.35); border-top-color: var(--red); border-radius: 50%; animation: raSpin 0.8s linear infinite; vertical-align: -1px; }
+@keyframes raSpin { to { transform: rotate(360deg); } }
+/* 更多风格入口（编号下方 / 操作区上方，常驻亮点；生成中发光 + 待确认红点） */
+.more-style-entry { margin: 8px 20px 0; text-align: center; }
+.more-style-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border: 1px dashed var(--gold); border-radius: 20px; background: #fff; color: var(--red-deep); font-size: 13px; cursor: pointer; }
+.more-style-btn:active { background: #FBEEEB; }
+.more-style-btn .me-icon { color: var(--gold); font-size: 12px; }
+.more-style-btn.generating { border-color: var(--gold); border-style: solid; animation: glowGold 1.8s ease-in-out infinite; }
+.more-style-btn.generating .me-icon { animation: twinkleGold 1.8s ease-in-out infinite; }
+.more-style-dot { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #C0362C; color: #fff; font-size: 10px; line-height: 16px; text-align: center; animation: dotPulse 1.6s ease-in-out infinite; }
+@keyframes glowGold {
+  0%, 100% { box-shadow: 0 0 5px rgba(200,155,60,0.30); }
+  50% { box-shadow: 0 0 15px rgba(200,155,60,0.80); }
+}
+@keyframes twinkleGold { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes dotPulse { 0%, 100% { box-shadow: 0 0 0 rgba(192,54,44,0); } 50% { box-shadow: 0 0 6px rgba(192,54,44,0.55); } }
+/* 待确认区（我的纪念顶部） */
+.mine-pending { margin: 12px 0 4px; padding: 12px; background: #FDF6E3; border: 1px solid #EADFC4; border-radius: 10px; }
+.mine-pending .mp-title { font-size: 13px; font-weight: 600; color: var(--red-deep); margin-bottom: 8px; }
+.mine-pending .mp-new { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; background: var(--red); color: #fff; font-size: 10px; vertical-align: 1px; }
+.mine-pending .mp-card { position: relative; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+.mine-pending .mp-card:last-child { margin-bottom: 0; }
+.mine-pending .mp-card.seen { opacity: 0.82; }
+.mine-pending .mp-thumb { position: relative; width: 40px; height: 52px; border-radius: 5px; overflow: hidden; background: linear-gradient(140deg,#7A1712,#B42318); flex-shrink: 0; }
+.mine-pending .mp-thumb .photo-bg { position: absolute; inset: 0; }
+.mine-pending .mp-thumb .photo-person { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 55%; aspect-ratio: 3/4; border-radius: 3px; z-index: 2; background: linear-gradient(135deg,#F5D0A9,#D9A066); }
+.mine-pending .mp-info { flex: 1; min-width: 0; }
+.mine-pending .mp-name { font-size: 13px; color: var(--ink); font-weight: 600; }
+.mine-pending .mp-sub { font-size: 11px; color: var(--gray); margin-top: 2px; }
+.mine-pending .mp-unread { position: absolute; top: 5px; left: 5px; width: 8px; height: 8px; border-radius: 50%; background: #C0362C; animation: dotPulse 1.6s ease-in-out infinite; }
+.mine-pending .mp-go { font-size: 12px; color: var(--red); font-weight: 600; flex-shrink: 0; }
+.mine-pending .mp-card.gen { cursor: default; box-shadow: none; }
+.mine-pending .mp-card.gen .mp-sub { color: var(--red-deep); }
+.mine-pending .mp-go.gen { color: var(--gray); font-weight: 400; display: inline-flex; align-items: center; gap: 5px; }
+/* 确认卡（待确认风格） */
+.ck-sheet { text-align: center; padding-bottom: 22px; }
+.ck-hero { position: relative; width: 150px; height: 200px; margin: 4px auto 10px; border-radius: 10px; overflow: hidden; background: linear-gradient(140deg,#7A1712,#B42318); box-shadow: 0 8px 24px rgba(0,0,0,0.16); }
+.ck-hero .photo-bg { position: absolute; inset: 0; }
+.ck-hero .photo-person { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 55%; aspect-ratio: 3/4; border-radius: 6px; z-index: 2; background: linear-gradient(135deg,#F5D0A9,#D9A066); }
+.ck-name { font-size: 16px; font-weight: 700; color: var(--ink); }
+.ck-desc { font-size: 12px; color: var(--gray); margin: 6px auto 14px; line-height: 1.6; padding: 0 8px; }
+.ck-actions { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.ck-actions .ra-btn { margin: 0; }
+.ck-drop { display: block; text-align: center; font-size: 12px; color: var(--gray); padding: 8px 0 2px; cursor: pointer; }
+.mine-card .mc-style-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 8px; background: #FBEEEB; color: var(--red-deep); font-size: 10px; vertical-align: 2px; }
 .result-actions { padding: 14px 20px 8px; }
 .ra-btn {
   width: 100%; min-height: 48px; padding: 12px; border-radius: 8px; border: none;
@@ -606,9 +685,13 @@ body {
 .wall-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px 14px 20px; background: #F6F2EA; }
 .wall-item { aspect-ratio: 3/4; position: relative; overflow: hidden; cursor: pointer; border-radius: 8px; }
 .wall-item .wall-bg { position: absolute; inset: 0; }
-.wall-item .wall-num {
-  position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.5);
-  color: #fff; font-size: 9px; border-radius: 4px; padding: 1px 5px; z-index: 2;
+.wall-item .wall-style-tag {
+  position: absolute; right: 6px; bottom: 6px; background: rgba(20,20,20,0.55);
+  color: #EAC866; font-size: 10px; border-radius: 10px; padding: 2px 8px; z-index: 3;
+}
+.wall-detail .wd-style-tag {
+  position: absolute; right: 10px; bottom: 10px; background: rgba(20,20,20,0.55);
+  color: #EAC866; font-size: 12px; border-radius: 12px; padding: 3px 10px; z-index: 3;
 }
 .wall-bg.wb-1 { background: linear-gradient(150deg, #B42318, #7A1712); }
 .wall-bg.wb-2 { background: linear-gradient(160deg, #7A1712, #B8860B); }
@@ -673,6 +756,7 @@ body {
 .mc-progress .bar { width: 40px; height: 4px; border-radius: 2px; background: #EDE4D0; overflow: hidden; position: relative; }
 .mc-progress .bar::after { content: ''; position: absolute; inset: 0; width: 60%; background: var(--warn); border-radius: 2px; animation: pulse 1.6s infinite; }
 .mine-card .mc-photo.processing { opacity: 0.85; }
+/* ===== V2.1 我的纪念单作品卡（风格作品带画风小标） ===== */
 .mine-empty { text-align: center; padding: 60px 20px; color: var(--gray); }
 .mine-empty .big { font-size: 38px; margin-bottom: 12px; }
 .mine-empty p { font-size: 13px; }
@@ -865,6 +949,19 @@ body {
       </div>
       <div class="toast" id="toast"><span class="t-icon" id="toast-icon"></span><span id="toast-text"></span></div>
       <div class="home-indicator"></div>
+    <!-- 全局待确认确认卡（V2.6：fixed 层脱离 .page，任何页面可打开） -->
+        <div class="st-mask" id="ck-mask" style="display:none" onclick="closeStyleConfirm()"></div>
+        <div class="st-sheet ck-sheet" id="ck-sheet" style="display:none">
+          <div class="st-title">确认风格照</div>
+          <div class="ck-hero" id="ck-hero"><div class="photo-bg"></div><div class="photo-person"></div></div>
+          <div class="ck-name" id="ck-name"></div>
+          <div class="ck-desc" id="ck-desc">风格照已生成，确认后保存到我的纪念；不满意可重新生成或放弃。</div>
+          <div class="ck-actions">
+            <button class="ra-btn primary" onclick="savePendingStyle()">保存到纪念照</button>
+            <button class="ra-btn sub" onclick="regenPendingStyle()">重新生成</button>
+            <span class="ck-drop" onclick="dropPendingStyle()">放弃这张风格照</span>
+          </div>
+        </div>
     </div>
     <button class="demo-fab" onclick="toggleDemoMenu()">演示</button>
     <div class="demo-menu" id="demo-menu">
@@ -923,8 +1020,9 @@ body {
       startGenerate();
     }
   </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
       window.PLATFORM = 'mobile';
       ProtoRouter.init('{{DEFAULT_PAGE}}');
     });

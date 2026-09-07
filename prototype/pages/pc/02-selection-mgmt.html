@@ -16,6 +16,10 @@
       background: linear-gradient(135deg, #F5D0A9, #D9A066);
       border: 1.5px solid rgba(255,255,255,0.8);
     }
+    /* V2.1 画风衍生缩略滤镜 */
+    .sel-thumb.effect-guangying .pt-bg, .sel-thumb.effect-guangying .pt-person { filter: brightness(1.08) contrast(1.06); }
+    .sel-thumb.effect-shuimo    .pt-bg, .sel-thumb.effect-shuimo    .pt-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
+    .sel-thumb.effect-shouhui  .pt-bg, .sel-thumb.effect-shouhui  .pt-person { filter: saturate(0.45) contrast(1.12); }
     .td-check { width: 36px; }
     /* 选中行高亮蓝色底 */
     .sel-tbl tbody tr.row-selected { background: #e6f4ff; }
@@ -114,6 +118,7 @@
           <th class="thumb-cell">纪念照</th>
           <th>编号</th>
           <th>模板</th>
+          <th>成像风格</th>
           <th>微信号</th>
           <th>上屏状态</th>
           <th>上屏时间</th>
@@ -158,9 +163,18 @@
 
 <script>
 /* ================= 申请上屏（用户已授权同意上屏） ================= */
+if (!window.__STYLE_LIST) {
+  window.__STYLE_LIST = [
+    { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '', count: 6 },
+    { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '', count: 4 },
+    { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '', count: 2 }
+  ];
+}
+function _sSelName(id) { var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; return s ? s.name : id; }
 var SEL_LIST = [
   { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', time: '09-30 10:21', on: true,  onTime: '09-30 10:21', offTime: null },
   { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', time: '09-30 09:12', on: true,  onTime: '09-30 09:12', offTime: null },
+  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo', time: '09-30 09:26', on: false, onTime: null, offTime: null },
   { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', time: '09-30 09:20', on: true,  onTime: '09-30 09:20', offTime: null },
   { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', time: '09-30 09:31', on: false, onTime: null, offTime: null },
   { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', time: '09-30 09:44', on: false, onTime: null, offTime: null },
@@ -175,6 +189,8 @@ var CURRENT_DEVICE_NO = null;   /* 上屏操作目标 */
 var CURRENT_DEVICE_MODE = 'single'; /* single / batch */
 
 function selTplBg(no) {
+  var p = (SEL_LIST||[]).filter(function(x){ return x.no === no; })[0];
+  if (p && p.sourceWorkId) return selTplBg(p.sourceWorkId);
   var n = parseInt(no.replace(/\D/g, ''), 10) || 1;
   return (n % 8) + 1;
 }
@@ -202,12 +218,17 @@ function renderSelTable() {
     var bg = selTplBg(p.no);
     var checked = SEL_SELECTED[p.no] ? ' checked' : '';
     var rowCls = SEL_SELECTED[p.no] ? ' class="row-selected"' : '';
+    var eff = p.styleId ? (' effect-' + p.styleId) : '';
+    var styleTd = p.styleId
+      ? '<td><span style="display:inline-block;padding:0 6px;font-size:11px;color:#8a641e;background:#fdf6e3;border:1px solid #eadfc4;border-radius:3px">' + _sSelName(p.styleId) + '</span></td>'
+      : '<td><span style="display:inline-block;padding:0 6px;font-size:11px;color:#1677ff;background:#e6f4ff;border:1px solid #91caff;border-radius:3px">原图</span></td>';
     html += '<tr' + rowCls + '>' +
       '<td class="td-check"><input type="checkbox" class="sel-row-check" data-no="' + p.no + '"' + checked + ' onclick="onSelRowCheck(this)"></td>' +
-      '<td><span class="sel-thumb" onclick="openSelPreview(\'' + p.no + '\')">' +
+      '<td><span class="sel-thumb' + eff + '" onclick="openSelPreview(\'' + p.no + '\')">' +
         '<span class="pt-bg wb-' + bg + '"></span><span class="pt-person"></span></span></td>' +
       '<td>' + p.no + '</td>' +
       '<td>' + p.tpl + '</td>' +
+      styleTd +
       '<td>' + p.wx + '</td>' +
       '<td>' + (p.on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">正在展示</span>'
                     : '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>') + '</td>' +
@@ -219,7 +240,7 @@ function renderSelTable() {
       '</tr>';
   });
   if (!list.length) {
-    html = '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+    html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
   }
   tbody.innerHTML = html;
   updateBatchBtns();
@@ -359,12 +380,16 @@ function selResetFilter() {
 function selBuildDetails() {
   if (!window.__PHOTO_DETAILS) window.__PHOTO_DETAILS = {};
   SEL_LIST.forEach(function(p) {
+    var root = p;
+    if (p.sourceWorkId) { var r = SEL_LIST.filter(function(x){ return x.no === p.sourceWorkId; })[0]; if (r) root = r; }
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen || '—',
       status: p.on ? 'selected' : 'wait', time: p.time || '—',
       onTime: p.onTime || (p.on ? p.onTime : null),
       offTime: p.offTime || null,
-      bg: ((p.no.length + 3) % 8) + 1
+      sourceWorkId: p.sourceWorkId || '',
+      styleId: p.styleId || '',
+      bg: ((root.no.length + 3) % 8) + 1
     };
   });
 }

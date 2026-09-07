@@ -11,44 +11,78 @@
       <div class="mh-sub" id="mh-sub">访客编号 FJDH-0328</div>
       <div class="mh-count" id="mh-count">共 0 张作品</div>
     </div>
+    <div id="mine-pending"></div>
     <div id="mine-list" class="mine-list"></div>
   </div>
 </div>
 <script>
-/* ================= H10 我的纪念 ================= */
+/* ================= H10 我的纪念（V2.5：单作品一卡，风格作品加画风小标） ================= */
+function _sName(id) { var s = findStyle ? findStyle(id) : null; return (s && s.name) ? s.name : id; }
+function statusPill(s) {
+  if (s === 'selected') return '<span class="status-pill on">● 正在展示</span>';
+  if (s === 'wait')    return '<span class="status-pill wait">● 等待上屏</span>';
+  return '<span class="status-pill off">○ 暂未分享</span>';
+}
 function renderMine() {
   document.getElementById('mh-no').textContent = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案';
   document.getElementById('mh-sub').textContent = '访客编号 FJDH-0328';
   document.getElementById('mh-count').textContent = '共 ' + MY_WORKS.length + ' 张作品';
+  /* 风格生成区（V2.6：生成中 + 已生成待确认 全部展示；查看后红点消失但仍可确认） */
+  var pendEl = document.getElementById('mine-pending');
+  var pendHtml = '';
+  var pends = state.pendingStyles || [];
+  var hasGen = !!state.genStyleId;
+  if (hasGen || pends.length) {
+    var un = pends.filter(function(p){ return !p.seen; }).length;
+    pendHtml = '<div class="mine-pending"><div class="mp-title">风格照生成' + (un ? ' <span class="mp-new">' + un + ' 条待确认</span>' : '') + '</div>';
+    if (hasGen) {
+      var g = _sName(state.genStyleId);
+      pendHtml += '<div class="mp-card gen">' +
+        '<span class="mp-thumb effect-' + state.genStyleId + '"><span class="photo-bg" data-tpl="' + state.curWork.tpl + '"></span><span class="photo-person"></span></span>' +
+        '<span class="mp-info"><span class="mp-name">' + g + '</span><span class="mp-sub">生成中，完成后需确认保存</span></span>' +
+        '<span class="mp-go gen"><span class="gen-spin"></span>生成中…</span></div>';
+    }
+    pends.forEach(function(p, i) {
+      var s = _sName(p.styleId);
+      pendHtml += '<div class="mp-card' + (p.seen ? ' seen' : '') + '" onclick="openStyleConfirm(' + i + ')">' +
+        '<span class="mp-thumb effect-' + p.styleId + '"><span class="photo-bg" data-tpl="' + p.tpl + '"></span><span class="photo-person"></span></span>' +
+        '<span class="mp-info"><span class="mp-name">' + s + '</span><span class="mp-sub">第 ' + ACTIVITY.archiveIndex + ' 号纪念档案</span></span>' +
+        (p.seen ? '' : '<i class="mp-unread"></i>') +
+        '<span class="mp-go">查看</span></div>';
+    });
+    pendHtml += '</div>';
+  }
+  pendEl.innerHTML = pendHtml;
   var list = document.getElementById('mine-list');
   if (MY_WORKS.length === 0) {
     list.innerHTML = '<div class="mine-empty"><div class="big"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg></div><p>还没有生成纪念作品</p><p><button class="gen-btn" onclick="goTemplates()">创作第一张纪念照</button></p></div>';
     return;
   }
   var html = '';
-  MY_WORKS.forEach(function(w, i) {
+  (MY_WORKS||[]).forEach(function(w) {
     var t = findByTpl(w.tpl);
-    var pill = statusPill(w.status);
-    html += '<div class="mine-card" data-num="' + w.no + '" onclick="openWorkFromMine(' + i + ')">' +
-      '<div class="mc-photo"><div class="photo-bg" data-tpl="' + w.tpl + '"></div><div class="photo-person"></div></div>' +
+    var styleTag = w.styleId ? '<span class="mc-style-tag">' + _sName(w.styleId) + '</span>' : '';
+    var eff = w.styleId ? ' effect-' + w.styleId : '';
+    html += '<div class="mine-card" onclick="openWorkByNo(\'' + w.no + '\')">' +
+      '<div class="mc-photo' + eff + '"><div class="photo-bg" data-tpl="' + w.tpl + '"></div><div class="photo-person"></div></div>' +
       '<div class="mc-info">' +
-        '<div class="mc-tpl">' + t.name + '</div>' +
-        '<div class="mc-num">' + w.no + ' · ' + w.time + '</div>' +
-        '<div class="mc-status">' + pill +
-        '</div>' +
+        '<div class="mc-tpl">' + t.name + styleTag + '</div>' +
+        '<div class="mc-num">' + w.time + '</div>' +
+        '<div class="mc-status">' + statusPill(w.status) + '</div>' +
       '</div>' +
       '</div>';
   });
   list.innerHTML = html;
 }
-function statusPill(s) {
-  if (s === 'selected') return '<span class="status-pill on">● 正在展示</span>';
-  if (s === 'wait')    return '<span class="status-pill wait">● 等待上屏</span>';
-  return '<span class="status-pill off">○ 暂未分享</span>';
-}
-function openWorkFromMine(idx) {
-  var w = MY_WORKS[idx];
+/* 打开作品：进入详情默认展示该作品本身（进入即该作品详情） */
+function openWorkByNo(no) {
+  var w = (MY_WORKS||[]).filter(function(x){ return x.no === no; })[0];
+  if (!w) return;
   state.curWork = w;
   renderResult();
+}
+function openWorkFromMine(idx) {
+  var w = (MY_WORKS||[])[idx];
+  if (w) { state.curWork = w; renderResult(); }
 }
 </script>
