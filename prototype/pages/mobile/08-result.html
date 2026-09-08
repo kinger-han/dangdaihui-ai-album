@@ -80,21 +80,34 @@ function currentRootNo() {
 /* 可生成画风：同底片同画风已保存的不出现；待确认/生成中的在列表内（显示查看/生成中） */
 function availableStyles() {
   if (!STYLES) return [];
-  var rootNo = currentRootNo();
-  var saved = {};
-  (MY_WORKS||[]).forEach(function(w){
-    if (w.styleId && ((rootNo && w.sourceWorkId === rootNo) || w.no === rootNo)) saved[w.styleId] = true;
-  });
-  return STYLES.filter(function(s){ return s.enabled && !saved[s.id]; });
+  return STYLES.filter(function(s){ return s.enabled !== false; });
 }
 function pendingOf(styleId) {
   var list = state.pendingStyles || [];
   for (var i = 0; i < list.length; i++) { if (list[i].styleId === styleId && list[i].srcNo === currentRootNo()) return i; }
   return -1;
 }
+function savedStyleWork(styleId) {
+  var rootNo = currentRootNo();
+  var list = MY_WORKS || [];
+  for (var i = 0; i < list.length; i++) {
+    var w = list[i];
+    if (w.styleId === styleId && w.sourceWorkId === rootNo) return w;
+  }
+  return null;
+}
+/* 已保存风格照：跳到该作品详情页（原地刷新详情） */
+function viewSavedStyle(no) {
+  closeStyleSheet();
+  var list = MY_WORKS || [];
+  for (var i = 0; i < list.length; i++) { if (list[i].no === no) { state.curWork = list[i]; renderWork(); return; } }
+}
 function styleBtnHtml(s) {
   if (state.genStyleId === s.id) return '<span class="st-gen"><span class="gen-spin"></span>生成中…</span>';
-  if (pendingOf(s.id) >= 0) return '<button class="st-btn2" onclick="openStyleConfirm(' + pendingOf(s.id) + ')">查看</button>';
+  var pf = pendingOf(s.id);
+  if (pf >= 0) return '<button class="st-btn2" onclick="openStyleConfirm(' + pf + ')">待确认</button>';
+  var saved = savedStyleWork(s.id);
+  if (saved) return '<button class="st-btn2 view" onclick="viewSavedStyle(\'' + saved.no + '\')">查看</button>';
   return '<button class="st-btn2" onclick="startStyleGen(\'' + s.id + '\')">生成</button>';
 }
 function openStyleSheet() {
