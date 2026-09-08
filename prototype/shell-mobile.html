@@ -542,6 +542,11 @@ body {
 /* 更多风格入口（编号下方 / 操作区上方，常驻亮点；生成中发光 + 待确认红点） */
 .more-style-entry { margin: 8px 20px 0; text-align: center; }
 .more-style-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border: 1px dashed var(--gold); border-radius: 20px; background: #fff; color: var(--red-deep); font-size: 13px; cursor: pointer; }
+.more-style-btn.ghost { border-style: solid; border-color: #e3dccb; color: var(--gray); margin-left: 8px; }
+/* 拍照页模板切换条（拍好自动生成，模板在页内切换） */
+.tpl-strip { display: flex; gap: 8px; padding: 10px 14px 4px; }
+.tpl-chip { flex: 1; text-align: center; padding: 7px 0; border: 1px solid #e7dbbb; border-radius: 16px; background: #fff; color: #8a6d3b; font-size: 12px; cursor: pointer; }
+.tpl-chip.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 600; }
 .more-style-btn:active { background: #FBEEEB; }
 .more-style-btn .me-icon { color: var(--gold); font-size: 12px; }
 .more-style-btn.generating { border-color: var(--gold); border-style: solid; animation: glowGold 1.8s ease-in-out infinite; }

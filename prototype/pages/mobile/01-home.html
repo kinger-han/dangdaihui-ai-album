@@ -18,7 +18,7 @@
       <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">人分享上屏</div></div>
     </div>
     <div class="home-main">
-      <button class="entry-btn primary" onclick="goTemplates()">立即创作纪念照</button>
+      <button class="entry-btn primary" onclick="goPhoto()">立即创作纪念照</button>
       <button class="entry-btn ghost" onclick="goMine()">我的纪念照<i class="entry-dot" id="home-mine-dot" style="display:none"></i></button>
     </div>
   </div>
@@ -239,7 +239,7 @@ function refreshTabs(id) {
 }
 function goHome()   { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('home'); }
 function goTemplates() { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderTplGrid(); showPage('templates'); }
-function goPhoto()  { showPage('photo'); }
+function goPhoto()  { if (typeof resetPhoto === 'function') resetPhoto(); showPage('photo'); }
 function goGenerating() { showPage('generating'); }
 function goGallery() { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderWall(); showPage('gallery'); }
 function goMine()   { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderMine(); showPage('mine'); }

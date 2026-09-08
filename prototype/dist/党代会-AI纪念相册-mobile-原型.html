@@ -715,6 +715,11 @@ body {
 /* 更多风格入口（编号下方 / 操作区上方，常驻亮点；生成中发光 + 待确认红点） */
 .more-style-entry { margin: 8px 20px 0; text-align: center; }
 .more-style-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border: 1px dashed var(--gold); border-radius: 20px; background: #fff; color: var(--red-deep); font-size: 13px; cursor: pointer; }
+.more-style-btn.ghost { border-style: solid; border-color: #e3dccb; color: var(--gray); margin-left: 8px; }
+/* 拍照页模板切换条（拍好自动生成，模板在页内切换） */
+.tpl-strip { display: flex; gap: 8px; padding: 10px 14px 4px; }
+.tpl-chip { flex: 1; text-align: center; padding: 7px 0; border: 1px solid #e7dbbb; border-radius: 16px; background: #fff; color: #8a6d3b; font-size: 12px; cursor: pointer; }
+.tpl-chip.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 600; }
 .more-style-btn:active { background: #FBEEEB; }
 .more-style-btn .me-icon { color: var(--gold); font-size: 12px; }
 .more-style-btn.generating { border-color: var(--gold); border-style: solid; animation: glowGold 1.8s ease-in-out infinite; }
@@ -1131,7 +1136,7 @@ body {
       <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">人分享上屏</div></div>
     </div>
     <div class="home-main">
-      <button class="entry-btn primary" onclick="goTemplates()">立即创作纪念照</button>
+      <button class="entry-btn primary" onclick="goPhoto()">立即创作纪念照</button>
       <button class="entry-btn ghost" onclick="goMine()">我的纪念照<i class="entry-dot" id="home-mine-dot" style="display:none"></i></button>
     </div>
   </div>
@@ -1155,6 +1160,10 @@ body {
     <h2>获取照片</h2>
     <span class="hdr-right"></span>
   </div>
+  <div class="tpl-strip" id="tpl-strip">
+    <div class="tpl-chip active" data-tpl="shenghui" onclick="setPhotoTpl('shenghui')">盛会留念框</div>
+    <div class="tpl-chip" data-tpl="fenjin" onclick="setPhotoTpl('fenjin')">奋进新征程</div>
+  </div>
   <div class="camera-area" id="camera-area">
     <div class="face-guide" id="face-guide"></div>
     <div class="camera-guide">
@@ -1175,9 +1184,6 @@ body {
     </button>
     <button class="shutter-btn" onclick="takePhoto()"></button>
     <button class="camera-flip" onclick="toast('演示环境已默认前置摄像头')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
-  </div>
-  <div class="confirm-bar" id="confirm-bar" style="display:none">
-    <button class="btn primary" id="confirm-go-btn" onclick="startGenerate()">立即生成纪念照片</button>
   </div>
   <input type="file" id="file-input" accept="image/*" style="display:none">
 </div>
@@ -1236,6 +1242,7 @@ body {
     <!-- 更多风格入口（常驻；生成中发光，待确认红点） -->
     <div class="more-style-entry">
       <button class="more-style-btn" id="more-style-btn" onclick="openStyleSheet()"><i class="me-icon">✦</i>更多风格<i class="more-style-dot" id="more-style-dot" style="display:none"></i></button>
+      <button class="more-style-btn ghost" onclick="goPhoto()">再拍一张</button>
     </div>
     <!-- 主操作区 -->
     <div class="ra-actions">
@@ -1696,7 +1703,7 @@ function refreshTabs(id) {
 }
 function goHome()   { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('home'); }
 function goTemplates() { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderTplGrid(); showPage('templates'); }
-function goPhoto()  { showPage('photo'); }
+function goPhoto()  { if (typeof resetPhoto === 'function') resetPhoto(); showPage('photo'); }
 function goGenerating() { showPage('generating'); }
 function goGallery() { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderWall(); showPage('gallery'); }
 function goMine()   { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderMine(); showPage('mine'); }
@@ -1773,18 +1780,26 @@ function closeNotice() {
   toast('已取消，可重新选择模板');
 }
 
-/* ================= H05 获取照片（纯拍照页） ================= */
-function takePhoto() {
+/* ================= H05 获取照片（拍好自动生成；模板在页内切换） ================= */
+function setPhotoTpl(id) {
+  state.selectedTpl = id;
+  var chips = document.querySelectorAll('#tpl-strip .tpl-chip');
+  for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('active', chips[i].getAttribute('data-tpl') === id);
+}
+/* 从结果页「再拍一张」返回时复位拍照页 */
+function resetPhoto() {
   var area = document.getElementById('camera-area');
   var pv = document.getElementById('preview-wrap');
-  var bar = document.getElementById('confirm-bar');
-  area.style.display = 'none';
-  pv.style.display = 'block';
-  document.getElementById('preview-img').src = makePortraitSVG();
-  bar.style.display = 'flex';
+  if (area) area.style.display = 'flex';
+  if (pv) pv.style.display = 'none';
+  state.photoTaken = false;
+  state.photoSrc = null;
+}
+function takePhoto() {
   state.photoTaken = true;
   state.photoSrc = makePortraitSVG();
-  toast('咔嚓！请确认照片');
+  toast('咔嚓！正在生成纪念照');
+  startGenerate();
 }
 function pickAlbum() {
   document.getElementById('file-input').click();
@@ -1792,23 +1807,19 @@ function pickAlbum() {
 function retake() {
   document.getElementById('preview-wrap').style.display = 'none';
   document.getElementById('camera-area').style.display = 'flex';
-  document.getElementById('confirm-bar').style.display = 'none';
   state.photoTaken = false;
   state.photoSrc = null;
 }
-/* 相册选择 */
+/* 相册选择 → 自动生成 */
 document.getElementById('file-input').addEventListener('change', function(e) {
   var file = e.target.files && e.target.files[0];
   if (!file) return;
   var reader = new FileReader();
   reader.onload = function(ev) {
-    document.getElementById('preview-img').src = ev.target.result;
-    document.getElementById('camera-area').style.display = 'none';
-    document.getElementById('preview-wrap').style.display = 'block';
-    document.getElementById('confirm-bar').style.display = 'flex';
     state.photoTaken = true;
     state.photoSrc = ev.target.result;
-    toast('照片已就绪');
+    toast('照片已就绪，正在生成');
+    startGenerate();
   };
   reader.readAsDataURL(file);
 });
@@ -1827,13 +1838,6 @@ function makePortraitSVG() {
 function takePhotoNoConsent() {
   state.photoTaken = true;
   state.photoSrc = makePortraitSVG();
-  var area = document.getElementById('camera-area');
-  var pv = document.getElementById('preview-wrap');
-  var bar = document.getElementById('confirm-bar');
-  area.style.display = 'none';
-  pv.style.display = 'block';
-  document.getElementById('preview-img').src = makePortraitSVG();
-  bar.style.display = 'flex';
 }
 /* H05 → 立即生成（无过渡动画：直出结果；失败演示仍保留失败页） */
 function startGenerate() {
