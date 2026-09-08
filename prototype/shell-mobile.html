@@ -570,6 +570,9 @@ body {
 .mine-pending .mp-card.gen { cursor: default; box-shadow: none; }
 .mine-pending .mp-card.gen .mp-sub { color: var(--red-deep); }
 .mine-pending .mp-go.gen { color: var(--gray); font-weight: 400; display: inline-flex; align-items: center; gap: 5px; }
+.mine-pending .mp-card.fail { cursor: pointer; background: #FDF3F2; border-color: #F0C4BF; }
+.mine-pending .mp-card.fail .mp-sub { color: #C0362C; }
+.mine-pending .mp-go.fail { color: #C0362C; }
 /* 确认卡（待确认风格） */
 .ck-sheet { text-align: center; padding-bottom: 22px; }
 .ck-hero { position: relative; width: 150px; height: 200px; margin: 4px auto 10px; border-radius: 10px; overflow: hidden; background: linear-gradient(140deg,#7A1712,#B42318); box-shadow: 0 8px 24px rgba(0,0,0,0.16); }
@@ -580,6 +583,10 @@ body {
 .ck-actions { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
 .ck-actions .ra-btn { margin: 0; }
 .ck-drop { display: block; text-align: center; font-size: 12px; color: var(--gray); padding: 8px 0 2px; cursor: pointer; }
+/* 生成中状态卡（gs-*） */
+.gs-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(20,20,24,0.55); color: #fff; font-size: 12px; letter-spacing: 1px; z-index: 3; }
+.gen-spin.big { width: 22px; height: 22px; border-width: 2px; border-color: rgba(255,255,255,0.35); border-top-color: #EAC866; }
+.mine-pending .mp-card.gen { cursor: pointer; }
 .mine-card .mc-style-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 8px; background: #FBEEEB; color: var(--red-deep); font-size: 10px; vertical-align: 2px; }
 .result-actions { padding: 14px 20px 8px; }
 .ra-btn {
@@ -960,8 +967,30 @@ body {
             <button class="ra-btn primary" onclick="savePendingStyle()">保存到纪念照</button>
             <button class="ra-btn sub" onclick="regenPendingStyle()">重新生成</button>
             <span class="ck-drop" onclick="dropPendingStyle()">放弃这张风格照</span>
-          </div>
-        </div>
+            </div>
+            </div>
+            <!-- 全局生成中状态卡（点击我的纪念生成中项打开） -->
+            <div class="st-mask" id="gs-mask" style="display:none" onclick="closeGenStatus()"></div>
+            <div class="st-sheet ck-sheet" id="gs-sheet" style="display:none">
+            <div class="st-title">风格生成中</div>
+            <div class="ck-hero" id="gs-hero"><div class="photo-bg"></div><div class="photo-person"></div><div class="gs-overlay"><span class="gen-spin big"></span>生成中…</div></div>
+            <div class="ck-name" id="gs-name">水墨国风</div>
+            <div class="ck-desc" id="gs-desc">正在生成，最快约 1-2 分钟。完成后回到这里会变成「待确认」，你可以确认保存或重新生成。</div>
+            <div class="ck-actions"><button class="ra-btn primary" onclick="closeGenStatus()">知道了</button></div>
+            </div>
+  <!-- 全局生成失败卡（点击我的纪念失败项打开：重新生成 / 放弃） -->
+  <div class="st-mask" id="fs-mask" style="display:none" onclick="closeFailStatus()"></div>
+  <div class="st-sheet ck-sheet" id="fs-sheet" style="display:none">
+    <div class="st-title">风格生成未完成</div>
+    <div class="ck-hero" id="fs-hero"><div class="photo-bg"></div><div class="photo-person"></div><div class="gs-overlay" style="font-size:34px;color:rgba(255,255,255,0.9)">✕</div></div>
+    <div class="ck-name" id="fs-name">水墨国风</div>
+    <div class="ck-desc" id="fs-desc">这张风格照没有生成完成，不会保存到你的纪念。可以重新生成，或放弃。</div>
+    <div class="ck-actions">
+      <button class="ra-btn primary" onclick="retryFailStyle()">重新生成</button>
+      <button class="ra-btn sub" onclick="dropFailStyle()">放弃这张风格照</button>
+      <span class="ck-drop" onclick="closeFailStatus()">暂不处理</span>
+    </div>
+  </div>
     </div>
     <button class="demo-fab" onclick="toggleDemoMenu()">演示</button>
     <div class="demo-menu" id="demo-menu">
@@ -973,6 +1002,7 @@ body {
       <div class="dm-item" onclick="demoStatus('network')">网络异常</div>
       <div class="dm-item" onclick="demoFail('common')">生成失败</div>
       <div class="dm-item" onclick="demoFail('safety')">生成失败 · 内容安全</div>
+      <div class="dm-item" onclick="demoStyleFail()">风格照生成失败</div>
     </div>
   </div>
 

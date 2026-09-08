@@ -123,19 +123,31 @@ function startStyleGen(styleId) {
   var rootNo = currentRootNo();
   toast(s.name + ' 生成中，完成后可在「更多风格」或我的纪念查看');
   state.genStyleId = styleId;
+  state.genTpl = state.curWork.tpl;
   updateStyleDots();
-  openStyleSheet(); /* 弹窗保持打开，该项按钮立刻变为“生成中…” */
+  openStyleSheetIfOpen(); /* 弹窗若开着：该项按钮立刻变为“生成中…” */
+  var tpl0 = state.genTpl;
   setTimeout(function(){
     if (state.genStyleId !== styleId) return;
+    var fail = state.genNextFail || ((window.STYLES || []).filter(function(x){ return x.id === styleId; })[0] || {}).demoFail === true;
     state.genStyleId = '';
-    state.pendingStyles.push({ styleId: styleId, tpl: state.curWork.tpl, srcNo: rootNo, seen: false });
+    state.genTpl = '';
+    state.genNextFail = false;
+    if (fail) {
+      state.genFail = { styleId: styleId, tpl: tpl0, srcNo: rootNo };
+      toast(s.name + ' 生成失败，可重新生成或放弃');
+      updateStyleDots();
+      refreshMineIfActive();
+      return;
+    }
+    state.pendingStyles.push({ styleId: styleId, tpl: tpl0, srcNo: rootNo, seen: false });
     toast(s.name + ' 已生成，请确认保存');
     updateStyleDots();
     refreshMineIfActive();
     openStyleSheetIfOpen();
-  }, 3000);
-}
-function openStyleSheetIfOpen() {
+    }, 10000);
+    }
+    function openStyleSheetIfOpen() {
   var sh = document.getElementById('st-sheet');
   if (sh && sh.style.display !== 'none') openStyleSheet();
 }
@@ -194,6 +206,7 @@ function regenPendingStyle() {
   CK_IDX = -1;
   toast((s.name || '风格') + ' 重新生成中');
   state.genStyleId = p.styleId;
+  state.genTpl = p.tpl;
   closeStyleConfirm();
   updateStyleDots();
   setTimeout(function(){
@@ -203,7 +216,7 @@ function regenPendingStyle() {
     toast((s.name || '风格') + ' 已重新生成，请确认');
     updateStyleDots();
     refreshMineIfActive();
-  }, 3000);
+  }, 10000);
 }
 function dropPendingStyle() {
   var list = state.pendingStyles || [];

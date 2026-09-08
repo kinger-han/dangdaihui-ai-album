@@ -54,7 +54,7 @@ var findByTpl = function(id) { return TEMPLATES.filter(function(t){ return t.id 
 var STYLES = [
   { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, desc: '提亮光影氛围，画面更通透', prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', count: 6  },
   { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, desc: '背景写意水墨质感，晕染虚化', prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', count: 4 },
-  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, desc: '清新水彩插画质感，画面更艺术', prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', count: 2 }
+  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, desc: '清新水彩插画质感，画面更艺术', prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', count: 2, demoFail: true }
 ];
 var findStyle = function(id) { return (STYLES || []).filter(function(s){ return s.id === id; })[0]; };
 
@@ -97,7 +97,10 @@ var state = {
   visitFromWall: false,
   /* V2.6 风格异步生成：生成中 + 待确认池（未读 seen 控制提醒红点） */
   genStyleId: '',
-  pendingStyles: [],
+    genTpl: '',
+    genFail: null,
+    genNextFail: false,
+    pendingStyles: [],
   curTabIdx: 0,
     curGroup: []
   };
@@ -125,6 +128,83 @@ var state = {
   function refreshMineIfActive() {
     var mine = document.getElementById('page-mine');
     if (mine && mine.classList.contains('active')) renderMine();
+  }
+  /* 生成中状态卡：点击我的纪念「生成中」项打开 */
+  function openGenStatus() {
+    if (!state.genStyleId) return;
+    var g = findStyle(state.genStyleId);
+    var hero = document.getElementById('gs-hero');
+    if (!hero) return;
+    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    hero.classList.add('effect-' + state.genStyleId);
+    hero.querySelector('.photo-bg').setAttribute('data-tpl', state.genTpl || (state.curWork && state.curWork.tpl) || 'shenghui');
+    document.getElementById('gs-name').textContent = (g && g.name) || state.genStyleId;
+    document.getElementById('gs-mask').style.display = '';
+    document.getElementById('gs-sheet').style.display = '';
+  }
+  function closeGenStatus() {
+    document.getElementById('gs-mask').style.display = 'none';
+    document.getElementById('gs-sheet').style.display = 'none';
+  }
+  /* 生成失败卡：重新生成 / 放弃 */
+  function openFailStatus() {
+    var f = state.genFail;
+    if (!f) return;
+    var g = findStyle(f.styleId);
+    var hero = document.getElementById('fs-hero');
+    if (!hero) return;
+    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    hero.classList.add('effect-' + f.styleId);
+    hero.querySelector('.photo-bg').setAttribute('data-tpl', f.tpl);
+    document.getElementById('fs-name').textContent = (g && g.name) || f.styleId;
+    document.getElementById('fs-mask').style.display = '';
+    document.getElementById('fs-sheet').style.display = '';
+  }
+  function closeFailStatus() {
+    document.getElementById('fs-mask').style.display = 'none';
+    document.getElementById('fs-sheet').style.display = 'none';
+  }
+  function retryFailStyle() {
+    var f = state.genFail;
+    if (!f) return;
+    if (state.genStyleId) { toast('当前已有风格生成中，请稍后'); return; }
+    closeFailStatus();
+    state.genFail = null;
+    var s = findStyle(f.styleId);
+    toast((s && s.name ? s.name : '') + ' 重新生成中');
+    state.genStyleId = f.styleId;
+    state.genTpl = f.tpl;
+    updateStyleDots();
+    refreshMineIfActive();
+    setTimeout(function(){
+      if (state.genStyleId !== f.styleId) return;
+      state.genStyleId = '';
+      state.genTpl = '';
+      state.pendingStyles.push({ styleId: f.styleId, tpl: f.tpl, srcNo: f.srcNo || '', seen: false });
+      toast('已生成，请确认保存');
+      updateStyleDots();
+      refreshMineIfActive();
+    }, 10000);
+  }
+  function dropFailStyle() {
+    closeFailStatus();
+    state.genFail = null;
+    toast('已放弃这张风格照');
+    updateStyleDots();
+    refreshMineIfActive();
+  }
+  function demoStyleFail() {
+    if (state.genStyleId) { toast('当前已有风格生成中'); return; }
+    if (state.genFail) { toast('已有失败项，可重新生成或放弃'); return; }
+    if (!state.curWork) { toast('请先打开一张作品详情页再演示'); toggleDemoMenu(); return; }
+    var sid = 'shuimo';
+    var all = window.STYLES || [];
+    if (all.length) sid = all[0].id;
+    var g = findStyle(sid);
+    state.genNextFail = true;
+    toggleDemoMenu();
+    toast('即将模拟「' + ((g && g.name) || sid) + '」生成失败');
+    startStyleGen(sid);
   }
 
 /* ================= 页面切换 ================= */

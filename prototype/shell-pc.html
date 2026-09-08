@@ -1013,9 +1013,9 @@ function switchDeviceMgmt(element) {
 
 /* 画风全局列表（PC 详情弹窗 / 画风管理页共用；字段含提示词） */
 window.__STYLE_LIST = window.__STYLE_LIST || [
-  { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', gen: 12, keep: 9, drop: 3 },
-  { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', gen: 9, keep: 6, drop: 3 },
-  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', gen: 5, keep: 2, drop: 3 }
+  { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', gen: 12, keep: 9, drop: 3, fail: 1 },
+  { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', gen: 9, keep: 6, drop: 3, fail: 2 },
+  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', gen: 5, keep: 2, drop: 3, fail: 5 }
 ];
 function pcStyleOf(id) { return (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; }
 
