@@ -138,10 +138,19 @@ function renderStMgmt() {
       '<td>' +
         '<a class="action-link" onclick="openStModal(\'' + s.id + '\')">编辑</a>' +
         '<a class="action-link' + (s.enabled ? '" style="color:#fa541c"' : '"') + ' onclick="stToggle(\'' + s.id + '\')">' + (s.enabled ? '禁用' : '启用') + '</a>' +
+        '<a class="action-link warn" onclick="delStyle(\'' + s.id + '\')">删除</a>' +
       '</td></tr>';
   });
   if (!list.length) html = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的画风</td></tr>';
   tb.innerHTML = html;
+}
+function delStyle(id) {
+  var s = stList().filter(function(x){ return x.id === id; })[0];
+  if (!s) return;
+  if (!confirm('确定删除画风「' + s.name + '」吗？删除后该画风从移动端入口消失。')) return;
+  window.__STYLE_LIST = (window.__STYLE_LIST || []).filter(function(x){ return x.id !== id; });
+  stToast('已删除画风：' + s.name);
+  renderStMgmt();
 }
 function stToggle(id) {
   var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0];

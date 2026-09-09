@@ -192,14 +192,23 @@ function renderTplMgmt() {
       '<td>' +
         '<a class="action-link" onclick="openTplModal(\'' + t.id + '\')">编辑</a>' +
         (t.state === 'on'
-          ? '<a class="action-link warn" onclick="tplToggle(\'' + t.id + '\')">禁用</a>'
-          : '<a class="action-link" onclick="tplToggle(\'' + t.id + '\')">启用</a>') + '</td>' +
+                  ? '<a class="action-link warn" onclick="tplToggle(\'' + t.id + '\')">禁用</a>'
+                  : '<a class="action-link" onclick="tplToggle(\'' + t.id + '\')">启用</a>') +
+                '<a class="action-link warn" onclick="delTpl(\'' + t.id + '\')">删除</a>' + '</td>' +
       '</tr>';
   });
   if (!list.length) {
     html = '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的模板</td></tr>';
   }
   tbody.innerHTML = html;
+}
+function delTpl(id) {
+  var t = TPL_LIST.filter(function(x){ return x.id === id; })[0];
+  if (!t) return;
+  if (!confirm('确定删除模板「' + t.name + '」吗？删除后不可恢复。')) return;
+  TPL_LIST = TPL_LIST.filter(function(x){ return x.id !== id; });
+  showToast('已删除模板：' + t.name, 'success');
+  renderTplMgmt();
 }
 function tplToggle(id) {
   var t = TPL_LIST.filter(function(x){ return x.id === id; })[0];

@@ -104,8 +104,6 @@ function viewSavedStyle(no) {
 }
 function styleBtnHtml(s) {
   if (state.genStyleId === s.id) return '<span class="st-gen"><span class="gen-spin"></span>生成中…</span>';
-  if (state.genFail && state.genFail.styleId === s.id && state.genFail.srcNo === currentRootNo())
-    return '<button class="st-btn2 fail" onclick="closeStyleSheet();openFailStatus()">生成失败</button>';
   var pf = pendingOf(s.id);
   if (pf >= 0) return '<button class="st-btn2" onclick="openStyleConfirm(' + pf + ')">待确认</button>';
   var saved = savedStyleWork(s.id);

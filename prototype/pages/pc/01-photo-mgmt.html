@@ -253,7 +253,19 @@ function styleTagsOf(p) {
   return '<span class="tag-c origin">原图</span>';
 }
 function onAction(p) {
-  return '<a class="action-btn" onclick="openPhotoDetail(\'' + p.no + '\')">详情</a>';
+  return '<a class="action-btn" onclick="openPhotoDetail(\'' + p.no + '\')">详情</a>' +
+    '<a class="action-btn danger" onclick="delPhoto(\'' + p.no + '\')">删除</a>';
+}
+/* 单行删除：原图删除时其风格衍生照一并删除（与批量删除一致） */
+function delPhoto(no) {
+  var p = PHOTO_LIST.filter(function(x){ return x.no === no; })[0];
+  if (!p) return;
+  var tip = p.sourceWorkId ? '确定删除风格照 ' + no + ' 吗？' : '确定删除照片 ' + no + ' 吗？其风格衍生照将一并删除。';
+  if (!confirm(tip)) return;
+  PHOTO_LIST = PHOTO_LIST.filter(function(x){ return x.no !== no && x.sourceWorkId !== no; });
+  showToast('已删除 ' + no);
+  renderPhotoTable();
+  renderStatCards();
 }
 function showToast(msg) {
   var ta = document.getElementById('toast-area');

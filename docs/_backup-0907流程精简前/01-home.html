@@ -1,0 +1,282 @@
+<!-- PAGE_META: {"id": "home", "title": "首页"} -->
+<div class="page" id="page-home">
+  <div class="page-body">
+    <div class="home-hero">
+      <div class="badge-party">★ 中国共产党福建省第十二次代表大会</div>
+      <div class="home-title">纪念相册</div>
+      <div class="home-sub">定格奋斗身影　共绘时代华章</div>
+      <div class="home-slogan">扫码拍一张　带走专属纪念</div>
+    </div>
+    <div class="spot-scroll">
+      <div class="ss-title">★ 现场风采</div>
+      <div class="spot-track" id="spot-track"></div>
+      <div class="spot-empty" id="spot-empty" style="display:none">成为首批留下纪念的参与者</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="stat-joiner"></div><div class="stat-label">人留下纪念</div></div>
+      <div class="stat-card"><div class="stat-num gold" id="stat-work"></div><div class="stat-label">张纪念照片</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">人分享上屏</div></div>
+    </div>
+    <div class="home-main">
+      <button class="entry-btn primary" onclick="goTemplates()">立即创作纪念照</button>
+      <button class="entry-btn ghost" onclick="goMine()">我的纪念照<i class="entry-dot" id="home-mine-dot" style="display:none"></i></button>
+    </div>
+  </div>
+</div>
+<script>
+/* ================= 共享数据（PRD 3.2 首期 9 模板 · 全部数据驱动） ================= */
+var ACTIVITY = {
+  fullName: '中国共产党福建省第十二次代表大会',
+  productName: '纪念相册',
+  slogan: '定格奋斗身影 共绘时代华章',
+  joinerCount: 328,
+  workCount: 612,
+  archiveIndex: 328,
+  shareCount: 28
+};
+
+var CAPABILITIES = {
+  A: { name: '经典纪念框', tag: '多人友好 · 约 3 秒', desc: '原片自然呈现 · 快速合成', confirmBtn: '确认合成', genBtn: '立即合成' },
+};
+
+var TPL_GROUPS = [
+  { id: 'classic', name: '庄重经典' },
+];
+
+var TEMPLATES = [
+  { id: 'shenghui', name: '盛会留念框', group: 'classic', cap: 'A', people: '1-6 人', time: '约 3 秒', guide: '建议多人合照，原图居中，红金边框', prime: true },
+  { id: 'fenjin',   name: '奋进新征程', group: 'classic', cap: 'A', people: '1-4 人', time: '约 3 秒', guide: '竖版照片 + 金色题字 + 福建剪影', prime: false },
+];
+var TPL_NAMES = {}; TEMPLATES.forEach(function(t){ TPL_NAMES[t.id] = t.name; });
+var findByTpl = function(id) { return TEMPLATES.filter(function(t){ return t.id === id; })[0]; };
+
+/* 画风列表（V2.1 风格化：照片详情页选择画风，字段含提示词/生成数量，PC 画风管理页数据源） */
+var STYLES = [
+  { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, desc: '提亮光影氛围，画面更通透', prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', count: 6  },
+  { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, desc: '背景写意水墨质感，晕染虚化', prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', count: 4 },
+  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, desc: '清新水彩插画质感，画面更艺术', prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', count: 2, demoFail: true }
+];
+var findStyle = function(id) { return (STYLES || []).filter(function(s){ return s.id === id; })[0]; };
+
+/* 我的作品（H10 数据源）
+   字段：sourceWorkId(风格作品指向来源原图；原图为空)、styleId(画风id；原图为空) */
+var MY_WORKS = [
+  { no: 'FJDH-0328-01', tpl: 'shenghui', status: 'selected', time: '今天 10:21', num: 1, sourceWorkId: '', styleId: '' },
+  { no: 'FJDH-0328-04', tpl: 'shenghui', status: 'notsub',   time: '今天 10:30', num: 4, sourceWorkId: 'FJDH-0328-01', styleId: 'shuimo' },
+  { no: 'FJDH-0328-02', tpl: 'fenjin',   status: 'wait',     time: '今天 10:23', num: 2, sourceWorkId: '', styleId: '' },
+  { no: 'FJDH-0328-03', tpl: 'fenjin',   status: 'notsub',   time: '今天 10:25', num: 3, sourceWorkId: '', styleId: '' }
+];
+
+/* 精选照片墙（H09，不含姓名/微信信息） */
+var GALLERY = [
+  { num: 'FJDH-0002', tpl: 'shenghui',  bg: 1 },
+  { num: 'FJDH-0009', tpl: 'fenjin',  bg: 4 },
+  { num: 'FJDH-0015', tpl: 'shenghui', bg: 2, styleId: 'shuimo' },
+  { num: 'FJDH-0021', tpl: 'fenjin',  bg: 5 },
+  { num: 'FJDH-0033', tpl: 'shenghui', bg: 1 },
+  { num: 'FJDH-0040', tpl: 'shenghui',  bg: 7 },
+  { num: 'FJDH-0052', tpl: 'fenjin',  bg: 8 },
+  { num: 'FJDH-0061', tpl: 'shenghui',    bg: 6 },
+  { num: 'FJDH-0068', tpl: 'fenjin',  bg: 2 },
+  { num: 'FJDH-0077', tpl: 'fenjin',  bg: 4 },
+  { num: 'FJDH-0084', tpl: 'shenghui',  bg: 1 },
+  { num: 'FJDH-0090', tpl: 'fenjin',  bg: 5 }
+];
+
+var state = {
+  curTplGroup: 'classic',
+  selectedTpl: 'shenghui',
+  sbChecked: false,
+  photoTaken: false,
+  photoSrc: null,
+  qcLevel: 'ok',
+  generating: false,
+  generationFail: null,
+  curWork: null,
+  wallWork: null,
+  visitFromWall: false,
+  /* V2.6 风格异步生成：生成中 + 待确认池（未读 seen 控制提醒红点） */
+  genStyleId: '',
+    genTpl: '',
+    genFail: null,
+    genNextFail: false,
+    pendingStyles: [],
+  curTabIdx: 0,
+    curGroup: []
+  };
+
+  /* ================= V2.6 待确认风格提醒（红点/发光） ================= */
+  function styleUnreadCount(srcNo) {
+    var list = state.pendingStyles || [];
+    if (srcNo) list = list.filter(function(p){ return p.srcNo === srcNo; });
+    return list.filter(function(p){ return !p.seen; }).length;
+  }
+  /* 更新全局提醒：首页「我的纪念照」红点、详情页「更多风格」红点+生成中发光 */
+  function updateStyleDots() {
+    var un = styleUnreadCount();
+    var dot = document.getElementById('home-mine-dot');
+    if (dot) { dot.style.display = un ? '' : 'none'; dot.textContent = un > 1 ? un : ''; }
+    var md = document.getElementById('more-style-dot');
+    if (md) {
+      var u2 = styleUnreadCount(currentRootNo());
+      md.style.display = u2 ? '' : 'none';
+      md.textContent = u2 > 1 ? u2 : '';
+    }
+    var mbtn = document.getElementById('more-style-btn');
+    if (mbtn) mbtn.classList.toggle('generating', !!state.genStyleId);
+  }
+  function refreshMineIfActive() {
+    var mine = document.getElementById('page-mine');
+    if (mine && mine.classList.contains('active')) renderMine();
+  }
+  /* 生成中状态卡：点击我的纪念「生成中」项打开 */
+  function openGenStatus() {
+    if (!state.genStyleId) return;
+    var g = findStyle(state.genStyleId);
+    var hero = document.getElementById('gs-hero');
+    if (!hero) return;
+    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    hero.classList.add('effect-' + state.genStyleId);
+    hero.querySelector('.photo-bg').setAttribute('data-tpl', state.genTpl || (state.curWork && state.curWork.tpl) || 'shenghui');
+    document.getElementById('gs-name').textContent = (g && g.name) || state.genStyleId;
+    document.getElementById('gs-mask').style.display = '';
+    document.getElementById('gs-sheet').style.display = '';
+  }
+  function closeGenStatus() {
+    document.getElementById('gs-mask').style.display = 'none';
+    document.getElementById('gs-sheet').style.display = 'none';
+  }
+  /* 生成失败卡：重新生成 / 放弃 */
+  function openFailStatus() {
+    var f = state.genFail;
+    if (!f) return;
+    var g = findStyle(f.styleId);
+    var hero = document.getElementById('fs-hero');
+    if (!hero) return;
+    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    hero.classList.add('effect-' + f.styleId);
+    hero.querySelector('.photo-bg').setAttribute('data-tpl', f.tpl);
+    document.getElementById('fs-name').textContent = (g && g.name) || f.styleId;
+    document.getElementById('fs-mask').style.display = '';
+    document.getElementById('fs-sheet').style.display = '';
+  }
+  function closeFailStatus() {
+    document.getElementById('fs-mask').style.display = 'none';
+    document.getElementById('fs-sheet').style.display = 'none';
+  }
+  function retryFailStyle() {
+    var f = state.genFail;
+    if (!f) return;
+    if (state.genStyleId) { toast('当前已有风格生成中，请稍后'); return; }
+    closeFailStatus();
+    state.genFail = null;
+    var s = findStyle(f.styleId);
+    toast((s && s.name ? s.name : '') + ' 重新生成中');
+    state.genStyleId = f.styleId;
+    state.genTpl = f.tpl;
+    updateStyleDots();
+    refreshMineIfActive();
+    setTimeout(function(){
+      if (state.genStyleId !== f.styleId) return;
+      state.genStyleId = '';
+      state.genTpl = '';
+      state.pendingStyles.push({ styleId: f.styleId, tpl: f.tpl, srcNo: f.srcNo || '', seen: false });
+      toast('已生成，请确认保存');
+      updateStyleDots();
+      refreshMineIfActive();
+    }, 10000);
+  }
+  function dropFailStyle() {
+    closeFailStatus();
+    state.genFail = null;
+    toast('已放弃这张风格照');
+    updateStyleDots();
+    refreshMineIfActive();
+  }
+  function demoStyleFail() {
+    if (state.genStyleId) { toast('当前已有风格生成中'); return; }
+    if (state.genFail) { toast('已有失败项，可重新生成或放弃'); return; }
+    if (!state.curWork) { toast('请先打开一张作品详情页再演示'); toggleDemoMenu(); return; }
+    var sid = 'shuimo';
+    var all = window.STYLES || [];
+    if (all.length) sid = all[0].id;
+    var g = findStyle(sid);
+    state.genNextFail = true;
+    toggleDemoMenu();
+    toast('即将模拟「' + ((g && g.name) || sid) + '」生成失败');
+    startStyleGen(sid);
+  }
+
+/* ================= 页面切换 ================= */
+var PAGE_STACK = ['home'];
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var el = document.getElementById('page-' + id);
+  if (el) el.classList.add('active');
+  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
+  var tabBar = document.getElementById('tab-bar');
+  if (tabBar) {
+    if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; }
+    else { tabBar.style.display = 'flex'; tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); }); }
+  }
+  if (PAGE_STACK[PAGE_STACK.length-1] !== id) PAGE_STACK.push(id);
+  return id;
+}
+function historyBack() {
+  PAGE_STACK.pop();
+  var to = PAGE_STACK[PAGE_STACK.length-1] || 'home';
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-' + to).classList.add('active');
+  refreshTabs(to);
+}
+function refreshTabs(id) {
+  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
+  var tabBar = document.getElementById('tab-bar');
+  if (!tabBar) return;
+  if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; return; }
+  tabBar.style.display = 'flex';
+  tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
+}
+function goHome()   { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('home'); }
+function goTemplates() { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderTplGrid(); showPage('templates'); }
+function goPhoto()  { showPage('photo'); }
+function goGenerating() { showPage('generating'); }
+function goGallery() { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderWall(); showPage('gallery'); }
+function goMine()   { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderMine(); showPage('mine'); }
+function goTerms()  { PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('terms'); }
+function goStatus() { showPage('status'); }
+
+/* ================= Toast ================= */
+var toastTimer = null;
+function toast(text, icon) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  document.getElementById('toast-icon').textContent = icon || '✓';
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
+
+/* ================= 首页精选轮播 ================= */
+function renderSpot() {
+  var track = document.getElementById('spot-track');
+  if (!track) return;
+  var html = '';
+  GALLERY.slice(0, 5).forEach(function(p) {
+    html += '<div class="spot-card" onclick="goGallery()">' +
+      '<div class="photo-bg wb-' + p.bg + '"></div>' +
+      '<div class="photo-person"></div>' +
+      '<span class="spot-num">' + p.num + '</span>' +
+      '</div>';
+  });
+  track.innerHTML = html;
+}
+
+/* ================= 初始化 ================= */
+document.getElementById('stat-joiner').textContent = ACTIVITY.joinerCount;
+document.getElementById('stat-work').textContent = ACTIVITY.workCount;
+document.getElementById('stat-archive').textContent = ACTIVITY.shareCount;
+renderSpot();
+</script>

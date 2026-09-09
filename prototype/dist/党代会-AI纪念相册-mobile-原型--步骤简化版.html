@@ -5,7 +5,180 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>党代会 · 纪念相册（手机端原型）</title>
   <style>
-/* __BASE_CSS__ placeholder */
+/* ============================
+   base.css - 全局公共样式
+   ============================ */
+
+/* Reset */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px; color: #333; background: #f0f2f5;
+  line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+.page { display: none; height: 100%; }
+.page.active { display: block; }
+
+/* ---- PC端布局 ---- */
+.pc-layout { display: flex; height: 100vh; overflow: hidden; }
+.pc-sider {
+  width: 200px; background: #fff; border-right: 1px solid #f0f0f0;
+  flex-shrink: 0; display: flex; flex-direction: column; overflow-y: auto;
+}
+.pc-logo {
+  height: 60px; display: flex; align-items: center; padding: 0 24px;
+  font-size: 18px; font-weight: 700; color: #000;
+  border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+}
+.pc-logo-icon {
+  width: 28px; height: 28px; background: #1890ff; border-radius: 6px;
+  margin-right: 10px; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+.pc-menu { flex: 1; padding: 8px 0; }
+.pc-menu-group { padding: 8px 24px 4px; font-size: 12px; color: #999; }
+.pc-menu-item {
+  display: flex; align-items: center; height: 44px; padding: 0 24px;
+  cursor: pointer; transition: all 0.15s; text-decoration: none;
+  color: #333; font-size: 14px;
+}
+.pc-menu-item:hover { background: #f5f7fa; }
+.pc-menu-item.active { background: #e6f7ff; color: #1890ff; border-right: 3px solid #1890ff; }
+.pc-menu-icon { width: 20px; margin-right: 12px; text-align: center; font-size: 16px; }
+
+.pc-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.pc-header {
+  height: 48px; background: #fff; border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; flex-shrink: 0;
+}
+.pc-breadcrumb { font-size: 14px; color: #999; }
+.pc-breadcrumb a { color: #1890ff; text-decoration: none; }
+.pc-breadcrumb .sep { margin: 0 6px; color: #ccc; }
+.pc-breadcrumb .current { color: #333; }
+.pc-header-right { display: flex; align-items: center; gap: 12px; }
+.pc-user-name { font-size: 14px; color: #666; }
+.pc-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: #e6f7ff;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; color: #1890ff;
+}
+.pc-content { flex: 1; padding: 24px; overflow-y: auto; background: #f0f2f5; }
+
+/* ---- 标注角标 ---- */
+.anno-badge {
+  position: absolute; top: -8px; right: -8px;
+  background: #ff4d4f; color: #fff; font-size: 10px;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px; cursor: pointer; z-index: 10;
+  font-weight: 600; line-height: 1;
+}
+.anno-badge:hover { background: #cf1322; }
+[data-anno-id] { position: relative; }
+
+/* ---- 通用组件 ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 0 16px; height: 32px; border-radius: 4px;
+  border: 1px solid #d9d9d9; font-size: 14px; cursor: pointer;
+  transition: all 0.15s; text-decoration: none; white-space: nowrap;
+}
+.btn-primary { background: #1890ff; color: #fff; border-color: #1890ff; }
+.btn-primary:hover { background: #40a9ff; border-color: #40a9ff; }
+.btn-default { background: #fff; color: #333; }
+.btn-default:hover { border-color: #1890ff; color: #1890ff; }
+.btn-link { background: none; border: none; color: #1890ff; padding: 0 4px; height: auto; font-size: 14px; cursor: pointer; }
+.btn-link.danger { color: #f5222d; }
+.btn-link.success { color: #52c41a; }
+.btn-sm { height: 28px; padding: 0 12px; font-size: 13px; }
+
+.table-wrap { background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); overflow: hidden; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+.table th { background: #fafafa; font-weight: 600; color: #333; }
+.table tbody tr:hover { background: #f5f7fa; }
+
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.tag-blue   { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.tag-green  { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.tag-red    { background: #fff2f0; color: #f5222d; border: 1px solid #ffa39e; }
+
+.filter-bar {
+  background: #fff; border-radius: 4px; padding: 20px 24px;
+  display: flex; align-items: center; gap: 24px; margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.filter-item { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 14px; color: #666; white-space: nowrap; }
+.filter-select {
+  height: 32px; padding: 0 12px; border: 1px solid #d9d9d9;
+  border-radius: 4px; font-size: 14px; color: #333; background: #fff; min-width: 120px;
+}
+.filter-date { height: 32px; padding: 0 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; width: 150px; }
+
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 12px; }
+.search-box { display: flex; }
+.search-input {
+  height: 32px; padding: 0 12px; border: 1px solid #d9d9d9;
+  border-radius: 4px 0 0 4px; font-size: 14px; width: 250px; outline: none;
+}
+.search-input:focus { border-color: #1890ff; }
+
+.page-header { margin-bottom: 16px; }
+.page-title { font-size: 18px; font-weight: 700; color: #333; }
+.page-desc { font-size: 14px; color: #999; margin-top: 4px; }
+
+.pagination {
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 16px 0; gap: 8px; font-size: 14px; color: #666;
+}
+.pagination .page-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid #d9d9d9; border-radius: 4px; background: #fff; cursor: pointer;
+}
+.pagination .page-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+
+.form-item { margin-bottom: 16px; }
+.form-label { display: block; margin-bottom: 6px; font-size: 14px; color: #333; font-weight: 500; }
+.input {
+  width: 100%; height: 36px; padding: 0 12px; border: 1px solid #d9d9d9;
+  border-radius: 4px; font-size: 14px; outline: none;
+}
+.input:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal {
+  background: #fff; border-radius: 8px; padding: 24px;
+  min-width: 420px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #333; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 24px; padding-top: 16px; border-top: 1px solid #f0f0f0;
+}
+
+.toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: #333; color: #fff; padding: 8px 20px; border-radius: 6px;
+  font-size: 13px; z-index: 9999; transition: opacity 0.3s;
+}
+
+/* ---- 移动端通用 ---- */
+.m-header {
+  height: 44px; display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 600; color: #000;
+  position: sticky; top: 0; z-index: 100; background: #fff;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #bbb; }
+
   </style>
   <style>
     /* ===== 项目业务样式（组件内 style 被构建丢弃，必须放 shell） ===== */
@@ -534,7 +707,6 @@ body {
 .st-sheet .st-go { font-size: 13px; color: var(--red); font-weight: 600; flex-shrink: 0; }
 .st-sheet .st-btn2 { height: 28px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--red); background: #fff; color: var(--red); font-size: 12px; cursor: pointer; }
 .st-sheet .st-btn2.view { background: var(--red); color: #fff; border-color: var(--red); }
-.st-sheet .st-btn2.fail { background: #FDF3F2; color: #C0362C; border-color: #E8B4AE; }
 .st-sheet .st-btn2:active { background: #FBEEEB; }
 .st-sheet .st-gen { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray); }
 .st-sheet .st-empty { text-align: center; padding: 34px 0; color: var(--gray); font-size: 13px; }
@@ -543,6 +715,11 @@ body {
 /* 更多风格入口（编号下方 / 操作区上方，常驻亮点；生成中发光 + 待确认红点） */
 .more-style-entry { margin: 8px 20px 0; text-align: center; }
 .more-style-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; border: 1px dashed var(--gold); border-radius: 20px; background: #fff; color: var(--red-deep); font-size: 13px; cursor: pointer; }
+.more-style-btn.ghost { border-style: solid; border-color: #e3dccb; color: var(--gray); margin-left: 8px; }
+/* 拍照页模板切换条（拍好自动生成，模板在页内切换） */
+.tpl-strip { display: flex; gap: 8px; padding: 10px 14px 4px; }
+.tpl-chip { flex: 1; text-align: center; padding: 7px 0; border: 1px solid #e7dbbb; border-radius: 16px; background: #fff; color: #8a6d3b; font-size: 12px; cursor: pointer; }
+.tpl-chip.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 600; }
 .more-style-btn:active { background: #FBEEEB; }
 .more-style-btn .me-icon { color: var(--gold); font-size: 12px; }
 .more-style-btn.generating { border-color: var(--gold); border-style: solid; animation: glowGold 1.8s ease-in-out infinite; }
@@ -940,7 +1117,278 @@ body {
         </span>
       </div>
       <div class="app-root" id="app-root">
-        <!-- 组件 page div 注入处 -->
+        <div class="page" id="page-home">
+  <div class="page-body">
+    <div class="home-hero">
+      <div class="badge-party">★ 中国共产党福建省第十二次代表大会</div>
+      <div class="home-title">纪念相册</div>
+      <div class="home-sub">定格奋斗身影　共绘时代华章</div>
+      <div class="home-slogan">扫码拍一张　带走专属纪念</div>
+    </div>
+    <div class="spot-scroll">
+      <div class="ss-title">★ 现场风采</div>
+      <div class="spot-track" id="spot-track"></div>
+      <div class="spot-empty" id="spot-empty" style="display:none">成为首批留下纪念的参与者</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="stat-joiner"></div><div class="stat-label">人留下纪念</div></div>
+      <div class="stat-card"><div class="stat-num gold" id="stat-work"></div><div class="stat-label">张纪念照片</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-archive"></div><div class="stat-label">人分享上屏</div></div>
+    </div>
+    <div class="home-main">
+      <button class="entry-btn primary" onclick="goPhoto()">立即创作纪念照</button>
+      <button class="entry-btn ghost" onclick="goMine()">我的纪念照<i class="entry-dot" id="home-mine-dot" style="display:none"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-templates">
+  <div class="page-header">
+    <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>选择纪念模板</h2>
+    <span class="hdr-right" onclick="toast('模板效果会因照片而异，请使用本人照片')">?</span>
+  </div>
+  <div class="page-body">
+    <div class="tpl-grid" id="tpl-grid"></div>
+  </div>
+
+</div>
+
+<div class="page" id="page-photo">
+  <div class="page-header">
+    <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>获取照片</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="tpl-strip" id="tpl-strip">
+    <div class="tpl-chip active" data-tpl="shenghui" onclick="setPhotoTpl('shenghui')">盛会留念框</div>
+    <div class="tpl-chip" data-tpl="fenjin" onclick="setPhotoTpl('fenjin')">奋进新征程</div>
+  </div>
+  <div class="camera-area" id="camera-area">
+    <div class="face-guide" id="face-guide"></div>
+    <div class="camera-guide">
+      <div class="svg-ring">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/></svg>
+      </div>
+      <p id="camera-tip">请将人脸置于取景框内</p>
+      <p class="sub" id="camera-sub">正面看向镜头 · 光线充足 · 避免遮挡面部</p>
+    </div>
+  </div>
+  <div id="preview-wrap" class="preview-wrap">
+    <img id="preview-img" alt="拍摄预览">
+    <button class="retake" onclick="retake()">↺ 重拍</button>
+  </div>
+  <div class="camera-bottom">
+    <button class="album-btn" onclick="pickAlbum()">
+      <span class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span><span>相册</span>
+    </button>
+    <button class="shutter-btn" onclick="takePhoto()"></button>
+    <button class="camera-flip" onclick="toast('演示环境已默认前置摄像头')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+  </div>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
+</div>
+
+<div class="page gen-page" id="page-generating">
+  <div class="gen-bg-thumb" id="gen-bg-thumb"></div>
+  <div id="gen-working">
+    <div class="gen-anim">
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="core">✦</div>
+    </div>
+    <div class="gen-title" id="gen-title">正在创作你的纪念照</div>
+    <div class="gen-sub" id="gen-sub">预计 30 秒内完成，请稍候</div>
+    <div class="gen-steps" id="gen-steps"></div>
+    <div class="gen-overtime" id="gen-overtime" style="display:none">创作仍在继续，你也可以稍后到“我的纪念”查看。</div>
+  </div>
+  <div class="gen-fail" id="gen-fail">
+    <div class="gf-ico">⚠</div>
+    <div class="gf-title">这次创作没有完成</div>
+    <div class="gf-sub" id="gf-sub">照片不会公开展示，你可以重新尝试</div>
+    <div class="gf-btns">
+      <button class="gf-btn primary" onclick="retryGenerate()">重新生成</button>
+      <button class="gf-btn plain" onclick="goPhoto()">换一张照片</button>
+      <button class="gf-btn plain" onclick="goTemplates()">试试其他模板</button>
+    </div>
+  </div>
+
+  <!-- 离开确认弹层 -->
+  <div class="leave-modal" id="leave-modal">
+    <div class="lm-card">
+      <div class="lm-title">作品仍在生成</div>
+      <div class="lm-desc">离开后可在“我的纪念”查看进度。</div>
+      <div class="lm-btns">
+        <button class="lm-btn primary" onclick="closeLeave(true)">继续等待</button>
+        <button class="lm-btn plain" onclick="closeLeave(false)">返回首页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-result">
+  <div class="page-header">
+    <button class="back-btn" onclick="onResultBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>我的纪念作品</h2>
+    <span class="hdr-right" onclick="goMineFromResult()">我的纪念</span>
+  </div>
+  <div class="page-body">
+    <div class="result-hero">
+      <div class="result-photo" id="result-photo" onclick="openFullPhoto()">
+        <div class="photo-bg"></div>
+        <div class="photo-person" id="result-person"></div>
+      </div>
+      <div class="result-number" id="result-number">第 328 号纪念档案</div>
+    </div>
+    <!-- 更多风格入口（常驻；生成中发光，待确认红点） -->
+    <div class="more-style-entry">
+      <button class="more-style-btn" id="more-style-btn" onclick="openStyleSheet()"><i class="me-icon">✦</i>更多风格<i class="more-style-dot" id="more-style-dot" style="display:none"></i></button>
+      <button class="more-style-btn ghost" onclick="goPhoto()">再拍一张</button>
+    </div>
+    <!-- 主操作区 -->
+    <div class="ra-actions">
+      <button class="ra-btn primary" id="btn-save" onclick="handleSaveClick()">保存本地</button>
+      <button class="ra-btn sub" id="btn-share" onclick="handleSecondClick()">分享上屏</button>
+    </div>
+    <!-- 分享上屏说明（三态文案随状态） -->
+    <div class="selection-box" id="selection-box">
+      <div class="sb-title" id="sb-title">把这份美好，留在现场</div>
+      <div class="sb-desc" id="sb-desc">大会现场大屏将轮播参会者的风采瞬间。提交你的纪念照，就有机会与全体参会者分享这份美好。</div>
+      <div class="sb-check" id="sb-check" onclick="toggleSbCheck()">
+        <span class="ck-box" id="sb-ck-box">✓</span>
+        <span>我同意将这张照片用于现场大屏展示</span>
+      </div>
+      <div class="sb-link" onclick="showPage('terms')">查看展示说明</div>
+    </div>
+  </div>
+
+  <!-- 风采提交成功弹层 -->
+  <div class="submit-modal" id="submit-modal">
+    <div class="sm-card">
+      <div class="sm-check">✓</div>
+      <div class="sm-title">已提交</div>
+      <div class="sm-desc">你的风采，即将被更多人看见。<br>工作人员确认后，就有机会在现场大屏与全体参会者相遇。</div>
+      <div class="sm-btns">
+        <button class="btn plain" onclick="closeModal('submit-modal')">知道了</button>
+        <button class="btn primary" onclick="closeSubmitGoMine()">查看我的纪念</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 更多风格弹层（生成 / 生成中 / 查看待确认） -->
+  <div class="st-mask" id="st-mask" style="display:none" onclick="closeStyleSheet()"></div>
+  <div class="st-sheet" id="st-sheet" style="display:none">
+    <div class="st-title">更多风格</div>
+    <div id="st-list"></div>
+  </div>
+
+  <!-- 沉浸预览 -->
+  <div class="full-photo" id="full-photo">
+    <span class="fp-close" onclick="closeModal('full-photo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+    <div class="fp-img" id="fp-img">
+      <div class="photo-bg"></div>
+      <div class="photo-person"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-gallery">
+  <div class="page-header">
+    <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>现场风采</h2>
+    <span class="hdr-right" onclick="goTemplates()">我要拍</span>
+  </div>
+  <div class="wall-toolbar">
+    <span class="wl">让每一份认真记录，都被时代看见。</span>
+    <span class="wl">共 <b id="wall-count">0</b> 张</span>
+  </div>
+  <div class="page-body">
+    <div class="wall-grid" id="wall-grid"></div>
+  </div>
+
+  <!-- 照片墙详情 -->
+  <div class="wall-detail" id="wall-detail">
+    <span class="wd-close" onclick="closeWallDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+    <div class="wd-photo" id="wd-photo">
+      <div class="wall-bg"></div>
+      <div class="wall-person-d"></div>
+      <span class="wd-style-tag" id="wd-style-tag" style="display:none"></span>
+    </div>
+    <div class="wd-name" id="wd-name"></div>
+    <div class="wd-num" id="wd-num"></div>
+    <div class="wd-btns">
+      <button class="wd-btn primary" onclick="sameTemplateFromWall()">拍同款 ›</button>
+      <button class="wd-btn plain" onclick="closeWallDetail()">看看就好</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-mine">
+  <div class="page-header">
+    <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>我的纪念</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="mine-head">
+      <div class="mh-no" id="mh-no">第 328 号纪念档案</div>
+      <div class="mh-sub" id="mh-sub">访客编号 FJDH-0328</div>
+      <div class="mh-count" id="mh-count">共 0 张作品</div>
+    </div>
+    <div id="mine-pending"></div>
+    <div id="mine-list" class="mine-list"></div>
+  </div>
+</div>
+
+<div class="page" id="page-terms">
+  <div class="page-header">
+    <button class="back-btn" onclick="historyBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h2>说明与授权</h2>
+    <span class="hdr-right"></span>
+  </div>
+  <div class="page-body">
+    <div class="terms-body">
+      <div class="terms-sec">
+        <h3>活动说明</h3>
+        <p>纪念相册是本次大会现场的互动留影服务。扫码进入后，上传或拍摄照片，选择纪念模板生成专属作品，可保存分享，也可把风采留在大屏上，与现场参会者分享美好。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>成像能力说明</h3>
+        <p>使用人物照片搭配纪念模板，直接合成专属纪念照（约 3 秒）。成像效果会因照片而异，请使用本人照片。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>现场大屏展示规则</h3>
+        <p>勾选同意后，作品经工作人员确认即可在现场大屏展示。未展示不代表照片有问题。提交后如需停止展示，请联系现场工作人员。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>隐私说明</h3>
+        <p>你上传的照片仅用于生成本次活动纪念作品与现场展示（需你主动授权）。作品与本浏览器关联。正式版本上线前将公示完整隐私政策、数据保存期限与删除渠道。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>肖像授权说明</h3>
+        <p>提交展示即代表你同意将照片用于现场大屏展示与相关宣传用途。多人照片请确保已获得同框人员同意。</p>
+      </div>
+      <div class="terms-sec">
+        <h3>内容规范</h3>
+        <ul>
+          <li>请使用本人的真实照片，不包含他人隐私信息；</li>
+          <li>不上传含政治敏感、广告、联系方式、水印等内容；</li>
+          <li>不支持生成与政治人物同框、军警制服或特定身份形象。</li>
+        </ul>
+      </div>
+      <div class="terms-sec">
+        <h3>联系我们</h3>
+        <p>如需帮助或撤回展示，请联系现场工作人员。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page status-page" id="page-status">
+  <div class="status-icon" id="status-icon"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+  <div class="status-title" id="status-title">活动即将开始</div>
+  <div class="status-desc" id="status-desc">敬请期待现场纪念相册</div>
+  <div class="status-btns" id="status-btns"></div>
+</div>
       </div>
       <!-- 照片使用说明弹窗（全局：选模板 / 拍同款 首次提醒，确认后不再弹） -->
       <div class="consent-modal" id="consent-modal">
@@ -1009,13 +1457,1085 @@ body {
   </div>
 
   <script>
-/* __MOCK_DATA__ placeholder */
+/* mock-data.js - 演示数据 */
+var MOCK = {
+  user: { name: "管理员", role: "admin", avatar: "👤", department: "产品部" },
+  users: [
+    { phone: "138****1234", name: "张三", customers: ["XX博物馆"], sessions: 23, lastVisit: "2026-07-13", regTime: "2026-03-15", status: "正常", color: "#faad14" },
+    { phone: "139****5678", name: "李四", customers: ["科技馆"], sessions: 8, lastVisit: "2026-07-12", regTime: "2026-04-20", status: "正常", color: "#52c41a" },
+    { phone: "136****9012", name: "王五", customers: ["XX博物馆","科技馆","自然博物馆"], sessions: 45, lastVisit: "2026-07-13", regTime: "2026-02-10", status: "正常", color: "#1890ff" },
+    { phone: "137****3456", name: "赵六", customers: ["XX博物馆"], sessions: 3, lastVisit: "2026-07-10", regTime: "2026-06-01", status: "正常", color: "#722ed1" },
+    { phone: "135****7890", name: "孙七", customers: ["自然博物馆"], sessions: 12, lastVisit: "2026-07-08", regTime: "2026-05-12", status: "已禁用", color: "#f5222d" },
+    { phone: "133****2468", name: "周八", customers: ["科技馆"], sessions: 1, lastVisit: "2026-07-13", regTime: "2026-07-01", status: "正常", color: "#13c2c2" }
+  ],
+  chatRecords: [
+    { id: "C001", user: "张三", customer: "XX博物馆", messages: 12, startTime: "2026-07-13 14:30" },
+    { id: "C002", user: "李四", customer: "科技馆", messages: 5, startTime: "2026-07-13 13:20" },
+    { id: "C003", user: "王五", customer: "XX博物馆", messages: 28, startTime: "2026-07-13 10:15" },
+    { id: "C004", user: "赵六", customer: "XX博物馆", messages: 3, startTime: "2026-07-12 16:45" },
+    { id: "C005", user: "孙七", customer: "自然博物馆", messages: 8, startTime: "2026-07-12 11:00" }
+  ],
+  chatList: [
+    { id: 1, title: "示例对话一", time: "14:30", unread: 0 },
+    { id: 2, title: "示例对话二", time: "昨天", unread: 2 },
+    { id: 3, title: "示例对话三", time: "07-11", unread: 0 }
+  ]
+};
+
   </script>
   <script>
-/* __COMPONENT_SCRIPTS__ placeholder */
+/* ================= 共享数据（PRD 3.2 首期 9 模板 · 全部数据驱动） ================= */
+var ACTIVITY = {
+  fullName: '中国共产党福建省第十二次代表大会',
+  productName: '纪念相册',
+  slogan: '定格奋斗身影 共绘时代华章',
+  joinerCount: 328,
+  workCount: 612,
+  archiveIndex: 328,
+  shareCount: 28
+};
+
+var CAPABILITIES = {
+  A: { name: '经典纪念框', tag: '多人友好 · 约 3 秒', desc: '原片自然呈现 · 快速合成', confirmBtn: '确认合成', genBtn: '立即合成' },
+};
+
+var TPL_GROUPS = [
+  { id: 'classic', name: '庄重经典' },
+];
+
+var TEMPLATES = [
+  { id: 'shenghui', name: '盛会留念框', group: 'classic', cap: 'A', people: '1-6 人', time: '约 3 秒', guide: '建议多人合照，原图居中，红金边框', prime: true },
+  { id: 'fenjin',   name: '奋进新征程', group: 'classic', cap: 'A', people: '1-4 人', time: '约 3 秒', guide: '竖版照片 + 金色题字 + 福建剪影', prime: false },
+];
+var TPL_NAMES = {}; TEMPLATES.forEach(function(t){ TPL_NAMES[t.id] = t.name; });
+var findByTpl = function(id) { return TEMPLATES.filter(function(t){ return t.id === id; })[0]; };
+
+/* 画风列表（V2.1 风格化：照片详情页选择画风，字段含提示词/生成数量，PC 画风管理页数据源） */
+var STYLES = [
+  { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, desc: '提亮光影氛围，画面更通透', prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', count: 6  },
+  { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, desc: '背景写意水墨质感，晕染虚化', prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', count: 4 },
+  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, desc: '清新水彩插画质感，画面更艺术', prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', count: 2, demoFail: true }
+];
+var findStyle = function(id) { return (STYLES || []).filter(function(s){ return s.id === id; })[0]; };
+
+/* 我的作品（H10 数据源）
+   字段：sourceWorkId(风格作品指向来源原图；原图为空)、styleId(画风id；原图为空) */
+var MY_WORKS = [
+  { no: 'FJDH-0328-01', tpl: 'shenghui', status: 'selected', time: '今天 10:21', num: 1, sourceWorkId: '', styleId: '' },
+  { no: 'FJDH-0328-04', tpl: 'shenghui', status: 'notsub',   time: '今天 10:30', num: 4, sourceWorkId: 'FJDH-0328-01', styleId: 'shuimo' },
+  { no: 'FJDH-0328-02', tpl: 'fenjin',   status: 'wait',     time: '今天 10:23', num: 2, sourceWorkId: '', styleId: '' },
+  { no: 'FJDH-0328-03', tpl: 'fenjin',   status: 'notsub',   time: '今天 10:25', num: 3, sourceWorkId: '', styleId: '' }
+];
+
+/* 精选照片墙（H09，不含姓名/微信信息） */
+var GALLERY = [
+  { num: 'FJDH-0002', tpl: 'shenghui',  bg: 1 },
+  { num: 'FJDH-0009', tpl: 'fenjin',  bg: 4 },
+  { num: 'FJDH-0015', tpl: 'shenghui', bg: 2, styleId: 'shuimo' },
+  { num: 'FJDH-0021', tpl: 'fenjin',  bg: 5 },
+  { num: 'FJDH-0033', tpl: 'shenghui', bg: 1 },
+  { num: 'FJDH-0040', tpl: 'shenghui',  bg: 7 },
+  { num: 'FJDH-0052', tpl: 'fenjin',  bg: 8 },
+  { num: 'FJDH-0061', tpl: 'shenghui',    bg: 6 },
+  { num: 'FJDH-0068', tpl: 'fenjin',  bg: 2 },
+  { num: 'FJDH-0077', tpl: 'fenjin',  bg: 4 },
+  { num: 'FJDH-0084', tpl: 'shenghui',  bg: 1 },
+  { num: 'FJDH-0090', tpl: 'fenjin',  bg: 5 }
+];
+
+var state = {
+  curTplGroup: 'classic',
+  selectedTpl: 'shenghui',
+  sbChecked: false,
+  photoTaken: false,
+  photoSrc: null,
+  qcLevel: 'ok',
+  generating: false,
+  generationFail: null,
+  curWork: null,
+  wallWork: null,
+  visitFromWall: false,
+  /* V2.6 风格异步生成：生成中 + 待确认池（未读 seen 控制提醒红点） */
+  genStyleId: '',
+    genTpl: '',
+    genFail: null,
+    genNextFail: false,
+    pendingStyles: [],
+  curTabIdx: 0,
+    curGroup: []
+  };
+
+  /* ================= V2.6 待确认风格提醒（红点/发光） ================= */
+  function styleUnreadCount(srcNo) {
+    var list = state.pendingStyles || [];
+    if (srcNo) list = list.filter(function(p){ return p.srcNo === srcNo; });
+    return list.filter(function(p){ return !p.seen; }).length;
+  }
+  /* 更新全局提醒：首页「我的纪念照」红点、详情页「更多风格」红点+生成中发光 */
+  function updateStyleDots() {
+    var un = styleUnreadCount();
+    var dot = document.getElementById('home-mine-dot');
+    if (dot) { dot.style.display = un ? '' : 'none'; dot.textContent = un > 1 ? un : ''; }
+    var md = document.getElementById('more-style-dot');
+    if (md) {
+      var u2 = styleUnreadCount(currentRootNo());
+      md.style.display = u2 ? '' : 'none';
+      md.textContent = u2 > 1 ? u2 : '';
+    }
+    var mbtn = document.getElementById('more-style-btn');
+    if (mbtn) mbtn.classList.toggle('generating', !!state.genStyleId);
+  }
+  function refreshMineIfActive() {
+    var mine = document.getElementById('page-mine');
+    if (mine && mine.classList.contains('active')) renderMine();
+  }
+  /* 生成中状态卡：点击我的纪念「生成中」项打开 */
+  function openGenStatus() {
+    if (!state.genStyleId) return;
+    var g = findStyle(state.genStyleId);
+    var hero = document.getElementById('gs-hero');
+    if (!hero) return;
+    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    hero.classList.add('effect-' + state.genStyleId);
+    hero.querySelector('.photo-bg').setAttribute('data-tpl', state.genTpl || (state.curWork && state.curWork.tpl) || 'shenghui');
+    document.getElementById('gs-name').textContent = (g && g.name) || state.genStyleId;
+    document.getElementById('gs-mask').style.display = '';
+    document.getElementById('gs-sheet').style.display = '';
+  }
+  function closeGenStatus() {
+    document.getElementById('gs-mask').style.display = 'none';
+    document.getElementById('gs-sheet').style.display = 'none';
+  }
+  /* 生成失败卡：重新生成 / 放弃 */
+  function openFailStatus() {
+    var f = state.genFail;
+    if (!f) return;
+    var g = findStyle(f.styleId);
+    var hero = document.getElementById('fs-hero');
+    if (!hero) return;
+    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    hero.classList.add('effect-' + f.styleId);
+    hero.querySelector('.photo-bg').setAttribute('data-tpl', f.tpl);
+    document.getElementById('fs-name').textContent = (g && g.name) || f.styleId;
+    document.getElementById('fs-mask').style.display = '';
+    document.getElementById('fs-sheet').style.display = '';
+  }
+  function closeFailStatus() {
+    document.getElementById('fs-mask').style.display = 'none';
+    document.getElementById('fs-sheet').style.display = 'none';
+  }
+  function retryFailStyle() {
+    var f = state.genFail;
+    if (!f) return;
+    if (state.genStyleId) { toast('当前已有风格生成中，请稍后'); return; }
+    closeFailStatus();
+    state.genFail = null;
+    var s = findStyle(f.styleId);
+    toast((s && s.name ? s.name : '') + ' 重新生成中');
+    state.genStyleId = f.styleId;
+    state.genTpl = f.tpl;
+    updateStyleDots();
+    refreshMineIfActive();
+    setTimeout(function(){
+      if (state.genStyleId !== f.styleId) return;
+      state.genStyleId = '';
+      state.genTpl = '';
+      state.pendingStyles.push({ styleId: f.styleId, tpl: f.tpl, srcNo: f.srcNo || '', seen: false });
+      toast('已生成，请确认保存');
+      updateStyleDots();
+      refreshMineIfActive();
+    }, 10000);
+  }
+  function dropFailStyle() {
+    closeFailStatus();
+    state.genFail = null;
+    toast('已放弃这张风格照');
+    updateStyleDots();
+    refreshMineIfActive();
+  }
+  function demoStyleFail() {
+    if (state.genStyleId) { toast('当前已有风格生成中'); return; }
+    if (state.genFail) { toast('已有失败项，可重新生成或放弃'); return; }
+    if (!state.curWork) { toast('请先打开一张作品详情页再演示'); toggleDemoMenu(); return; }
+    var sid = 'shuimo';
+    var all = window.STYLES || [];
+    if (all.length) sid = all[0].id;
+    var g = findStyle(sid);
+    state.genNextFail = true;
+    toggleDemoMenu();
+    toast('即将模拟「' + ((g && g.name) || sid) + '」生成失败');
+    startStyleGen(sid);
+  }
+
+/* ================= 页面切换 ================= */
+var PAGE_STACK = ['home'];
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var el = document.getElementById('page-' + id);
+  if (el) el.classList.add('active');
+  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
+  var tabBar = document.getElementById('tab-bar');
+  if (tabBar) {
+    if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; }
+    else { tabBar.style.display = 'flex'; tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); }); }
+  }
+  if (PAGE_STACK[PAGE_STACK.length-1] !== id) PAGE_STACK.push(id);
+  return id;
+}
+function historyBack() {
+  PAGE_STACK.pop();
+  var to = PAGE_STACK[PAGE_STACK.length-1] || 'home';
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-' + to).classList.add('active');
+  refreshTabs(to);
+}
+function refreshTabs(id) {
+  var hideTabs = ['photo', 'photo-confirm', 'generating', 'terms', 'status'];
+  var tabBar = document.getElementById('tab-bar');
+  if (!tabBar) return;
+  if (hideTabs.indexOf(id) >= 0) { tabBar.style.display = 'none'; return; }
+  tabBar.style.display = 'flex';
+  tabBar.querySelectorAll('.tab-bar-item').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-page') === id); });
+}
+function goHome()   { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('home'); }
+function goTemplates() { state.visitFromWall = false; PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderTplGrid(); showPage('templates'); }
+function goPhoto()  { if (typeof resetPhoto === 'function') resetPhoto(); showPage('photo'); }
+function goGenerating() { showPage('generating'); }
+function goGallery() { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderWall(); showPage('gallery'); }
+function goMine()   { PAGE_STACK.length = 0; PAGE_STACK.push('home'); renderMine(); showPage('mine'); }
+function goTerms()  { PAGE_STACK.length = 0; PAGE_STACK.push('home'); showPage('terms'); }
+function goStatus() { showPage('status'); }
+
+/* ================= Toast ================= */
+var toastTimer = null;
+function toast(text, icon) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  document.getElementById('toast-icon').textContent = icon || '✓';
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
+
+/* ================= 首页精选轮播 ================= */
+function renderSpot() {
+  var track = document.getElementById('spot-track');
+  if (!track) return;
+  var html = '';
+  GALLERY.slice(0, 5).forEach(function(p) {
+    html += '<div class="spot-card" onclick="goGallery()">' +
+      '<div class="photo-bg wb-' + p.bg + '"></div>' +
+      '<div class="photo-person"></div>' +
+      '<span class="spot-num">' + p.num + '</span>' +
+      '</div>';
+  });
+  track.innerHTML = html;
+}
+
+/* ================= 初始化 ================= */
+document.getElementById('stat-joiner').textContent = ACTIVITY.joinerCount;
+document.getElementById('stat-work').textContent = ACTIVITY.workCount;
+document.getElementById('stat-archive').textContent = ACTIVITY.shareCount;
+renderSpot();
+
+/* ================= H03 模板列表 ================= */
+function renderTplGrid() {
+  var grid = document.getElementById('tpl-grid');
+  if (!grid) return;
+  var list = TEMPLATES;
+  var html = '';
+  list.forEach(function(t) {
+    html += '<div class="tpl-card" data-id="' + t.id + '" onclick="chooseTpl(\'' + t.id + '\')">' +
+      '<div class="tpl-thumb"><div class="tpl-inner"><div class="tpl-' + t.id + '"><div class="avatar-dummy"></div></div></div></div>' +
+      '<div class="tpl-name">' + t.name + '</div>' +
+      '<div class="tpl-desc">' + t.guide + '</div>' +
+      '</div>';
+  });
+  if (list.length === 0) html = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray);font-size:13px">暂无模板</div>';
+  grid.innerHTML = html;
+}
+/* 选模板：首次弹出照片使用说明，确认后进拍照页 */
+function chooseTpl(id) {
+  state.selectedTpl = id;
+  if (sessionStorage.getItem('ddh_notice_agreed') === '1') {
+    goPhoto();
+    return;
+  }
+  document.getElementById('consent-modal').classList.add('show');
+}
+function agreeNotice() {
+  sessionStorage.setItem('ddh_notice_agreed', '1');
+  document.getElementById('consent-modal').classList.remove('show');
+  goPhoto();
+  if (state.visitFromWall) toast('已按该作品模板为你跳转，拍个同款吧');
+}
+function closeNotice() {
+  document.getElementById('consent-modal').classList.remove('show');
+  toast('已取消，可重新选择模板');
+}
+
+/* ================= H05 获取照片（拍好自动生成；模板在页内切换） ================= */
+function setPhotoTpl(id) {
+  state.selectedTpl = id;
+  var chips = document.querySelectorAll('#tpl-strip .tpl-chip');
+  for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('active', chips[i].getAttribute('data-tpl') === id);
+}
+/* 从结果页「再拍一张」返回时复位拍照页 */
+function resetPhoto() {
+  var area = document.getElementById('camera-area');
+  var pv = document.getElementById('preview-wrap');
+  if (area) area.style.display = 'flex';
+  if (pv) pv.style.display = 'none';
+  state.photoTaken = false;
+  state.photoSrc = null;
+}
+function takePhoto() {
+  state.photoTaken = true;
+  state.photoSrc = makePortraitSVG();
+  toast('咔嚓！正在生成纪念照');
+  startGenerate();
+}
+function pickAlbum() {
+  document.getElementById('file-input').click();
+}
+function retake() {
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('camera-area').style.display = 'flex';
+  state.photoTaken = false;
+  state.photoSrc = null;
+}
+/* 相册选择 → 自动生成 */
+document.getElementById('file-input').addEventListener('change', function(e) {
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    state.photoTaken = true;
+    state.photoSrc = ev.target.result;
+    toast('照片已就绪，正在生成');
+    startGenerate();
+  };
+  reader.readAsDataURL(file);
+});
+function makePortraitSVG() {
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500">' +
+    '<rect width="400" height="500" fill="#3A3A40"/>' +
+    '<ellipse cx="200" cy="150" rx="85" ry="100" fill="#F5D0A9"/>' +
+    '<rect x="140" y="262" width="120" height="120" rx="55" fill="#D95C4A"/>' +
+    '<rect x="120" y="330" width="160" height="220" rx="60" fill="#C0392B"/>' +
+    '<path d="M160 420 Q200 520 240 420" fill="none" stroke="#7A1712" stroke-width="3"/>' +
+    '</svg>'
+  );
+}
+/* 演示：跳过拍照直接取照片（demoFail 使用，仅演示生成失败时） */
+function takePhotoNoConsent() {
+  state.photoTaken = true;
+  state.photoSrc = makePortraitSVG();
+}
+/* H05 → 立即生成（无过渡动画：直出结果；失败演示仍保留失败页） */
+function startGenerate() {
+  if (!state.photoTaken) { toast('请先拍摄或选择照片'); return; }
+  if (state.generationFail) {
+    var fail = state.generationFail;
+    state.generationFail = null;
+    showPage('generating');
+    showGenFail(fail);
+    return;
+  }
+  finishGenerate();
+}
+
+/* ================= H07 生成进度 ================= */
+function startGenTimer(steps) {
+  var i = 0;
+  var stepMs = 1100;
+  var timer = setInterval(function() {
+    i++;
+    if (i < steps.length && document.getElementById('gs-' + (i-1))) document.getElementById('gs-' + (i-1)).className = 'gen-step done';
+    if (i < steps.length) document.getElementById('gs-' + i).className = 'gen-step active';
+    if (i >= 2) document.getElementById('gen-overtime').style.display = 'block';
+    if (i >= steps.length) {
+      clearInterval(timer);
+      setTimeout(function() { finishGenerate(); }, 500);
+    }
+  }, stepMs);
+}
+function finishGenerate() {
+  var t = findByTpl(state.selectedTpl);
+  var nextNum = MY_WORKS.length + 1;
+  var work = {
+    no: 'FJDH-0328-0' + nextNum,
+    tpl: t.id,
+    status: 'notsub',
+    time: '今天 10:2' + ((nextNum) % 10),
+    num: nextNum
+  };
+  MY_WORKS.push(work);
+  state.curWork = work;
+  renderResult(true);
+}
+function showGenFail(type) {
+  document.getElementById('gen-working').style.display = 'none';
+  var fail = document.getElementById('gen-fail');
+  fail.classList.add('show');
+  var sub = document.getElementById('gf-sub');
+  if (type === 'safety') sub.textContent = '当前照片暂不支持生成，请更换一张照片。';
+  else sub.textContent = '照片不会公开展示，你可以重新尝试';
+}
+function retryGenerate() {
+  state.generationFail = null;
+  var t = findByTpl(state.selectedTpl);
+  document.getElementById('gen-fail').classList.remove('show');
+  document.getElementById('gen-working').style.display = 'block';
+  showPage('generating');
+  var steps = t.cap === 'A' ? ['正在排版纪念信息','正在合成高清作品'] : t.cap === 'B' ? ['正在识别人像','正在融合主题场景','正在优化光影细节'] : ['正在分析人物特征','正在创作艺术画面','正在完成细节优化'];
+  var stepsWrap = document.getElementById('gen-steps');
+  stepsWrap.innerHTML = '';
+  steps.forEach(function(s, i) {
+    var div = document.createElement('div');
+    div.className = 'gen-step' + (i === 0 ? ' active' : '');
+    div.id = 'gs-' + i;
+    div.innerHTML = '<span class="s-dot"></span><span>' + s + '</span>';
+    stepsWrap.appendChild(div);
+  });
+  startGenTimer(steps);
+}
+function closeLeave(continueWait) {
+  document.getElementById('leave-modal').classList.remove('show');
+  if (!continueWait) goHome();
+}
+
+/* ================= H08 作品结果（V2.6：风格生成异步化 → 待确认池 + 确认卡；入口按钮状态动效） ================= */
+function findWorkByNo(no) { return (MY_WORKS||[]).filter(function(x){ return x.no === no; })[0]; }
+function getRootWork(w) { return (w && w.sourceWorkId) ? (findWorkByNo(w.sourceWorkId) || w) : w; }
+function findStyle(id) { return (STYLES||[]).filter(function(x){ return x.id === id; })[0]; }
+function findByTpl(id) { return (TEMPLATES||[]).filter(function(x){ return x.id === id; })[0] || { name: '', cap: 'A', id: id }; }
+function currentRootNo() {
+  var w = state.curWork;
+  return (w && w.sourceWorkId) ? w.sourceWorkId : (w ? w.no : '');
+}
+/* 可生成画风：同底片同画风已保存的不出现；待确认/生成中的在列表内（显示查看/生成中） */
+function availableStyles() {
+  if (!STYLES) return [];
+  return STYLES.filter(function(s){ return s.enabled !== false; });
+}
+function pendingOf(styleId) {
+  var list = state.pendingStyles || [];
+  for (var i = 0; i < list.length; i++) { if (list[i].styleId === styleId && list[i].srcNo === currentRootNo()) return i; }
+  return -1;
+}
+function savedStyleWork(styleId) {
+  var rootNo = currentRootNo();
+  var list = MY_WORKS || [];
+  for (var i = 0; i < list.length; i++) {
+    var w = list[i];
+    if (w.styleId === styleId && w.sourceWorkId === rootNo) return w;
+  }
+  return null;
+}
+/* 已保存风格照：跳到该作品详情页（原地刷新详情） */
+function viewSavedStyle(no) {
+  closeStyleSheet();
+  var list = MY_WORKS || [];
+  for (var i = 0; i < list.length; i++) { if (list[i].no === no) { state.curWork = list[i]; renderWork(); return; } }
+}
+function styleBtnHtml(s) {
+  if (state.genStyleId === s.id) return '<span class="st-gen"><span class="gen-spin"></span>生成中…</span>';
+  var pf = pendingOf(s.id);
+  if (pf >= 0) return '<button class="st-btn2" onclick="openStyleConfirm(' + pf + ')">待确认</button>';
+  var saved = savedStyleWork(s.id);
+  if (saved) return '<button class="st-btn2 view" onclick="viewSavedStyle(\'' + saved.no + '\')">查看</button>';
+  return '<button class="st-btn2" onclick="startStyleGen(\'' + s.id + '\')">生成</button>';
+}
+function openStyleSheet() {
+  var list = availableStyles();
+  var html = '';
+  list.forEach(function(s){
+    html += '<div class="st-item"><span class="st-thumb effect-' + s.id + '"><span class="photo-bg" data-tpl="' + state.curWork.tpl + '"></span><span class="photo-person"></span></span>' +
+      '<span class="st-info"><span class="st-name">' + s.name + '</span><span class="st-time">' + s.time + '</span>' +
+        (s.desc ? '<span class="st-desc">' + s.desc + '</span>' : '') + '</span>' +
+      '<span class="st-go">' + styleBtnHtml(s) + '</span></div>';
+  });
+  if (!html) html = '<div class="st-empty">本张照片的全部风格已生成</div>';
+  document.getElementById('st-list').innerHTML = html;
+  document.getElementById('st-mask').style.display = '';
+  document.getElementById('st-sheet').style.display = '';
+}
+function closeStyleSheet() {
+  document.getElementById('st-mask').style.display = 'none';
+  document.getElementById('st-sheet').style.display = 'none';
+}
+/* ---- 风格生成：异步任务（原型 3s 模拟），完成入待确认池；一次一个 ---- */
+function startStyleGen(styleId) {
+  if (state.genStyleId) { toast('已有风格生成中，请稍后'); return; }
+  var s = findStyle(styleId);
+  if (!s) return;
+  var rootNo = currentRootNo();
+  toast(s.name + ' 生成中，完成后可在「更多风格」或我的纪念查看');
+  state.genStyleId = styleId;
+  state.genTpl = state.curWork.tpl;
+  updateStyleDots();
+  openStyleSheetIfOpen(); /* 弹窗若开着：该项按钮立刻变为“生成中…” */
+  var tpl0 = state.genTpl;
+  setTimeout(function(){
+    if (state.genStyleId !== styleId) return;
+    var fail = state.genNextFail || ((window.STYLES || []).filter(function(x){ return x.id === styleId; })[0] || {}).demoFail === true;
+    state.genStyleId = '';
+    state.genTpl = '';
+    state.genNextFail = false;
+    if (fail) {
+      state.genFail = { styleId: styleId, tpl: tpl0, srcNo: rootNo };
+      toast(s.name + ' 生成失败，可重新生成或放弃');
+      updateStyleDots();
+      refreshMineIfActive();
+      return;
+    }
+    state.pendingStyles.push({ styleId: styleId, tpl: tpl0, srcNo: rootNo, seen: false });
+    toast(s.name + ' 已生成，请确认保存');
+    updateStyleDots();
+    refreshMineIfActive();
+    openStyleSheetIfOpen();
+    }, 10000);
+    }
+    function openStyleSheetIfOpen() {
+  var sh = document.getElementById('st-sheet');
+  if (sh && sh.style.display !== 'none') openStyleSheet();
+}
+/* ---- 确认卡（查看待确认风格） ---- */
+var CK_IDX = -1;
+function openStyleConfirm(idx) {
+  var list = state.pendingStyles || [];
+  if (idx < 0 || idx >= list.length) return;
+  CK_IDX = idx;
+  var p = list[idx];
+  p.seen = true;
+  updateStyleDots();
+  var s = findStyle(p.styleId) || {};
+  var hero = document.getElementById('ck-hero');
+  ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+  hero.classList.add('effect-' + p.styleId);
+  hero.querySelector('.photo-bg').setAttribute('data-tpl', p.tpl);
+  document.getElementById('ck-name').textContent = s.name || p.styleId;
+  document.getElementById('ck-mask').style.display = '';
+  document.getElementById('ck-sheet').style.display = '';
+}
+function closeStyleConfirm() {
+  document.getElementById('ck-mask').style.display = 'none';
+  document.getElementById('ck-sheet').style.display = 'none';
+}
+function savePendingStyle() {
+  var list = state.pendingStyles || [];
+  if (CK_IDX < 0 || CK_IDX >= list.length) return;
+  var p = list[CK_IDX];
+  var s = findStyle(p.styleId) || {};
+  var root = findWorkByNo(p.srcNo);
+  var nextNum = 1;
+  (MY_WORKS||[]).forEach(function(x){ if ((x.num||1) > nextNum) nextNum = x.num; });
+  nextNum += 1;
+  var work = {
+    no: 'FJDH-0328-' + (nextNum < 10 ? '0' : '') + nextNum,
+    tpl: p.tpl, status: 'notsub', time: '刚刚', num: nextNum,
+    sourceWorkId: p.srcNo, styleId: p.styleId, 'new': true
+  };
+  MY_WORKS.push(work);
+  list.splice(CK_IDX, 1);
+  CK_IDX = -1;
+  toast((s.name || '风格') + ' 已保存到我的纪念');
+  closeStyleConfirm();
+  updateStyleDots();
+  state.curWork = work;
+  renderResult();
+}
+function regenPendingStyle() {
+  var list = state.pendingStyles || [];
+  if (CK_IDX < 0 || CK_IDX >= list.length) return;
+  var p = list[CK_IDX];
+  var s = findStyle(p.styleId) || {};
+  if (state.genStyleId) { toast('已有风格生成中，请稍后'); return; }
+  list.splice(CK_IDX, 1);
+  CK_IDX = -1;
+  toast((s.name || '风格') + ' 重新生成中');
+  state.genStyleId = p.styleId;
+  state.genTpl = p.tpl;
+  closeStyleConfirm();
+  updateStyleDots();
+  setTimeout(function(){
+    if (state.genStyleId !== p.styleId) return;
+    state.genStyleId = '';
+    state.pendingStyles.push({ styleId: p.styleId, tpl: p.tpl, srcNo: p.srcNo, seen: false });
+    toast((s.name || '风格') + ' 已重新生成，请确认');
+    updateStyleDots();
+    refreshMineIfActive();
+  }, 10000);
+}
+function dropPendingStyle() {
+  var list = state.pendingStyles || [];
+  if (CK_IDX < 0 || CK_IDX >= list.length) return;
+  var p = list.splice(CK_IDX, 1)[0];
+  CK_IDX = -1;
+  closeStyleConfirm();
+  updateStyleDots();
+  toast('已放弃该风格照');
+}
+/* ---- 渲染当前作品（正式态） ---- */
+function renderWork() {
+  var w = state.curWork;
+  if (!w) return;
+  var t = findByTpl(w.tpl);
+  var photo = document.getElementById('result-photo');
+  ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ photo.classList.remove(c); });
+  if (w.styleId) photo.classList.add('effect-' + w.styleId);
+  photo.querySelector('.photo-bg').setAttribute('data-tpl', t.id);
+  var numEl = document.getElementById('result-number');
+  if (w.styleId) {
+    var sn = (findStyle(w.styleId) || {}).name || w.styleId;
+    numEl.textContent = sn;
+  } else {
+    numEl.textContent = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案';
+  }
+  var st = w.status || '';
+  var sv = document.getElementById('btn-save');
+  var sh = document.getElementById('btn-share');
+  sv.textContent = '保存本地'; sv.disabled = false;
+  if (st === 'selected') { sh.textContent = '正在展示'; sh.disabled = true; }
+  else if (st === 'wait') { sh.textContent = '等待上屏'; sh.disabled = true; }
+  else { sh.textContent = '分享上屏'; sh.disabled = false; }
+  // 三态说明（PRD H08）
+  var title = '把这份美好，留在现场';
+  var desc = '大会现场大屏将轮播参会者的风采瞬间。提交你的纪念照，就有机会与全体参会者分享这份美好。';
+  var showCheck = true;
+  if (st === 'wait') { title = '已提交，等待上屏'; desc = '工作人员确认后，你的风采就有机会与现场参会者相遇，你可以在“我的纪念”查看状态。'; showCheck = false; }
+  else if (st === 'selected') { title = '正在展示'; desc = '你的风采正在现场与参会者相遇。'; showCheck = false; }
+  document.getElementById('sb-title').textContent = title;
+  document.getElementById('sb-desc').textContent = desc;
+  document.getElementById('sb-check').style.display = showCheck ? '' : 'none';
+  document.getElementById('selection-box').style.display = '';
+  updateStyleDots();
+}
+function renderResult(fromGen) {
+  renderWork();
+  showPage('result');
+  if (fromGen) toast('纪念作品生成完成');
+}
+/* ---- 按钮分发 ---- */
+function handleSaveClick() { saveToLocal(); }
+function handleSecondClick() { shareToScreen(); }
+function saveToLocal() { toast('已保存'); }
+function resetCheckBox() {
+  var box = document.getElementById('sb-check');
+  box.classList.remove('checked');
+  box.querySelector('.ck-box').textContent = '✓';
+}
+function toggleSbCheck() {
+  var wrap = document.getElementById('sb-check');
+  wrap.classList.toggle('checked');
+  state.sbChecked = wrap.classList.contains('checked');
+}
+function shareToScreen() {
+  var w = state.curWork;
+  if (!w || w.status === 'selected' || w.status === 'wait') return;
+  if (!state.sbChecked) { toast('请先勾选同意展示授权', '⚠️'); return; }
+  w.status = 'wait';
+  document.getElementById('submit-modal').classList.add('show');
+  renderWork();
+}
+function closeSubmitGoMine() {
+  document.getElementById('submit-modal').classList.remove('show');
+  showPage('mine'); renderMine();
+}
+function goMineFromResult() { showPage('mine'); renderMine(); }
+/* ---- 沉浸预览 ---- */
+function openFullPhoto() {
+  var t = findByTpl(state.curWork.tpl);
+  var fp = document.getElementById('fp-img');
+  ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ fp.classList.remove(c); });
+  if (state.curWork.styleId) fp.classList.add('effect-' + state.curWork.styleId);
+  fp.querySelector('.photo-bg').setAttribute('data-tpl', t.id);
+  document.getElementById('full-photo').classList.add('show');
+}
+function retryCreate() { goTemplates(); }
+function onResultBack() { goHome(); }
+
+/* ================= H09 现场风采 ================= */
+function renderWall() {
+  var grid = document.getElementById('wall-grid');
+  if (!grid) return;
+  var html = '';
+  GALLERY.forEach(function(p, idx) {
+    var tag = '';
+    if (p.styleId) {
+      var sn = _sName(p.styleId);
+      tag = '<span class="wall-style-tag">' + sn + '</span>';
+    }
+    html += '<div class="wall-item" onclick="openWallDetail(' + idx + ')">' +
+      '<div class="wall-bg wb-' + p.bg + '"></div>' +
+      '<div class="wall-person"></div>' +
+      tag +
+      '</div>';
+  });
+  grid.innerHTML = html;
+  document.getElementById('wall-count').textContent = GALLERY.length;
+}
+function openWallDetail(idx) {
+  var p = GALLERY[idx];
+  var d = document.getElementById('wall-detail');
+  var t = findByTpl(p.tpl);
+  d.classList.add('show');
+  var wp = document.getElementById('wd-photo');
+  wp.querySelector('.wall-bg').className = 'wall-bg wb-' + p.bg;
+  document.getElementById('wd-name').textContent = t.name;
+  var stTag = document.getElementById('wd-style-tag');
+  if (p.styleId) {
+    stTag.textContent = _sName(p.styleId);
+    stTag.style.display = '';
+  } else {
+    stTag.style.display = 'none';
+  }
+  document.getElementById('wd-num').textContent = (p.styleId ? (_sName(p.styleId) + ' · ') : '') + '点击可拍同款';
+  state.wallWork = p;
+}
+function sameTemplateFromWall() {
+  var p = state.wallWork;
+  closeWallDetail();
+  state.visitFromWall = true;
+  state.selectedTpl = p.tpl;
+  /* 首次（未在任何位置点过"我已了解"）→ 先弹照片使用说明，确认后再进拍照页 */
+  if (sessionStorage.getItem('ddh_notice_agreed') !== '1') {
+    document.getElementById('consent-modal').classList.add('show');
+    return;
+  }
+  goPhoto();
+  toast('已按该作品模板为你跳转，拍个同款吧');
+}
+function closeWallDetail() { document.getElementById('wall-detail').classList.remove('show'); }
+
+/* ================= H10 我的纪念（V2.5：单作品一卡，风格作品加画风小标） ================= */
+function _sName(id) { var s = findStyle ? findStyle(id) : null; return (s && s.name) ? s.name : id; }
+function statusPill(s) {
+  if (s === 'selected') return '<span class="status-pill on">● 正在展示</span>';
+  if (s === 'wait')    return '<span class="status-pill wait">● 等待上屏</span>';
+  return '<span class="status-pill off">○ 暂未分享</span>';
+}
+function renderMine() {
+  document.getElementById('mh-no').textContent = '第 ' + ACTIVITY.archiveIndex + ' 号纪念档案';
+  document.getElementById('mh-sub').textContent = '访客编号 FJDH-0328';
+  document.getElementById('mh-count').textContent = '共 ' + MY_WORKS.length + ' 张作品';
+  /* 风格生成区（V2.6：生成中 + 已生成待确认 全部展示；查看后红点消失但仍可确认） */
+  var pendEl = document.getElementById('mine-pending');
+  var pendHtml = '';
+  var pends = state.pendingStyles || [];
+  var hasGen = !!state.genStyleId;
+  if (hasGen || state.genFail || pends.length) {
+    var un = pends.filter(function(p){ return !p.seen; }).length;
+    pendHtml = '<div class="mine-pending"><div class="mp-title">风格照生成' + (un ? ' <span class="mp-new">' + un + ' 条待确认</span>' : '') + '</div>';
+    if (hasGen) {
+      var g = _sName(state.genStyleId);
+      pendHtml += '<div class="mp-card gen" onclick="openGenStatus()">' +
+        '<span class="mp-thumb effect-' + state.genStyleId + '"><span class="photo-bg" data-tpl="' + (state.genTpl || state.curWork.tpl) + '"></span><span class="photo-person"></span></span>' +
+        '<span class="mp-info"><span class="mp-name">' + g + '</span><span class="mp-sub">生成中，完成后需确认保存</span></span>' +
+        '<span class="mp-go gen"><span class="gen-spin"></span>生成中…</span></div>';
+    }
+    if (state.genFail) {
+      var fg = _sName(state.genFail.styleId);
+      pendHtml += '<div class="mp-card fail" onclick="openFailStatus()">' +
+        '<span class="mp-thumb effect-' + state.genFail.styleId + '"><span class="photo-bg" data-tpl="' + state.genFail.tpl + '"></span><span class="photo-person"></span></span>' +
+        '<span class="mp-info"><span class="mp-name">' + fg + '</span><span class="mp-sub">生成没有完成</span></span>' +
+        '<span class="mp-go fail">生成失败</span></div>';
+    }
+    pends.forEach(function(p, i) {
+      var s = _sName(p.styleId);
+      pendHtml += '<div class="mp-card' + (p.seen ? ' seen' : '') + '" onclick="openStyleConfirm(' + i + ')">' +
+        '<span class="mp-thumb effect-' + p.styleId + '"><span class="photo-bg" data-tpl="' + p.tpl + '"></span><span class="photo-person"></span></span>' +
+        '<span class="mp-info"><span class="mp-name">' + s + '</span><span class="mp-sub">第 ' + ACTIVITY.archiveIndex + ' 号纪念档案</span></span>' +
+        (p.seen ? '' : '<i class="mp-unread"></i>') +
+        '<span class="mp-go">待确认</span></div>';
+    });
+    pendHtml += '</div>';
+  }
+  pendEl.innerHTML = pendHtml;
+  var list = document.getElementById('mine-list');
+  if (MY_WORKS.length === 0) {
+    list.innerHTML = '<div class="mine-empty"><div class="big"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg></div><p>还没有生成纪念作品</p><p><button class="gen-btn" onclick="goTemplates()">创作第一张纪念照</button></p></div>';
+    return;
+  }
+  var html = '';
+  (MY_WORKS||[]).forEach(function(w) {
+    var t = findByTpl(w.tpl);
+    var styleTag = w.styleId ? '<span class="mc-style-tag">' + _sName(w.styleId) + '</span>' : '';
+    var eff = w.styleId ? ' effect-' + w.styleId : '';
+    html += '<div class="mine-card" onclick="openWorkByNo(\'' + w.no + '\')">' +
+      '<div class="mc-photo' + eff + '"><div class="photo-bg" data-tpl="' + w.tpl + '"></div><div class="photo-person"></div></div>' +
+      '<div class="mc-info">' +
+        '<div class="mc-tpl">' + t.name + styleTag + '</div>' +
+        '<div class="mc-num">' + w.time + '</div>' +
+        '<div class="mc-status">' + statusPill(w.status) + '</div>' +
+      '</div>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+}
+/* 打开作品：进入详情默认展示该作品本身（进入即该作品详情） */
+function openWorkByNo(no) {
+  var w = (MY_WORKS||[]).filter(function(x){ return x.no === no; })[0];
+  if (!w) return;
+  state.curWork = w;
+  renderResult();
+}
+function openWorkFromMine(idx) {
+  var w = (MY_WORKS||[])[idx];
+  if (w) { state.curWork = w; renderResult(); }
+}
+
+/* H11 说明与授权：静态页，无独立逻辑 */
+
+/* H12 活动状态：页面切换由 shell 演示菜单驱动 demoStatus() */
   </script>
   <script>
-/* __BASE_JS__ placeholder */
+/* ============================
+   base.js - ProtoKit 运行时引擎
+   ProtoRouter + ProtoAnno + ProtoDoc
+   ============================ */
+
+// ---- 路由引擎 ----
+var ProtoRouter = {
+  currentPage: null,
+  defaultPage: null,
+
+  init: function(defaultPage) {
+    this.defaultPage = defaultPage || '';
+    window.addEventListener('hashchange', this.render.bind(this));
+    this.render();
+  },
+
+  render: function() {
+    var hash = window.location.hash || '#/' + this.defaultPage;
+    var pageId = hash.replace('#/', '').replace('#', '');
+
+    // 销毁旧页面
+    if (this.currentPage && typeof window['destroy_' + this.currentPage.replace(/-/g, '_')] === 'function') {
+      window['destroy_' + this.currentPage.replace(/-/g, '_')]();
+    }
+
+    // 隐藏所有页面
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+
+    // 显示目标页面
+    var target = document.getElementById('page-' + pageId);
+    if (target) {
+      target.classList.add('active');
+      this.currentPage = pageId;
+
+      // 调用初始化
+      var fnName = 'init_' + pageId.replace(/-/g, '_');
+      if (typeof window[fnName] === 'function') {
+        window[fnName]();
+      }
+
+      // 更新菜单高亮
+      document.querySelectorAll('.pc-menu-item').forEach(function(item) {
+        item.classList.toggle('active', item.getAttribute('data-page') === pageId);
+      });
+
+      // 更新移动端 Tab
+      document.querySelectorAll('.tab-bar-item').forEach(function(tab) {
+        tab.classList.toggle('active', tab.getAttribute('data-page') === pageId);
+      });
+
+      // 更新面包屑
+      var bc = document.getElementById('breadcrumb-current');
+      if (bc) bc.textContent = pageId;
+
+      // 更新页码导航
+      document.querySelectorAll('.page-nav-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-page') === pageId);
+      });
+
+      // 文档联动
+      ProtoDoc.trigger('page-load', pageId);
+
+      // 渲染标注
+      ProtoAnno.render();
+
+      // 更新 hash
+      if (location.hash !== '#/' + pageId) {
+        history.replaceState(null, '', '#/' + pageId);
+      }
+    }
+  },
+
+  go: function(pageId) {
+    window.location.hash = '#/' + pageId;
+  }
+};
+
+// ---- 标注引擎 ----
+var ProtoAnno = {
+  visible: true,
+
+  render: function() {
+    if (!this.visible) return;
+    document.querySelectorAll('[data-anno-id]').forEach(function(el) {
+      if (el.querySelector('.anno-badge')) return;
+      var id = el.getAttribute('data-anno-id');
+      var badge = document.createElement('span');
+      badge.className = 'anno-badge';
+      badge.textContent = id;
+      badge.onclick = function(e) {
+        e.stopPropagation();
+        if (window.PLATFORM === 'mobile') {
+          ProtoDoc.trigger('anno:' + id, ProtoRouter.currentPage);
+        } else {
+          ProtoAnno.showPopover(el, id);
+        }
+      };
+      el.appendChild(badge);
+    });
+  },
+
+  toggle: function() {
+    this.visible = !this.visible;
+    document.querySelectorAll('.anno-badge').forEach(function(b) {
+      b.style.display = ProtoAnno.visible ? 'flex' : 'none';
+    });
+  },
+
+  showPopover: function(el, id) {
+    var title = el.getAttribute('data-anno-title') || id;
+    var desc = el.getAttribute('data-anno-desc') || '暂无说明';
+    var container = document.getElementById('anno-popover-container');
+    if (!container) return;
+
+    var rect = el.getBoundingClientRect();
+    container.innerHTML =
+      '<div style="position:fixed;top:' + (rect.bottom + 8) + 'px;left:' + rect.left +
+      'px;background:#fff;border-radius:8px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);' +
+      'z-index:10001;min-width:240px;max-width:360px;">' +
+      '<div style="font-weight:600;margin-bottom:8px;">' + title + '</div>' +
+      '<div style="font-size:13px;color:#666;line-height:1.6;">' + desc + '</div>' +
+      '<div style="text-align:right;margin-top:12px;">' +
+      '<button class="btn btn-sm btn-default" onclick="document.getElementById(\'anno-popover-container\').innerHTML=\'\'">关闭</button>' +
+      '</div></div>';
+
+    setTimeout(function() {
+      document.addEventListener('click', function handler() {
+        container.innerHTML = '';
+        document.removeEventListener('click', handler);
+      });
+    }, 100);
+  }
+};
+
+// ---- 文档联动引擎 ----
+var ProtoDoc = {
+  storagePrefix: 'proto_doc_',
+
+  trigger: function(eventId, pageId) {
+    var panel = document.getElementById('doc-panel');
+    if (!panel) return;
+
+    // 查找对应 doc-section
+    var sections = document.querySelectorAll('.doc-section[data-trigger]');
+    var matched = null;
+    sections.forEach(function(s) {
+      if (s.getAttribute('data-trigger') === eventId) matched = s;
+    });
+
+    // 移动端：高亮对应 doc-card
+    if (pageId) {
+      document.querySelectorAll('.doc-card').forEach(function(card) {
+        card.classList.toggle('highlight', card.getAttribute('data-page') === pageId);
+      });
+      var docCard = document.querySelector('.doc-card[data-page="' + pageId + '"]');
+      if (docCard) {
+        panel.innerHTML = docCard.innerHTML;
+        return;
+      }
+    }
+
+    if (matched) {
+      var saved = localStorage.getItem(this.storagePrefix + eventId);
+      panel.innerHTML = saved || matched.innerHTML;
+      panel.setAttribute('data-current-trigger', eventId);
+    }
+  },
+
+  save: function() {
+    var panel = document.getElementById('doc-panel');
+    var eventId = panel.getAttribute('data-current-trigger');
+    if (eventId) {
+      localStorage.setItem(this.storagePrefix + eventId, panel.innerHTML);
+      showToast('保存成功');
+    }
+  },
+
+  reset: function() {
+    var panel = document.getElementById('doc-panel');
+    var eventId = panel.getAttribute('data-current-trigger');
+    if (eventId) {
+      localStorage.removeItem(this.storagePrefix + eventId);
+      this.trigger(eventId);
+      showToast('已重置');
+    }
+  }
+};
+
+// ---- 工具函数 ----
+function renderList(containerId, items, renderItem) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = items.map(renderItem).join('');
+}
+
+function renderTable(containerId, columns, rows) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var html = '<table class="table"><thead><tr>';
+  columns.forEach(function(col) { html += '<th>' + col.label + '</th>'; });
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(row) {
+    html += '<tr>';
+    columns.forEach(function(col) { html += '<td>' + (row[col.key] !== undefined ? row[col.key] : '') + '</td>'; });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function showModal(title, bodyHtml, onConfirm) {
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML =
+    '<div class="modal"><div class="modal-title">' + title + '</div>' +
+    '<div class="modal-body">' + bodyHtml + '</div>' +
+    '<div class="modal-footer"><button class="btn btn-default" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>' +
+    '<button class="btn btn-primary" id="modal-confirm-btn">确定</button></div></div>';
+  document.body.appendChild(overlay);
+  overlay.querySelector('#modal-confirm-btn').onclick = function() {
+    document.body.removeChild(overlay);
+    if (typeof onConfirm === 'function') onConfirm();
+  };
+}
+
+function showToast(msg, duration) {
+  duration = duration || 2000;
+  var toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function() {
+    toast.style.opacity = '0';
+    setTimeout(function() { document.body.removeChild(toast); }, 300);
+  }, duration);
+}
+
+function mockRequest(data, delay) {
+  delay = delay || 300;
+  return new Promise(function(resolve) { setTimeout(function() { resolve(data); }, delay); });
+}
+
   </script>
   <script>
     /* ===== 演示菜单（全局） ===== */
@@ -1056,7 +2576,7 @@ body {
     <script>
       document.addEventListener('DOMContentLoaded', function() {
       window.PLATFORM = 'mobile';
-      ProtoRouter.init('{{DEFAULT_PAGE}}');
+      ProtoRouter.init('home');
     });
   </script>
 </body>
