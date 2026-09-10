@@ -510,6 +510,7 @@ body {
 .effect-guangying .photo-bg, .effect-guangying .photo-person { filter: brightness(1.08) contrast(1.06); }
 .effect-shuimo    .photo-bg, .effect-shuimo    .photo-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
 .effect-shouhui  .photo-bg, .effect-shouhui  .photo-person { filter: saturate(0.45) contrast(1.12); }
+.effect-hongchou  .photo-bg, .effect-hongchou  .photo-person { filter: sepia(0.22) saturate(1.12) contrast(1.04); }
 /* 双主按钮并列 */
 .ra-actions { display: flex; gap: 10px; padding: 14px 20px 4px; }
 .ra-actions .ra-btn { flex: 1; margin-bottom: 0; }
@@ -519,14 +520,23 @@ body {
 .st-mask { position: absolute; inset: 0; z-index: 96; background: rgba(0,0,0,0.35); }
 .st-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 97; background: #fff; border-radius: 14px 14px 0 0; box-shadow: 0 -6px 30px rgba(0,0,0,0.18); padding: 18px 18px 26px; }
 .st-sheet .st-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+/* 更多风格弹层专属：头部固定 + 列表内滚（用 .st-style-sheet 隔离，不与其他 st-sheet 弹层共用布局） */
+.st-sheet.st-style-sheet { max-height: 76%; display: flex; flex-direction: column; padding-bottom: calc(26px + env(safe-area-inset-bottom)); }
+.st-sheet.st-style-sheet .st-head { flex-shrink: 0; position: relative; padding-right: 30px; }
+.st-sheet.st-style-sheet .st-title { margin-bottom: 0; }
+.st-sheet.st-style-sheet .st-sub { font-size: 12px; color: var(--gray); margin-top: 4px; line-height: 1.5; }
+.st-sheet.st-style-sheet .st-close { position: absolute; top: -2px; right: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: #9A9A9A; cursor: pointer; }
+.st-sheet.st-style-sheet .st-close svg { width: 16px; height: 16px; display: block; }
+.st-sheet.st-style-sheet .st-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 12px; }
 .st-sheet .st-item { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; background: #fff; cursor: pointer; }
 .st-sheet .st-item:last-child { margin-bottom: 0; }
-.st-sheet .st-thumb { width: 52px; height: 68px; border-radius: 6px; overflow: hidden; position: relative; flex-shrink: 0; background: linear-gradient(140deg,#7A1712,#B42318); }
+.st-sheet .st-thumb { width: 52px; height: 68px; border-radius: 6px; overflow: hidden; position: relative; flex-shrink: 0; background: #EDEDE8; }
 .st-sheet .st-thumb .photo-bg { position: absolute; inset: 0; }
 .st-sheet .st-thumb .photo-person { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 55%; aspect-ratio: 3/4; border-radius: 4px; z-index: 2; background: linear-gradient(135deg,#F5D0A9,#D9A066); border: 1px solid rgba(255,255,255,0.7); }
-.st-sheet .st-thumb.effect-guangying { filter: brightness(1.08) contrast(1.06); }
-.st-sheet .st-thumb.effect-shuimo { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
-.st-sheet .st-thumb.effect-shouhui { filter: saturate(0.45) contrast(1.12); }
+.st-sheet .st-thumb.effect-guangying { background: linear-gradient(140deg,#8E1A12,#C0392B); filter: brightness(1.08) contrast(1.06); }
+.st-sheet .st-thumb.effect-shuimo { background: linear-gradient(160deg,#F8F8F4,#CDCEC7); filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
+.st-sheet .st-thumb.effect-shouhui { background: linear-gradient(150deg,#FFF4E6,#F3D2B8); filter: saturate(0.45) contrast(1.12); }
+.st-sheet .st-thumb.effect-hongchou { background: linear-gradient(150deg,#FBE9E2,#E3A18F); filter: sepia(0.22) saturate(1.12) contrast(1.04); }
 .st-sheet .st-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
 .st-sheet .st-name { font-size: 14px; color: var(--ink); font-weight: 600; }
 .st-sheet .st-time { font-size: 11px; color: var(--gold-deep); margin-top: 2px; }

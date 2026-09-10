@@ -53,6 +53,7 @@ var findByTpl = function(id) { return TEMPLATES.filter(function(t){ return t.id 
 /* 画风列表（V2.1 风格化：照片详情页选择画风，字段含提示词/生成数量，PC 画风管理页数据源） */
 var STYLES = [
   { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, desc: '提亮光影氛围，画面更通透', prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', count: 6  },
+  { id: 'hongchou',  name: '红绸环绕', time: '约30秒', enabled: true, desc: '红丝绸飘带环绕，喜庆有仪式感', prompt: '浅红丝绸飘带局部环绕，画面要素与相框保持不变，人物清晰不被遮挡', count: 3 },
   { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, desc: '背景写意水墨质感，晕染虚化', prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', count: 4 },
   { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, desc: '清新水彩插画质感，画面更艺术', prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', count: 2, demoFail: true }
 ];
@@ -135,7 +136,7 @@ var state = {
     var g = findStyle(state.genStyleId);
     var hero = document.getElementById('gs-hero');
     if (!hero) return;
-    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    ['effect-guangying','effect-hongchou','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
     hero.classList.add('effect-' + state.genStyleId);
     hero.querySelector('.photo-bg').setAttribute('data-tpl', state.genTpl || (state.curWork && state.curWork.tpl) || 'shenghui');
     document.getElementById('gs-name').textContent = (g && g.name) || state.genStyleId;
@@ -153,7 +154,7 @@ var state = {
     var g = findStyle(f.styleId);
     var hero = document.getElementById('fs-hero');
     if (!hero) return;
-    ['effect-guangying','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
+    ['effect-guangying','effect-hongchou','effect-shuimo','effect-shouhui'].forEach(function(c){ hero.classList.remove(c); });
     hero.classList.add('effect-' + f.styleId);
     hero.querySelector('.photo-bg').setAttribute('data-tpl', f.tpl);
     document.getElementById('fs-name').textContent = (g && g.name) || f.styleId;

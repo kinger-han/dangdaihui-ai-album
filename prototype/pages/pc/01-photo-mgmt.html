@@ -20,12 +20,14 @@
     .photo-thumb.effect-guangying .pt-bg, .photo-thumb.effect-guangying .pt-person { filter: brightness(1.08) contrast(1.06); }
     .photo-thumb.effect-shuimo    .pt-bg, .photo-thumb.effect-shuimo    .pt-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
     .photo-thumb.effect-shouhui  .pt-bg, .photo-thumb.effect-shouhui  .pt-person { filter: saturate(0.45) contrast(1.12); }
+    .photo-thumb.effect-hongchou  .pt-bg, .photo-thumb.effect-hongchou  .pt-person { filter: sepia(0.22) saturate(1.12) contrast(1.04); }
     .tag-c { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 8px; font-size: 11px; border-radius: 3px; line-height: 1.5; }
     .tag-c.origin { color: #1677ff; background: #e6f4ff; border: 1px solid #91caff; }
     .tag-c.style { color: #8a641e; background: #fdf6e3; border: 1px solid #eadfc4; }
     .pv-img.effect-guangying .photo-bg, .pv-img.effect-guangying .photo-person { filter: brightness(1.08) contrast(1.06); }
     .pv-img.effect-shuimo    .photo-bg, .pv-img.effect-shuimo    .photo-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
     .pv-img.effect-shouhui  .photo-bg, .pv-img.effect-shouhui  .photo-person { filter: saturate(0.45) contrast(1.12); }
+    .pv-img.effect-hongchou  .photo-bg, .pv-img.effect-hongchou  .photo-person { filter: sepia(0.22) saturate(1.12) contrast(1.04); }
 
     .td-check { width: 36px; }
     .selection-cell .badge-status { margin-right: 4px; }
@@ -153,7 +155,8 @@ if (!window.__STYLE_LIST) {
   window.__STYLE_LIST = [
     { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '', count: 6 },
     { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '', count: 4 },
-    { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '', count: 2 }
+    { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '', count: 2 },
+    { id: 'hongchou',  name: '红绸环绕', time: '约30秒', enabled: true, prompt: '', count: 3 }
   ];
 }
 function _pStyleName(id) { var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; return s ? s.name : id; }

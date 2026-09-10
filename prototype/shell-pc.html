@@ -768,6 +768,7 @@ table tr { cursor: pointer; }
     .pd-img.effect-guangying .photo-bg, .pd-img.effect-guangying .photo-person { filter: brightness(1.08) contrast(1.06); }
     .pd-img.effect-shuimo    .photo-bg, .pd-img.effect-shuimo    .photo-person { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
     .pd-img.effect-shouhui  .photo-bg, .pd-img.effect-shouhui  .photo-person { filter: saturate(0.45) contrast(1.12); }
+    .pd-img.effect-hongchou  .photo-bg, .pd-img.effect-hongchou  .photo-person { filter: sepia(0.22) saturate(1.12) contrast(1.04); }
     .pd-field-row .pd-label.pd-style { color: #8a641e; }
   </style></style>
 </head>
@@ -1015,7 +1016,8 @@ function switchDeviceMgmt(element) {
 window.__STYLE_LIST = window.__STYLE_LIST || [
   { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', gen: 12, keep: 9, drop: 3, fail: 1 },
   { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', gen: 9, keep: 6, drop: 3, fail: 2 },
-  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', gen: 5, keep: 2, drop: 3, fail: 5 }
+  { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', gen: 5, keep: 2, drop: 3, fail: 5 },
+  { id: 'hongchou',  name: '红绸环绕', time: '约30秒', enabled: true, prompt: '浅红丝绸飘带局部环绕，画面要素与相框保持不变，人物清晰不被遮挡', gen: 7, keep: 5, drop: 2, fail: 0 }
 ];
 function pcStyleOf(id) { return (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; }
 
