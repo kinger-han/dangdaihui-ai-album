@@ -1,4 +1,4 @@
-<!-- PAGE_META: {"id": "selection-mgmt", "title": "上屏展示审核"} -->
+<!-- PAGE_META: {"id": "selection-mgmt", "title": "上屏审核"} -->
 <div class="page" id="page-selection-mgmt">
   <style>
     /* 申请上屏页局部样式 */
@@ -52,21 +52,17 @@
     .preview-box .pv-meta { font-size: 13px; color: #666; margin-top: 12px; text-align: left; line-height: 1.8; }
     .preview-box .pv-close { position: absolute; top: 10px; right: 14px; font-size: 20px; cursor: pointer; color: #999; }
     .preview-box .pv-close:hover { color: #333; }
-    /* 上屏设备选择弹窗 */
+    /* 上屏设备选择弹窗（多选表格，对齐真实系统） */
     .device-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1200; display: none; align-items: center; justify-content: center; }
     .device-modal.show { display: flex; }
-    .device-box { background: #fff; border-radius: 8px; width: 420px; padding: 20px 24px; }
-    .device-box .dv-title { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 4px; }
-    .device-box .dv-sub { font-size: 12px; color: #999; margin-bottom: 14px; }
-    .device-group { margin-bottom: 12px; }
-    .device-group .dg-label { font-size: 13px; color: #333; margin-bottom: 8px; }
-    .device-options { display: flex; gap: 8px; flex-wrap: wrap; }
-    .device-opt {
-      padding: 6px 14px; border: 1px solid #d9d9d9; border-radius: 4px;
-      font-size: 13px; color: #333; cursor: pointer; transition: all 0.15s; background: #fff;
-    }
-    .device-opt:hover { border-color: #1677ff; color: #1677ff; }
-    .device-opt.active { border-color: #1677ff; color: #fff; background: #1677ff; }
+    .device-box { background: #fff; border-radius: 8px; width: 640px; padding: 20px 24px; }
+    .device-box .dv-title { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 14px; }
+    .dv-search { margin-bottom: 12px; }
+    .dv-search .filter-input { width: 100%; box-sizing: border-box; }
+    .dv-tbl { width: 100%; border-collapse: collapse; }
+    .dv-tbl th { background: #fafafa; padding: 8px 12px; font-size: 13px; font-weight: 600; color: #333; text-align: left; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    .dv-tbl td { padding: 10px 12px; font-size: 13px; color: #333; border-bottom: 1px solid #f0f0f0; }
+    .dv-tbl tr:hover { background: #f9fbff; }
     .dv-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
     .dv-btn { padding: 7px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #333; }
     .dv-btn.primary { background: #1677ff; border-color: #1677ff; color: #fff; }
@@ -79,7 +75,7 @@
 
   <div class="filter-bar">
     <div class="filter-item">
-      <span class="filter-label">上屏状态</span>
+      <span class="filter-label">状态</span>
       <select class="filter-select" id="f-sel-onscreen" onchange="selApplyFilter()">
         <option value="">全部</option>
         <option value="onscreen">正在展示</option>
@@ -97,12 +93,32 @@
         <option value="水墨山河">水墨山河</option>
         <option value="古田星火">古田星火</option>
         <option value="福见山海">福见山海</option>
+        <option value="Q版先锋">Q版先锋</option>
         <option value="奋进新征程">奋进新征程</option>
       </select>
     </div>
     <div class="filter-item">
-      <button class="filter-btn primary" onclick="selApplyFilter()">查询</button>
+      <span class="filter-label">照片方向</span>
+      <select class="filter-select" id="f-sel-dir" onchange="selApplyFilter()">
+        <option value="">全部</option>
+        <option value="竖屏">竖屏</option>
+        <option value="横屏">横屏</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">来源屏幕</span>
+      <select class="filter-select" id="f-sel-src-screen" onchange="selApplyFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">上屏屏幕</span>
+      <select class="filter-select" id="f-sel-on-screen" onchange="selApplyFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <input class="filter-input" id="f-sel-no" placeholder="请输入照片编号" oninput="selApplyFilter()">
+    </div>
+    <div class="filter-item">
       <button class="filter-btn" onclick="selResetFilter()">重置</button>
+      <button class="filter-btn search" onclick="selApplyFilter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>搜索</button>
     </div>
     <div class="filter-spacer" style="flex:1"></div>
     <div class="filter-item">
@@ -119,8 +135,10 @@
           <th class="thumb-cell">纪念照</th>
           <th>编号</th>
           <th>模板</th>
-          <th>成像风格</th>
-          <th>微信号</th>
+          <th>画风</th>
+          <th>账号</th>
+          <th>上屏屏幕</th>
+          <th>来源屏幕</th>
           <th>上屏状态</th>
           <th>上屏时间</th>
           <th>操作</th>
@@ -128,6 +146,7 @@
       </thead>
       <tbody id="sel-tbody"></tbody>
     </table>
+    <div class="pagination" id="sel-pager"></div>
   </div>
 
   <!-- 大图预览 -->
@@ -139,22 +158,25 @@
     </div>
   </div>
 
-  <!-- 上屏设备选择弹窗 -->
+  <!-- 上屏设备选择弹窗（多选，对齐真实系统） -->
   <div class="device-modal" id="device-modal" onclick="closeDeviceModal()">
     <div class="device-box" onclick="event.stopPropagation()">
-      <div class="dv-title">选择展示屏幕</div>
-      <div class="dv-sub" id="dv-sub">将作品上屏至目标大屏</div>
-      <div class="device-group">
-        <div class="dg-label">主会场</div>
-        <div class="device-options" id="dev-main"></div>
-      </div>
-      <div class="device-group">
-        <div class="dg-label">分会场</div>
-        <div class="device-options" id="dev-sub"></div>
-      </div>
+      <div class="dv-title">选择上屏设备</div>
+      <div class="dv-search"><input class="filter-input" id="dv-kw" placeholder="请输入设备名称" oninput="renderDevPicker()"></div>
+      <table class="dv-tbl">
+        <thead>
+          <tr>
+            <th class="td-check"><input type="checkbox" id="dv-all" onchange="toggleAllDev(this)"></th>
+            <th>设备名称</th>
+            <th>设备MAC</th>
+            <th>更新时间</th>
+          </tr>
+        </thead>
+        <tbody id="dv-tbody"></tbody>
+      </table>
       <div class="dv-actions">
         <button class="dv-btn" onclick="closeDeviceModal()">取消</button>
-        <button class="dv-btn primary disabled" id="dv-confirm" onclick="confirmDevice()">确认上屏</button>
+        <button class="dv-btn primary disabled" id="dv-confirm" onclick="confirmDevice()">确认（0）</button>
       </div>
     </div>
   </div>
@@ -164,29 +186,24 @@
 
 <script>
 /* ================= 申请上屏（用户已授权同意上屏） ================= */
-if (!window.__STYLE_LIST) {
-  window.__STYLE_LIST = [
-    { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '', count: 6 },
-    { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '', count: 4 },
-    { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '', count: 2 },
-    { id: 'hongchou',  name: '红绸环绕', time: '约30秒', enabled: true, prompt: '', count: 3 }
-  ];
-}
 function _sSelName(id) { var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; return s ? s.name : id; }
 var SEL_LIST = [
-  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', time: '09-30 10:21', on: true,  onTime: '09-30 10:21', offTime: null },
-  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', time: '09-30 09:12', on: true,  onTime: '09-30 09:12', offTime: null },
-  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo', time: '09-30 09:26', on: false, onTime: null, offTime: null },
-  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', time: '09-30 09:20', on: true,  onTime: '09-30 09:20', offTime: null },
-  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', time: '09-30 09:31', on: false, onTime: null, offTime: null },
-  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', time: '09-30 09:44', on: false, onTime: null, offTime: null },
-  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '1号屏', time: '09-30 10:02', on: true,  onTime: '09-30 10:02', offTime: null },
-  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '2号屏', time: '09-30 10:15', on: true,  onTime: '09-30 10:15', offTime: null },
-  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '2号屏', time: '09-30 10:26', on: false, onTime: null, offTime: null },
-  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '2号屏', time: '09-30 10:30', on: false, onTime: null, offTime: null },
-  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章', screen: '1号屏', time: '09-30 10:35', on: false, onTime: null, offTime: null }
+  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞',   screen: '测试',        onScreen: '测试',              on: true,  onTime: '2026-09-30 10:21:05', offTime: null, time: '2026-09-30 10:21:05' },
+  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: 'P43-纪念相册', onScreen: '测试、P43-纪念相册', on: true,  onTime: '2026-09-30 09:12:18', offTime: null, time: '2026-09-30 09:12:18' },
+  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 09:26:51', sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo' },
+  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章',   screen: 'P43-纪念相册', onScreen: 'P43-纪念相册',       on: true,  onTime: '2026-09-30 09:20:33', offTime: null, time: '2026-09-30 09:20:33' },
+  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章',   screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 09:31:26' },
+  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河',   screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 09:44:12' },
+  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '测试',        onScreen: '测试',              on: true,  onTime: '2026-09-30 10:02:55', offTime: null, time: '2026-09-30 10:02:55' },
+  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海',   screen: 'P43-纪念相册', onScreen: 'P43-纪念相册',       on: true,  onTime: '2026-09-30 10:15:09', offTime: null, time: '2026-09-30 10:15:09' },
+  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 10:26:38' },
+  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章',   screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 10:30:14' },
+  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章',   screen: '测试',        onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 10:35:47' }
 ];
 var SEL_SELECTED = {};
+var SEL_PAGE = 1;
+var SEL_PAGE_SIZE = 10;
+var SEL_TPL_DIR = { '盛会留念框': '横屏' };
 var CURRENT_DEVICE_NO = null;   /* 上屏操作目标 */
 var CURRENT_DEVICE_MODE = 'single'; /* single / batch */
 
@@ -205,18 +222,36 @@ function selShowToast(msg) {
   ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
   setTimeout(function(){ ta.innerHTML = ''; }, 1600);
 }
+function selDirOf(tpl) { return SEL_TPL_DIR[tpl] || '竖屏'; }
+function selFillScreenFilters() {
+  var opts = '<option value="">全部</option>';
+  (window.__DEVICE_LIST || []).forEach(function(d) { opts += '<option value="' + d.name + '">' + d.name + '</option>'; });
+  var a = document.getElementById('f-sel-src-screen'), b = document.getElementById('f-sel-on-screen');
+  if (a) a.innerHTML = opts;
+  if (b) b.innerHTML = opts;
+}
 function renderSelTable() {
-  var osF = document.getElementById('f-sel-onscreen').value;
+  var osF  = document.getElementById('f-sel-onscreen').value;
   var tplF = document.getElementById('f-sel-tpl').value;
+  var dirF = document.getElementById('f-sel-dir').value;
+  var srcF = document.getElementById('f-sel-src-screen').value;
+  var onF  = document.getElementById('f-sel-on-screen').value;
+  var noF  = (document.getElementById('f-sel-no').value || '').trim();
   var list = SEL_LIST.filter(function(p) {
     if (osF === 'onscreen' && !p.on) return false;
     if (osF === 'off' && p.on) return false;
     if (tplF && p.tpl !== tplF) return false;
+    if (dirF && selDirOf(p.tpl) !== dirF) return false;
+    if (srcF && p.screen !== srcF) return false;
+    if (onF && (p.onScreen || '') !== onF) return false;
+    if (noF && p.no.indexOf(noF) < 0) return false;
     return true;
   });
   var tbody = document.getElementById('sel-tbody');
+  var start = (SEL_PAGE - 1) * SEL_PAGE_SIZE;
+  var pageList = list.slice(start, start + SEL_PAGE_SIZE);
   var html = '';
-  list.forEach(function(p) {
+  pageList.forEach(function(p) {
     var bg = selTplBg(p.no);
     var checked = SEL_SELECTED[p.no] ? ' checked' : '';
     var rowCls = SEL_SELECTED[p.no] ? ' class="row-selected"' : '';
@@ -232,6 +267,8 @@ function renderSelTable() {
       '<td>' + p.tpl + '</td>' +
       styleTd +
       '<td>' + p.wx + '</td>' +
+      '<td>' + (p.onScreen && p.onScreen !== '—' ? p.onScreen : '—') + '</td>' +
+      '<td>' + p.screen + '</td>' +
       '<td>' + (p.on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">正在展示</span>'
                     : '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>') + '</td>' +
       '<td>' + (p.onTime || '—') + '</td>' +
@@ -241,10 +278,12 @@ function renderSelTable() {
               : '<a class="action-btn" onclick="askOnScreen(\'' + p.no + '\')">上屏</a>') + '</td>' +
       '</tr>';
   });
-  if (!list.length) {
-    html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+  if (!pageList.length) {
+    html = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
   }
   tbody.innerHTML = html;
+  window.__PAGER['sel-pager'] = function(pg) { SEL_PAGE = pg; renderSelTable(); };
+  renderPager('sel-pager', list.length, SEL_PAGE, SEL_PAGE_SIZE);
   updateBatchBtns();
 }
 /* 批量按钮：按勾选数据类型精确判断
@@ -273,13 +312,14 @@ function onSelRowCheck(el) {
 function askOnScreen(no) {
   CURRENT_DEVICE_NO = no;
   CURRENT_DEVICE_MODE = 'single';
-  openDeviceModal('上屏：' + no);
+  openDeviceModal();
 }
 function askOffScreen(no) {
   var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
   if (!p) return;
   p.on = false;
   p.onTime = null;
+  p.onScreen = '—';
   selShowToast('已下屏：' + no);
   renderSelTable();
 }
@@ -292,7 +332,7 @@ function selBatchOnScreen() {
   if (!unsel.length) { selShowToast('勾选的照片均已上屏'); return; }
   CURRENT_DEVICE_NO = null;
   CURRENT_DEVICE_MODE = 'batch';
-  openDeviceModal('批量上屏 ' + unsel.length + ' 张');
+  openDeviceModal();
 }
 function selBatchOffScreen() {
   var keys = Object.keys(SEL_SELECTED);
@@ -300,66 +340,83 @@ function selBatchOffScreen() {
   /* 只对已上屏的照片执行批量下屏（按钮已按类型禁用，这里兜底） */
   var onlist = SEL_LIST.filter(function(x){ return SEL_SELECTED[x.no] && x.on; });
   if (!onlist.length) { selShowToast('勾选的照片均未上屏'); return; }
-  onlist.forEach(function(p) { p.on = false; p.onTime = null; });
+  onlist.forEach(function(p) { p.on = false; p.onTime = null; p.onScreen = '—'; });
   var n = onlist.length;
   SEL_SELECTED = {};
   selShowToast('已批量下屏 ' + n + ' 张');
   renderSelTable();
 }
-/* ---- 设备选择弹窗 ---- */
-var MAIN_DEVICES = ['主会场 · 屏1', '主会场 · 屏2', '主会场 · 屏3', '主会场 · 屏4'];
-var SUB_DEVICES  = ['分会场 · 屏1', '分会场 · 屏2'];
-var CURRENT_DEVICE = null;
-function openDeviceModal(sub) {
-  CURRENT_DEVICE = null;
-  document.getElementById('dv-sub').textContent = sub || '将作品上屏至目标屏幕';
-  document.getElementById('dv-confirm').className = 'dv-btn primary disabled';
-  var mainWrap = document.getElementById('dev-main');
-  mainWrap.innerHTML = '';
-  MAIN_DEVICES.forEach(function(d) {
-    var b = document.createElement('div');
-    b.className = 'device-opt';
-    b.textContent = d;
-    b.setAttribute('data-dev', d);
-    b.onclick = function() { pickDevice(d); };
-    mainWrap.appendChild(b);
+/* ---- 设备选择弹窗（多选，对齐真实系统） ---- */
+var DV_SELECTED = {};
+function renderDevPicker() {
+  var kw = (document.getElementById('dv-kw').value || '').trim();
+  var list = (window.__DEVICE_LIST || []).filter(function(d) { return !kw || d.name.indexOf(kw) >= 0; });
+  var tb = document.getElementById('dv-tbody');
+  var html = '';
+  list.forEach(function(d) {
+    var ck = DV_SELECTED[d.id] ? ' checked' : '';
+    html += '<tr>' +
+      '<td class="td-check"><input type="checkbox" data-did="' + d.id + '"' + ck + ' onclick="onDevCheck(this)"></td>' +
+      '<td>' + d.name + '</td>' +
+      '<td>' + d.mac + '</td>' +
+      '<td>' + d.time + '</td>' +
+      '</tr>';
   });
-  var subWrap = document.getElementById('dev-sub');
-  subWrap.innerHTML = '';
-  SUB_DEVICES.forEach(function(d) {
-    var b = document.createElement('div');
-    b.className = 'device-opt';
-    b.textContent = d;
-    b.setAttribute('data-dev', d);
-    b.onclick = function() { pickDevice(d); };
-    subWrap.appendChild(b);
-  });
+  if (!list.length) html = '<tr><td colspan="4" style="text-align:center;color:#999;padding:24px 0">暂无符合条件的设备</td></tr>';
+  tb.innerHTML = html;
+  var allEl = document.getElementById('dv-all');
+  if (allEl) allEl.checked = list.length > 0 && list.every(function(d) { return DV_SELECTED[d.id]; });
+  updateDvConfirm();
+}
+function onDevCheck(el) {
+  var id = el.getAttribute('data-did');
+  if (el.checked) DV_SELECTED[id] = true; else delete DV_SELECTED[id];
+  updateDvConfirm();
+}
+function toggleAllDev(el) {
+  (window.__DEVICE_LIST || []).forEach(function(d) { if (el.checked) DV_SELECTED[d.id] = true; else delete DV_SELECTED[d.id]; });
+  renderDevPicker();
+}
+function dvPickedNames() {
+  return (window.__DEVICE_LIST || []).filter(function(d) { return DV_SELECTED[d.id]; }).map(function(d) { return d.name; });
+}
+function updateDvConfirm() {
+  var n = Object.keys(DV_SELECTED).length;
+  var b = document.getElementById('dv-confirm');
+  b.textContent = '确认（' + n + '）';
+  b.className = 'dv-btn primary' + (n ? '' : ' disabled');
+}
+function openDeviceModal() {
+  DV_SELECTED = {};
+  document.getElementById('dv-kw').value = '';
+  renderDevPicker();
   document.getElementById('device-modal').classList.add('show');
 }
-function pickDevice(dev) {
-  CURRENT_DEVICE = dev;
-  document.querySelectorAll('.device-opt').forEach(function(o) { o.classList.toggle('active', o.getAttribute('data-dev') === dev); });
-  document.getElementById('dv-confirm').className = 'dv-btn primary';
-}
 function closeDeviceModal() { document.getElementById('device-modal').classList.remove('show'); }
+function nowStr() {
+  var d = new Date();
+  function p(n) { return ('0' + n).slice(-2); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
 function confirmDevice() {
-  if (!CURRENT_DEVICE) return;
-  var dev = CURRENT_DEVICE;
-  var now = new Date();
-  var hm = ('0' + now.getHours()).slice(-2) + '-' + ('0' + ('0' + now.getMinutes()).slice(-2)).slice(-2);
+  var names = dvPickedNames();
+  if (!names.length) return;
+  var dev = names.join('、');
+  var ts = nowStr();
   if (CURRENT_DEVICE_MODE === 'batch') {
     var keys = Object.keys(SEL_SELECTED);
-    SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) { p.on = true; p.onTime = hm; } });
+    SEL_LIST.forEach(function(p) { if (SEL_SELECTED[p.no]) { p.on = true; p.onScreen = dev; p.onTime = ts; } });
     SEL_SELECTED = {};
     selShowToast('已批量上屏 ' + keys.length + ' 张 → ' + dev);
   } else {
     var p = SEL_LIST.filter(function(x){ return x.no === CURRENT_DEVICE_NO; })[0];
-    if (p) { p.on = true; p.onTime = hm; }
+    if (p) { p.on = true; p.onScreen = dev; p.onTime = ts; }
     selShowToast('已上屏：' + CURRENT_DEVICE_NO + ' → ' + dev);
   }
   closeDeviceModal();
   renderSelTable();
 }
+
 /* ---- 大图预览 ---- */
 function openSelPreview(no) {
   var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
@@ -369,14 +426,19 @@ function openSelPreview(no) {
   img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
   document.getElementById('sel-pv-meta').innerHTML =
     '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + selCapNameOf(p.tpl) + '）<br>' +
-    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time;
+    '<b>账号：</b>' + p.wx + '　<b>来源屏幕：</b>' + p.screen + '　<b>创建时间：</b>' + p.time;
   document.getElementById('sel-preview-overlay').classList.add('show');
 }
 function closeSelPreview() { document.getElementById('sel-preview-overlay').classList.remove('show'); }
-function selApplyFilter() { renderSelTable(); }
+function selApplyFilter() { SEL_PAGE = 1; renderSelTable(); }
 function selResetFilter() {
   document.getElementById('f-sel-onscreen').value = '';
   document.getElementById('f-sel-tpl').value = '';
+  document.getElementById('f-sel-dir').value = '';
+  document.getElementById('f-sel-src-screen').value = '';
+  document.getElementById('f-sel-on-screen').value = '';
+  document.getElementById('f-sel-no').value = '';
+  SEL_PAGE = 1;
   renderSelTable();
 }
 function selBuildDetails() {
@@ -386,6 +448,7 @@ function selBuildDetails() {
     if (p.sourceWorkId) { var r = SEL_LIST.filter(function(x){ return x.no === p.sourceWorkId; })[0]; if (r) root = r; }
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen || '—',
+      onScreen: p.onScreen || '—',
       status: p.on ? 'selected' : 'wait', time: p.time || '—',
       onTime: p.onTime || (p.on ? p.onTime : null),
       offTime: p.offTime || null,
@@ -399,6 +462,6 @@ function selOpenDetail(no) {
   selBuildDetails();
   if (typeof window.pdShowDetail === 'function') window.pdShowDetail(no);
 }
-function init_selection_mgmt() { renderSelTable(); }
+function init_selection_mgmt() { selFillScreenFilters(); renderSelTable(); }
 init_selection_mgmt();
 </script>

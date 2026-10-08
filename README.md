@@ -26,6 +26,9 @@
 | 原型运行版 | `D:\hpy\桌面\数熙相关文档\党代会项目\prototype\dist\` |
 | 原型源码 | `D:\hpy\桌面\数熙相关文档\党代会项目\prototype\` |
 | PRD | `D:\hpy\桌面\数熙相关文档\党代会项目\docs\AI纪念相册产品原型设计PRD.md` |
+| PC 原型页面清单与共享源 | 本文件「六、PC 端原型」 |
+| 原型 vs 真实系统差异记录 | `docs\PRD待更新清单.md` |
+
 
 ## 四、特殊规则（给 AI 看）
 
@@ -61,3 +64,15 @@
 - 8 类兜底、优先级、JSON 协议、追问规则未改动。
 - 文件：`提示词\问境-福建省第十二次党代会智能助手提示词-v3.txt`；v2 保留可回退。
 - 待验证：用诊断用例回归（我感冒了 / 我找不到妈妈了 / 母婴室在哪 / 有人打架怎么办 / 1+2等于几），确认前两条不再落入 SAFETY_VIOLATION。
+
+## 六、PC 端原型（AI纪念相册管理后台）
+
+- 页面源码：`prototype\pages\pc\` — `03-template-mgmt.html`（模板管理）、`01-photo-mgmt.html`（照片管理）、`02-selection-mgmt.html`（上屏审核）、`05-device-mgmt.html`（设备管理）、`04-style-mgmt.html`（画风管理）
+- 构建：`"$PYTHON" "$BUILD" pc --project-path="<项目目录>"` → `prototype\dist\党代会-AI纪念相册-pc-原型.html`（构建日志应显示「注入页面数: 5」）
+- 菜单由 `prototype\shell-pc.html` 硬编码，顺序对齐真实系统：模板管理 → 照片管理 → 上屏审核 → 设备管理 → 画风管理；菜单改名需同步 shell `menu-item` 文本与各页 `PAGE_META.title`（build 用它生成标题→页面 id 路由表）
+- 全局共享源（均在 shell，各页只读）：`window.__STYLE_LIST`（画风：id/name/time/mode「合成模式」/sort「排序」/enabled/prompt/统计）、`window.__DEVICE_LIST`（设备：id/name/mac/sort/time/二维码标记）
+- 通用组件（shell 提供，各页直接用）：`renderPager(容器id, 总数, 页码, 每页)` 分页条（共 N 条 / 10条/页 / 页码 / 前往 N 页）、`.filter-btn.search` 搜索按钮、`.filter-btn.danger` 批量删除按钮、`pdShowDetail(d)` 照片详情弹窗
+- 照片详情弹窗字段口径：模板 / 账号 / 来源屏幕 / 上屏屏幕 / 上屏状态 / 创建时间 / 上屏展示时间 / 下屏时间
+- 新增/编辑一律弹窗（无独立页面）；弹窗 DOM 与业务 JS 都在所属页面文件内
+
+> 与真实系统（智汇平台）的口径差异及待确认项记录在 `docs\PRD待更新清单.md`。

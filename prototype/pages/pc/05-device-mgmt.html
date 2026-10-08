@@ -1,0 +1,264 @@
+<!-- PAGE_META: {"id": "device-mgmt", "title": "设备管理"} -->
+<div class="page" id="page-device-mgmt">
+  <style>
+    /* 设备管理页：现场大屏设备（轮播首图 / 设备二维码 / 悬浮二维码），
+       数据同步 window.__DEVICE_LIST，与上屏审核设备选择弹窗、照片来源屏幕筛选共用 */
+    .dev-thumb { width: 44px; height: 58px; border-radius: 4px; overflow: hidden; position: relative; display: inline-block; background: linear-gradient(140deg,#7A1712,#B42318); vertical-align: middle; }
+    .dev-thumb .dev-thumb-ph { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 11px; color: rgba(255,255,255,0.85); white-space: nowrap; }
+    .dev-qr { width: 40px; height: 40px; border: 1px solid #eee; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; position: relative; background: #fff; overflow: hidden; vertical-align: middle; }
+    .dev-qr .qr-pat { position: absolute; inset: 3px; background-image: repeating-conic-gradient(#333 0% 25%, #fff 0% 50%); background-size: 6px 6px; opacity: 0.8; }
+    .dev-qr .qr-cen { position: relative; width: 12px; height: 12px; border-radius: 3px; background: #FF8A00; border: 1px solid #fff; }
+    .dev-qr.float .qr-cen { background: #D4380D; }
+    .dev-tbl { width: 100%; border-collapse: collapse; background: #fff; }
+    .dev-tbl th, .dev-tbl td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333; }
+    .dev-tbl th { background: #FAFAFA; color: #666; font-weight: 600; }
+    .dev-tbl tr:hover { background: #fafcff; }
+    .dev-modal { position: fixed; inset: 0; z-index: 1300; display: none; align-items: center; justify-content: center; }
+    .dev-modal-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+    .dev-modal-box { position: relative; background: #fff; border-radius: 8px; width: 560px; max-height: 86vh; overflow-y: auto; padding: 20px 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+    .dev-modal-title { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 16px; }
+    .dev-img-row { display: flex; gap: 24px; margin-bottom: 16px; }
+    .dev-img-item { display: flex; gap: 12px; align-items: flex-start; }
+    .dev-img-preview { width: 96px; height: 96px; border: 1px dashed #d9d9d9; border-radius: 4px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fafafa; }
+    .dev-img-preview.has-img { border-style: solid; border-color: #e0e0e0; background: #fff; }
+    .dev-img-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dev-img-ph { font-size: 12px; color: #bbb; white-space: nowrap; }
+    .dev-img-ops { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+    .dev-btn { height: 32px; padding: 0 14px; border-radius: 4px; border: 1px solid #d9d9d9; background: #fff; font-size: 13px; cursor: pointer; color: #333; }
+    .dev-btn:hover { color: #0B5DEA; border-color: #0B5DEA; }
+    .dev-btn.primary { background: #0B5DEA; border-color: #0B5DEA; color: #fff; }
+    .dev-btn.primary:hover { background: #3a7bef; color: #fff; }
+    .dev-row { display: flex; gap: 16px; margin-bottom: 14px; }
+    .dev-field { flex: 1; }
+    .dev-lbl { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+    .dev-input { width: 100%; box-sizing: border-box; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 10px; font-size: 13px; color: #333; }
+    .dev-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
+    .dev-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+  </style>
+
+  <div class="filter-bar">
+    <div class="filter-item">
+      <input class="filter-input" id="f-dev-name" placeholder="请输入设备名称" oninput="renderDevTable()">
+    </div>
+    <div class="filter-item">
+      <button class="filter-btn" onclick="resetDevFilter()">重置</button>
+      <button class="filter-btn search" onclick="renderDevTable()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>搜索</button>
+      <button class="filter-btn primary" onclick="openDevModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>新增设备</button>
+      <button class="filter-btn danger" onclick="batchDelDev()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>批量删除</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table class="dev-tbl">
+      <thead>
+        <tr>
+          <th style="width:36px"><input type="checkbox" id="dev-all" onchange="toggleAllDev2(this)"></th>
+          <th>设备名称</th>
+          <th>设备 MAC</th>
+          <th style="width:90px">轮播首图</th>
+          <th style="width:90px">设备二维码</th>
+          <th style="width:100px">悬浮二维码</th>
+          <th style="width:70px">排序</th>
+          <th style="width:170px">更新时间</th>
+          <th style="width:120px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="dev-tbody"></tbody>
+    </table>
+    <div class="pagination" id="dev-pager"></div>
+  </div>
+
+  <div id="dev-toast-area"></div>
+
+  <!-- 新增/编辑设备弹窗 -->
+  <div class="dev-modal" id="dev-modal" style="display:none">
+    <div class="dev-modal-mask" onclick="closeDevModal()"></div>
+    <div class="dev-modal-box">
+      <div class="dev-modal-title" id="dev-modal-title">新增设备</div>
+      <div class="dev-row">
+        <div class="dev-field">
+          <label class="dev-lbl">轮播首图</label>
+          <div class="dev-img-item">
+            <div class="dev-img-preview" id="dev-carousel-preview"><span class="dev-img-ph">暂无图片</span></div>
+            <div class="dev-img-ops">
+              <button class="dev-btn" onclick="document.getElementById('dev-carousel-file').click()">上传图片</button>
+              <button class="dev-btn" onclick="devRemoveImg('carousel')">移除</button>
+              <div class="dev-tip">大屏轮播展示的首张图片</div>
+              <input type="file" id="dev-carousel-file" accept="image/*" style="display:none" onchange="devImgChosen(this, 'carousel')">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dev-row">
+        <div class="dev-field">
+          <label class="dev-lbl">悬浮二维码</label>
+          <div class="dev-img-item">
+            <div class="dev-img-preview" id="dev-float-preview"><span class="dev-img-ph">暂无图片</span></div>
+            <div class="dev-img-ops">
+              <button class="dev-btn" onclick="document.getElementById('dev-float-file').click()">上传图片</button>
+              <button class="dev-btn" onclick="devRemoveImg('float')">移除</button>
+              <div class="dev-tip">大屏浮层展示的二维码图片</div>
+              <input type="file" id="dev-float-file" accept="image/*" style="display:none" onchange="devImgChosen(this, 'float')">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dev-row">
+        <div class="dev-field">
+          <label class="dev-lbl">设备名称 <span style="color:#f5222d">*</span></label>
+          <input class="dev-input" id="dev-name" placeholder="如：测试、P43-纪念相册">
+        </div>
+      </div>
+      <div class="dev-row">
+        <div class="dev-field">
+          <label class="dev-lbl">设备 MAC <span style="color:#f5222d">*</span></label>
+          <input class="dev-input" id="dev-mac" placeholder="如：A0BB3EDC28E8">
+        </div>
+      </div>
+      <div class="dev-footer">
+        <button class="dev-btn" onclick="closeDevModal()">取消</button>
+        <button class="dev-btn primary" onclick="saveDevModal()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 设备管理（现场大屏设备） ================= */
+var DEV_SELECTED = {};
+function devShowToast(msg) {
+  var ta = document.getElementById('dev-toast-area');
+  ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
+  setTimeout(function(){ ta.innerHTML = ''; }, 1600);
+}
+function toggleAllDev2(el) {
+  (window.__DEVICE_LIST || []).forEach(function(d) { if (el.checked) DEV_SELECTED[d.id] = true; else delete DEV_SELECTED[d.id]; });
+  renderDevTable();
+}
+function onDevRowCheck(el) {
+  var id = el.getAttribute('data-did');
+  if (el.checked) DEV_SELECTED[id] = true; else delete DEV_SELECTED[id];
+}
+function renderDevTable() {
+  var kw = (document.getElementById('f-dev-name').value || '').trim();
+  var list = (window.__DEVICE_LIST || []).filter(function(d) {
+    return !kw || d.name.indexOf(kw) >= 0 || (d.mac || '').indexOf(kw) >= 0;
+  });
+  var tbody = document.getElementById('dev-tbody');
+  var html = '';
+  list.forEach(function(d) {
+    var ck = DEV_SELECTED[d.id] ? ' checked' : '';
+    html += '<tr>' +
+      '<td><input type="checkbox" data-did="' + d.id + '"' + ck + ' onclick="onDevRowCheck(this)"></td>' +
+      '<td>' + d.name + '</td>' +
+      '<td>' + d.mac + '</td>' +
+      '<td>' + (d.carousel
+        ? (d.carouselImg ? '<span class="dev-thumb"><img src="' + d.carouselImg + '" style="width:100%;height:100%;object-fit:cover;display:block"></span>' : '<span class="dev-thumb"><span class="dev-thumb-ph">首图</span></span>')
+        : '<span style="color:#999">—</span>') + '</td>' +
+      '<td>' + (d.devQr ? '<span class="dev-qr"><span class="qr-pat"></span><span class="qr-cen"></span></span>' : '<span style="color:#999">—</span>') + '</td>' +
+      '<td>' + (d.floatQr ? '<span class="dev-qr float"><span class="qr-pat"></span><span class="qr-cen"></span></span>' : '<span style="color:#999">—</span>') + '</td>' +
+      '<td>' + (d.sort === undefined ? '—' : d.sort) + '</td>' +
+      '<td>' + (d.time || '—') + '</td>' +
+      '<td>' +
+        '<a class="action-link" onclick="openDevModal(\'' + d.id + '\')">编辑</a>' +
+        '<a class="action-link warn" onclick="delDev(\'' + d.id + '\')">删除</a>' +
+      '</td>' +
+      '</tr>';
+  });
+  if (!list.length) {
+    html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的设备</td></tr>';
+  }
+  tbody.innerHTML = html;
+  var allEl = document.getElementById('dev-all');
+  if (allEl) allEl.checked = list.length > 0 && list.every(function(d) { return DEV_SELECTED[d.id]; });
+  renderPager('dev-pager', list.length, 1, 10);
+}
+function resetDevFilter() {
+  document.getElementById('f-dev-name').value = '';
+  DEV_SELECTED = {};
+  renderDevTable();
+}
+function batchDelDev() {
+  var ids = Object.keys(DEV_SELECTED);
+  if (!ids.length) { devShowToast('请先勾选设备'); return; }
+  if (!confirm('确定删除所选 ' + ids.length + ' 台设备吗？删除后该设备不再接收上屏内容。')) return;
+  window.__DEVICE_LIST = (window.__DEVICE_LIST || []).filter(function(d) { return !DEV_SELECTED[d.id]; });
+  DEV_SELECTED = {};
+  renderDevTable();
+  devShowToast('已删除 ' + ids.length + ' 台设备');
+}
+function delDev(id) {
+  var d = (window.__DEVICE_LIST || []).filter(function(x){ return x.id === id; })[0];
+  if (!d) return;
+  if (!confirm('确定删除设备「' + d.name + '」吗？删除后该设备不再接收上屏内容。')) return;
+  window.__DEVICE_LIST = (window.__DEVICE_LIST || []).filter(function(x){ return x.id !== id; });
+  renderDevTable();
+  devShowToast('已删除设备：' + d.name);
+}
+
+/* ---- 新增/编辑弹窗 ---- */
+var DEV_EDIT_ID = null;
+var DEV_IMG = { carousel: null, float: null };
+function devRenderImg(kind) {
+  var pv = document.getElementById(kind === 'carousel' ? 'dev-carousel-preview' : 'dev-float-preview');
+  var url = DEV_IMG[kind];
+  if (url) { pv.innerHTML = '<img src="' + url + '" alt="设备图片">'; pv.classList.add('has-img'); }
+  else { pv.innerHTML = '<span class="dev-img-ph">暂无图片</span>'; pv.classList.remove('has-img'); }
+}
+function devImgChosen(inp, kind) {
+  var f = inp.files && inp.files[0];
+  if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function(e) { DEV_IMG[kind] = e.target.result; devRenderImg(kind); };
+  rd.readAsDataURL(f);
+  inp.value = '';
+}
+function devRemoveImg(kind) { DEV_IMG[kind] = null; devRenderImg(kind); }
+function openDevModal(id) {
+  DEV_EDIT_ID = id || null;
+  var d = (window.__DEVICE_LIST || []).filter(function(x){ return x.id === id; })[0];
+  document.getElementById('dev-modal-title').textContent = id ? '编辑设备' : '新增设备';
+  document.getElementById('dev-name').value = d ? d.name : '';
+  document.getElementById('dev-mac').value = d ? (d.mac || '') : '';
+  DEV_IMG.carousel = (d && d.carouselImg) ? d.carouselImg : null;
+  DEV_IMG.float = (d && d.floatImg) ? d.floatImg : null;
+  devRenderImg('carousel');
+  devRenderImg('float');
+  document.getElementById('dev-modal').style.display = 'flex';
+}
+function closeDevModal() { document.getElementById('dev-modal').style.display = 'none'; }
+function saveDevModal() {
+  var name = document.getElementById('dev-name').value.trim();
+  var mac = document.getElementById('dev-mac').value.trim();
+  if (!name) { devShowToast('请填写设备名称'); return; }
+  if (!mac) { devShowToast('请填写设备 MAC'); return; }
+  var data = {
+    name: name,
+    mac: mac,
+    carousel: !!DEV_IMG.carousel,
+    carouselImg: DEV_IMG.carousel,
+    floatImg: DEV_IMG.float,
+    devQr: true,
+    floatQr: true
+  };
+  if (DEV_EDIT_ID) {
+    var d = (window.__DEVICE_LIST || []).filter(function(x){ return x.id === DEV_EDIT_ID; })[0];
+    if (d) { for (var k in data) d[k] = data[k]; d.time = nowStr(); devShowToast('设备已保存：' + name); }
+  } else {
+    data.id = 'dev' + ((window.__DEVICE_LIST || []).length + 1);
+    data.sort = (window.__DEVICE_LIST || []).length + 1;
+    data.time = nowStr();
+    window.__DEVICE_LIST.push(data);
+    devShowToast('设备已新增：' + name);
+  }
+  closeDevModal();
+  renderDevTable();
+}
+function nowStr() {
+  var d = new Date();
+  function p(n) { return ('0' + n).slice(-2); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
+function init_device_mgmt() { renderDevTable(); }
+init_device_mgmt();
+</script>

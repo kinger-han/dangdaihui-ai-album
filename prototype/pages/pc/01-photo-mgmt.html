@@ -67,14 +67,14 @@
   </style>
 
   <div class="stat-cards">
-    <div class="stat-card"><div class="sc-num" id="stat-total">0</div><div class="sc-label">全部照片</div></div>
-    <div class="stat-card"><div class="sc-num" id="stat-onscreen">0</div><div class="sc-label">上屏展示中</div></div>
-    <div class="stat-card"><div class="sc-num" id="stat-visitors">0</div><div class="sc-label">留影人数</div></div>
+    <div class="stat-card"><div class="sc-num" id="stat-total">0</div><div class="sc-label">纪念照片数</div></div>
+    <div class="stat-card"><div class="sc-num" id="stat-onscreen">0</div><div class="sc-label">分享上屏人数</div></div>
+    <div class="stat-card"><div class="sc-num" id="stat-visitors">0</div><div class="sc-label">留下纪念人数</div></div>
   </div>
 
   <div class="filter-bar">
     <div class="filter-item">
-      <span class="filter-label">上屏状态</span>
+      <span class="filter-label">状态</span>
       <select class="filter-select" id="f-on-screen" onchange="applyFilter()">
         <option value="">全部</option>
         <option value="selected">正在展示</option>
@@ -93,15 +93,33 @@
         <option value="水墨山河">水墨山河</option>
         <option value="古田星火">古田星火</option>
         <option value="福见山海">福见山海</option>
+        <option value="Q版先锋">Q版先锋</option>
         <option value="奋进新征程">奋进新征程</option>
       </select>
     </div>
     <div class="filter-item">
-      <button class="filter-btn primary" onclick="applyFilter()">查询</button>
-      <button class="filter-btn" onclick="resetFilter()">重置</button>
+      <span class="filter-label">照片方向</span>
+      <select class="filter-select" id="f-dir" onchange="applyFilter()">
+        <option value="">全部</option>
+        <option value="竖屏">竖屏</option>
+        <option value="横屏">横屏</option>
+      </select>
     </div>
     <div class="filter-item">
-      <button class="filter-btn danger" onclick="batchDelete()">批量删除</button>
+      <span class="filter-label">来源屏幕</span>
+      <select class="filter-select" id="f-src-screen" onchange="applyFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">上屏屏幕</span>
+      <select class="filter-select" id="f-on-screen-dev" onchange="applyFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <input class="filter-input" id="f-photo-no" placeholder="请输入照片编号" oninput="applyFilter()">
+    </div>
+    <div class="filter-item">
+      <button class="filter-btn" onclick="resetFilter()">重置</button>
+      <button class="filter-btn search" onclick="applyFilter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>搜索</button>
+      <button class="filter-btn danger" onclick="batchDelete()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>批量删除</button>
     </div>
   </div>
 
@@ -117,8 +135,9 @@
           <th class="thumb-cell">纪念照</th>
           <th>编号</th>
           <th>模板</th>
-          <th>成像风格</th>
-          <th>微信号</th>
+          <th>画风</th>
+          <th>账号</th>
+          <th>上屏屏幕</th>
           <th>来源屏幕</th>
           <th>上屏状态</th>
           <th>创建时间</th>
@@ -127,14 +146,7 @@
       </thead>
       <tbody id="photo-tbody"></tbody>
     </table>
-  </div>
-  <div class="pagination">
-    <div class="page-info" id="page-info"></div>
-    <div class="page-btns">
-      <button class="page-btn" onclick="prevPage()">‹</button>
-      <span class="page-btn active" id="page-num">1</span>
-      <button class="page-btn" onclick="nextPage()">›</button>
-    </div>
+    <div class="pagination" id="photo-pager"></div>
   </div>
 
   <!-- 大图预览 -->
@@ -151,35 +163,27 @@
 
 <script>
 /* ================= 照片管理（B 端总台账） ================= */
-if (!window.__STYLE_LIST) {
-  window.__STYLE_LIST = [
-    { id: 'guangying', name: '光影焕新', time: '约10秒', enabled: true, prompt: '', count: 6 },
-    { id: 'shuimo',    name: '水墨国风', time: '约20秒', enabled: true, prompt: '', count: 4 },
-    { id: 'shouhui',   name: '手绘插画', time: '约25秒', enabled: true, prompt: '', count: 2 },
-    { id: 'hongchou',  name: '红绸环绕', time: '约30秒', enabled: true, prompt: '', count: 3 }
-  ];
-}
 function _pStyleName(id) { var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; return s ? s.name : id; }
 var PHOTO_LIST = [
-  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞', screen: '1号屏', on: true, status: 'selected',  time: '09-30 10:21', onTime: '09-30 10:22', offTime: null },
-  { no: 'FJDH-0328-02', wx: '138****0328', tpl: '工笔华章', screen: '1号屏', on: false, status: 'notsub', time: '09-30 10:23', onTime: null, offTime: null },
-  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', on: true, status: 'selected',  time: '09-30 09:12', onTime: '09-30 09:13', offTime: null },
-  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo',    on: false, status: 'wait',    time: '09-30 09:26', onTime: null, offTime: null },
-  { no: 'FJDH-0002-03', wx: '139****8002', tpl: '盛会留念框', screen: '2号屏', sourceWorkId: 'FJDH-0002-01', styleId: 'guangying', on: false, status: 'notsub',  time: '09-30 09:32', onTime: null, offTime: null },
-  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章', screen: '2号屏', on: true, status: 'selected',  time: '09-30 09:20', onTime: '09-30 09:21', offTime: null },
-  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章', screen: '2号屏', on: false, status: 'wait', time: '09-30 09:31', onTime: null, offTime: '09-30 09:58' },
-  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河', screen: '2号屏', on: false, status: 'wait', time: '09-30 09:44', onTime: null, offTime: null },
-  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '1号屏', on: true, status: 'selected',  time: '09-30 10:02', onTime: '09-30 10:03', offTime: null },
-  { no: 'FJDH-0040-01', wx: '138****0040', tpl: '古田星火', screen: '2号屏', on: false, status: 'notsub', time: '09-30 10:08', onTime: null, offTime: null },
-  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海', screen: '2号屏', on: true, status: 'selected',  time: '09-30 10:15', onTime: '09-30 10:16', offTime: null },
-  { no: 'FJDH-0061-01', wx: '137****0061', tpl: 'Q版先锋', screen: '1号屏', on: false, status: 'notsub', time: '09-30 10:17', onTime: null, offTime: null },
-  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: '2号屏', on: false, status: 'wait', time: '09-30 10:26', onTime: null, offTime: '09-30 11:02' },
-  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章', screen: '2号屏', on: false, status: 'wait', time: '09-30 10:30', onTime: null, offTime: null }
+  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞',   screen: '测试',        onScreen: '测试',                        on: true,  status: 'selected', time: '2026-09-30 10:21:05', onTime: '2026-09-30 10:22:11', offTime: null },
+  { no: 'FJDH-0328-02', wx: '138****0328', tpl: '工笔华章',   screen: '测试',        onScreen: '—',                          on: false, status: 'notsub',   time: '2026-09-30 10:23:40', onTime: null, offTime: null },
+  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: 'P43-纪念相册', onScreen: '测试、P43-纪念相册',           on: true,  status: 'selected', time: '2026-09-30 09:12:18', onTime: '2026-09-30 09:13:02', offTime: null },
+  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screen: 'P43-纪念相册', onScreen: '—',                          on: false, status: 'wait',     time: '2026-09-30 09:26:51', onTime: null, offTime: null, sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo' },
+  { no: 'FJDH-0002-03', wx: '139****8002', tpl: '盛会留念框', screen: 'P43-纪念相册', onScreen: '—',                          on: false, status: 'notsub',   time: '2026-09-30 09:32:07', onTime: null, offTime: null, sourceWorkId: 'FJDH-0002-01', styleId: 'guangying' },
+  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章',   screen: 'P43-纪念相册', onScreen: 'P43-纪念相册',                 on: true,  status: 'selected', time: '2026-09-30 09:20:33', onTime: '2026-09-30 09:21:10', offTime: null },
+  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章',   screen: 'P43-纪念相册', onScreen: '—',                          on: false, status: 'wait',     time: '2026-09-30 09:31:26', onTime: null, offTime: '2026-09-30 09:58:44' },
+  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河',   screen: 'P43-纪念相册', onScreen: '—',                          on: false, status: 'wait',     time: '2026-09-30 09:44:12', onTime: null, offTime: null },
+  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '测试',        onScreen: '测试',                        on: true,  status: 'selected', time: '2026-09-30 10:02:55', onTime: '2026-09-30 10:03:20', offTime: null },
+  { no: 'FJDH-0040-01', wx: '138****0040', tpl: '古田星火',   screen: 'P43-纪念相册', onScreen: '—',                          on: false, status: 'notsub',   time: '2026-09-30 10:08:41', onTime: null, offTime: null },
+  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海',   screen: 'P43-纪念相册', onScreen: 'P43-纪念相册',                 on: true,  status: 'selected', time: '2026-09-30 10:15:09', onTime: '2026-09-30 10:16:31', offTime: null },
+  { no: 'FJDH-0061-01', wx: '137****0061', tpl: 'Q版先锋',    screen: '测试',        onScreen: '—',                          on: false, status: 'notsub',   time: '2026-09-30 10:17:22', onTime: null, offTime: null },
+  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: 'P43-纪念相册', onScreen: '—',                          on: false, status: 'wait',     time: '2026-09-30 10:26:38', onTime: null, offTime: '2026-09-30 11:02:15' },
+  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章',   screen: 'P43-纪念相册', onScreen: '—',                          on: false, status: 'wait',     time: '2026-09-30 10:30:14', onTime: null, offTime: null }
 ];
 
 var MGMT_SELECTED = {};
 var MGMT_PAGE = 1;
-var MGMT_PAGE_SIZE = 8;
+var MGMT_PAGE_SIZE = 10;
 
 function getTplBgIdx(no) {
   var p = (PHOTO_LIST||[]).filter(function(x){ return x.no === no; })[0];
@@ -192,23 +196,39 @@ function capNameOf(tpl) {
   return map[tpl] || '智能海报';
 }
 function renderStatCards() {
-  var visitors = {};
+  var visitors = {}, onPeople = {};
   PHOTO_LIST.forEach(function(p) {
-    var k = p.wx;
-    if (!visitors[k]) visitors[k] = 1;
+    visitors[p.wx] = 1;
+    if (p.status === 'selected') onPeople[p.wx] = 1;
   });
   document.getElementById('stat-total').textContent = PHOTO_LIST.length;
-  document.getElementById('stat-onscreen').textContent = PHOTO_LIST.filter(function(p){ return p.status === 'selected'; }).length;
+  document.getElementById('stat-onscreen').textContent = Object.keys(onPeople).length;
   document.getElementById('stat-visitors').textContent = Object.keys(visitors).length;
 }
+var TPL_DIR = { '盛会留念框': '横屏' };
+function dirOfTpl(tpl) { return TPL_DIR[tpl] || '竖屏'; }
+/* 来源屏幕 / 上屏屏幕 筛选下拉：取设备全局列表 */
+function fillScreenFilters() {
+  var opts = '<option value="">全部</option>';
+  (window.__DEVICE_LIST || []).forEach(function(d) { opts += '<option value="' + d.name + '">' + d.name + '</option>'; });
+  var a = document.getElementById('f-src-screen'), b = document.getElementById('f-on-screen-dev');
+  if (a) a.innerHTML = opts;
+  if (b) b.innerHTML = opts;
+}
 function renderPhotoTable() {
+  var osF  = document.getElementById('f-on-screen').value;
   var tplF = document.getElementById('f-tpl').value;
-  var osF = document.getElementById('f-on-screen').value;
+  var dirF = document.getElementById('f-dir').value;
+  var srcF = document.getElementById('f-src-screen').value;
+  var onF  = document.getElementById('f-on-screen-dev').value;
+  var noF  = (document.getElementById('f-photo-no').value || '').trim();
   var list = PHOTO_LIST.filter(function(p) {
-    if (osF === 'selected' && p.status !== 'selected') return false;
-    if (osF === 'wait' && p.status !== 'wait') return false;
-    if (osF === 'notsub' && p.status !== 'notsub') return false;
+    if (osF && p.status !== osF) return false;
     if (tplF && p.tpl !== tplF) return false;
+    if (dirF && dirOfTpl(p.tpl) !== dirF) return false;
+    if (srcF && p.screen !== srcF) return false;
+    if (onF && (p.onScreen || '') !== onF) return false;
+    if (noF && p.no.indexOf(noF) < 0) return false;
     return true;
   });
   var tbody = document.getElementById('photo-tbody');
@@ -219,15 +239,15 @@ function renderPhotoTable() {
     var bg = getTplBgIdx(p.no);
     var checked = MGMT_SELECTED[p.no] ? ' checked' : '';
     var eff = p.styleId ? (' effect-' + p.styleId) : '';
-    var styleTags = styleTagsOf(p);
     html += '<tr>' +
       '<td class="td-check"><input type="checkbox" class="row-check" data-no="' + p.no + '"' + checked + ' onclick="onRowCheck(this)"></td>' +
       '<td><span class="photo-thumb' + eff + '" onclick="openPreview(\'' + p.no + '\')">' +
         '<span class="pt-bg wb-' + bg + '"></span><span class="pt-person"></span></span></td>' +
       '<td>' + p.no + '</td>' +
       '<td>' + p.tpl + '</td>' +
-      '<td>' + styleTags + '</td>' +
+      '<td>' + styleTagsOf(p) + '</td>' +
       '<td>' + p.wx + '</td>' +
+      '<td>' + (p.onScreen && p.onScreen !== '—' ? p.onScreen : '—') + '</td>' +
       '<td>' + p.screen + '</td>' +
       '<td>' + statusBadge(p.status) + '</td>' +
       '<td>' + p.time + '</td>' +
@@ -235,11 +255,11 @@ function renderPhotoTable() {
       '</tr>';
   });
   if (!pageList.length) {
-    html = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+    html = '<tr><td colspan="11" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
   }
   tbody.innerHTML = html;
-  document.getElementById('page-info').textContent = '共 ' + list.length + ' 张';
-  document.getElementById('page-num').textContent = MGMT_PAGE;
+  window.__PAGER['photo-pager'] = function(pg) { MGMT_PAGE = pg; renderPhotoTable(); };
+  renderPager('photo-pager', list.length, MGMT_PAGE, MGMT_PAGE_SIZE);
   var bc = Object.keys(MGMT_SELECTED).length;
   document.getElementById('batch-count').textContent = bc;
   var batchBar = document.getElementById('batch-bar');
@@ -250,7 +270,7 @@ function statusBadge(st) {
   if (st === 'wait')    return '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>';
   return '<span class="badge-status disabled">暂未分享</span>';
 }
-/* 成像风格列：每行单值（原图 / 画风名）；风格照片为独立数据行 */
+/* 画风列：每行单值（原图 / 画风名）；风格照片为独立数据行 */
 function styleTagsOf(p) {
   if (p.styleId) return '<span class="tag-c style">' + _pStyleName(p.styleId) + '</span>';
   return '<span class="tag-c origin">原图</span>';
@@ -306,7 +326,7 @@ function openPreview(no) {
   var styleTxt = p.styleId ? '　<b>画风：</b>' + _pStyleName(p.styleId) : '';
   document.getElementById('pv-meta').innerHTML =
     '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + capNameOf(p.tpl) + '）' + styleTxt + '<br>' +
-    '<b>微信号：</b>' + p.wx + '　<b>来源：</b>' + p.screen + '　<b>提交时间：</b>' + p.time;
+    '<b>账号：</b>' + p.wx + '　<b>来源屏幕：</b>' + p.screen + '　<b>创建时间：</b>' + p.time;
   document.getElementById('preview-overlay').classList.add('show');
 }
 function closePreview() { document.getElementById('preview-overlay').classList.remove('show'); }
@@ -315,11 +335,13 @@ function applyFilter() { MGMT_PAGE = 1; renderPhotoTable(); }
 function resetFilter() {
   document.getElementById('f-on-screen').value = '';
   document.getElementById('f-tpl').value = '';
+  document.getElementById('f-dir').value = '';
+  document.getElementById('f-src-screen').value = '';
+  document.getElementById('f-on-screen-dev').value = '';
+  document.getElementById('f-photo-no').value = '';
   MGMT_PAGE = 1;
   renderPhotoTable();
 }
-function prevPage() { if (MGMT_PAGE > 1) { MGMT_PAGE--; renderPhotoTable(); } }
-function nextPage() { MGMT_PAGE++; renderPhotoTable(); }
 function buildPhotoDetails() {
   window.__PHOTO_DETAILS = {};
   PHOTO_LIST.forEach(function(p) {
@@ -327,6 +349,7 @@ function buildPhotoDetails() {
     if (p.sourceWorkId) { var r = PHOTO_LIST.filter(function(x){ return x.no === p.sourceWorkId; })[0]; if (r) root = r; }
     window.__PHOTO_DETAILS[p.no] = {
       no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen,
+      onScreen: p.onScreen || '—',
       status: p.status || (p.on ? 'selected' : 'notsub'), time: p.time,
       onTime: p.onTime || (p.on ? p.time : null),
       offTime: p.offTime || null,
@@ -340,7 +363,7 @@ function openPhotoDetail(no) {
   buildPhotoDetails();
   if (typeof window.pdShowDetail === 'function') window.pdShowDetail(no);
 }
-function init_photo_mgmt() { renderStatCards(); renderPhotoTable(); }
+function init_photo_mgmt() { renderStatCards(); fillScreenFilters(); renderPhotoTable(); }
   buildPhotoDetails();
 init_photo_mgmt();
 </script>

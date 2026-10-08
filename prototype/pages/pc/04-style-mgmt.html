@@ -3,9 +3,6 @@
   <style>
     /* 画风管理页（V2.1）：启停 + 提示词配置；数据同步 window.__STYLE_LIST，
        移动端「加个风格」由各自 mock 数据驱动（P0 演示为纯前端联动） */
-    .st-filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-    .st-label { font-size: 13px; color: #666; }
-    .st-select { height: 32px; min-width: 120px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 0 8px; font-size: 13px; background: #fff; color: #333; }
     .st-btn { height: 32px; padding: 0 16px; border-radius: 6px; border: 1px solid #d9d9d9; background: #fff; font-size: 13px; cursor: pointer; color: #333; }
     .st-btn:hover { color: #1677ff; border-color: #1677ff; }
     .st-btn.primary { background: #1677ff; border-color: #1677ff; color: #fff; }
@@ -18,10 +15,20 @@
     .st-thumb.effect-shuimo { filter: grayscale(0.55) sepia(0.35) contrast(0.98); }
     .st-thumb.effect-shouhui { filter: saturate(0.45) contrast(1.12); }
     .st-thumb.effect-hongchou { filter: sepia(0.22) saturate(1.12) contrast(1.04); }
+    .st-thumb.effect-jingdian { filter: grayscale(0.2) brightness(1.05); }
+    .st-thumb.effect-guochao { filter: saturate(1.35) contrast(1.05); }
+    .st-thumb.effect-youhua { filter: sepia(0.3) saturate(1.2) contrast(1.06); }
     .st-state { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12px; }
     .st-state.on { background: #f6ffed; color: #52c41a; }
     .st-state.off { background: #f5f5f5; color: #999; }
     .st-leaf { color: #666; max-width: 340px; line-height: 1.6; }
+    .st-img-row { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 16px; }
+    .st-img-preview { width: 110px; height: 146px; border: 1px dashed #d9d9d9; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: linear-gradient(140deg,#7A1712,#B42318); display: flex; align-items: center; justify-content: center; }
+    .st-img-preview.has-img { border-style: solid; border-color: #e0e0e0; }
+    .st-img-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .st-img-ph { font-size: 12px; color: rgba(255,255,255,0.85); }
+    .st-img-ops { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+    .st-img-tip { font-size: 12px; color: #999; line-height: 1.6; }
     .st-modal { position: fixed; inset: 0; z-index: 1300; display: none; align-items: center; justify-content: center; }
     .st-modal-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
     .st-modal-box { position: relative; background: #fff; border-radius: 8px; width: 640px; max-height: 86vh; overflow-y: auto; padding: 20px 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
@@ -35,31 +42,37 @@
   </style>
 
   <div class="page-header">
-    <div class="page-title">画风管理 <span class="sub">风格化画风启停与提示词配置，数据下发移动端「更多风格」即时生效；生成/采用/弃用为运营统计</span></div>
-    <div>
-      <button class="st-btn primary" onclick="openStModal()">新增画风</button>
-    </div>
+    <div class="page-title">画风管理 <span class="sub">画风启停与提示词配置，生成、采用和弃用数量为运营统计</span></div>
   </div>
 
-  <div class="st-filter-bar">
-    <span class="st-label">状态</span>
-    <select class="st-select" id="st-f-state" onchange="renderStMgmt()">
-      <option value="">全部</option>
-      <option value="on">启用</option>
-      <option value="off">禁用</option>
-    </select>
-    <span class="st-label">画风名称</span>
-    <input class="st-select" id="st-f-name" placeholder="输入画风名称" style="width:180px" oninput="renderStMgmt()">
-    <button class="st-btn primary" onclick="renderStMgmt()">查询</button>
-    <button class="st-btn" onclick="stResetFilter()">重置</button>
+  <div class="filter-bar">
+    <div class="filter-item">
+      <span class="filter-label">状态</span>
+      <select class="filter-select" id="st-f-state" onchange="renderStMgmt()">
+        <option value="">全部</option>
+        <option value="on">启用</option>
+        <option value="off">停用</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <input class="filter-input" id="st-f-name" placeholder="请输入画风名称" oninput="renderStMgmt()">
+    </div>
+    <div class="filter-item">
+      <button class="filter-btn" onclick="stResetFilter()">重置</button>
+      <button class="filter-btn search" onclick="renderStMgmt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>搜索</button>
+      <button class="filter-btn primary" onclick="openStModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>新增画风</button>
+      <button class="filter-btn danger" onclick="batchDelStyle()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>批量删除</button>
+    </div>
   </div>
 
   <div class="table-card">
     <table class="st-table">
       <thead>
         <tr>
+          <th style="width:36px"><input type="checkbox" id="st-all" onchange="toggleAllSt(this)"></th>
           <th style="width:70px">示例</th>
           <th>画风名称</th>
+          <th style="width:100px">合成模式</th>
           <th style="width:90px">预计耗时</th>
           <th>提示词</th>
           <th style="width:70px" class="st-num">生成</th>
@@ -67,11 +80,13 @@
           <th style="width:70px" class="st-num">弃用</th>
           <th style="width:70px" class="st-num">失败</th>
           <th style="width:80px">状态</th>
-          <th style="width:120px">操作</th>
+          <th style="width:70px">排序</th>
+          <th style="width:150px">操作</th>
         </tr>
       </thead>
       <tbody id="st-tbody"></tbody>
     </table>
+    <div class="pagination" id="st-pager"></div>
   </div>
 
   <div id="st-toast-area"></div>
@@ -81,14 +96,30 @@
     <div class="st-modal-mask" onclick="closeStModal()"></div>
     <div class="st-modal-box">
       <div class="st-modal-title" id="st-modal-title">编辑画风</div>
-      <div class="st-row">
-        <div class="st-field"><label class="st-lbl">画风名称 <span style="color:#f5222d">*</span></label><input class="st-input" id="st-name" placeholder="如：光影焕新"></div>
-        <div class="st-field"><label class="st-lbl">预计耗时</label><input class="st-input" id="st-time" placeholder="如：约20秒"></div>
+      <div class="st-img-row">
+        <div class="st-img-preview" id="st-img-preview"><span class="st-img-ph">预览图</span></div>
+        <div class="st-img-ops">
+          <button class="st-btn" onclick="document.getElementById('st-img-file').click()">上传图片</button>
+          <button class="st-btn" onclick="stRemoveImg()">移除</button>
+          <div class="st-img-tip">建议控制在 2MB 内，用于画风示例展示</div>
+          <input type="file" id="st-img-file" accept="image/*" style="display:none" onchange="stImgChosen(this)">
+        </div>
       </div>
       <div class="st-row">
-        <div class="st-field"><label class="st-lbl">状态</label>
-          <select class="st-input" id="st-state"><option value="on">启用</option><option value="off">禁用</option></select>
+        <div class="st-field"><label class="st-lbl">画风名称 <span style="color:#f5222d">*</span></label><input class="st-input" id="st-name" placeholder="如：光影焕新"></div>
+        <div class="st-field"><label class="st-lbl">合成模式 <span style="color:#f5222d">*</span></label>
+          <select class="st-input" id="st-mode"><option value="默认合成">默认合成</option><option value="模型合成">模型合成</option></select>
         </div>
+      </div>
+      <div class="st-row">
+        <div class="st-field"><label class="st-lbl">预计耗时</label><input class="st-input" id="st-time" placeholder="如：约20秒"></div>
+        <div class="st-field"><label class="st-lbl">排序 <span style="color:#f5222d">*</span></label><input class="st-input" id="st-sort" type="number" value="0"></div>
+        <div class="st-field"><label class="st-lbl">状态 <span style="color:#f5222d">*</span></label>
+          <select class="st-input" id="st-state"><option value="on">启用</option><option value="off">停用</option></select>
+        </div>
+      </div>
+      <div class="st-row">
+        <div class="st-field"><label class="st-lbl">描述</label><textarea class="st-textarea" id="st-desc" placeholder="请输入画风描述"></textarea></div>
       </div>
       <div class="st-row">
         <div class="st-field"><label class="st-lbl">提示词 <span style="color:#f5222d">*</span></label>
@@ -104,15 +135,23 @@
 </div>
 <script>
 /* ================= 画风管理（V2.1：启停 + 提示词配置） ================= */
-if (!window.__STYLE_LIST) window.__STYLE_LIST = [];
 function stList() {
-  return (window.__STYLE_LIST || []).map(function(s){ return { id: s.id, name: s.name, time: s.time || '—', enabled: s.enabled !== false, prompt: s.prompt || '', gen: s.gen || 0, keep: s.keep || 0, drop: s.drop || 0, fail: s.fail || 0 }; });
+  return (window.__STYLE_LIST || []).map(function(s){ return { id: s.id, name: s.name, time: s.time || '—', mode: s.mode || '默认合成', sort: (s.sort === undefined ? 0 : s.sort), enabled: s.enabled !== false, prompt: s.prompt || '', desc: s.desc || '', img: s.img || null, gen: s.gen || 0, keep: s.keep || 0, drop: s.drop || 0, fail: s.fail || 0 }; });
 }
 function stBg(id) { var n = 0; for (var i = 0; i < id.length; i++) n += id.charCodeAt(i); return (n % 8) + 1; }
 function stToast(msg) {
   var ta = document.getElementById('st-toast-area');
   ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
   setTimeout(function(){ ta.innerHTML = ''; }, 1600);
+}
+var ST_SELECTED = {};
+function toggleAllSt(el) {
+  stList().forEach(function(s) { if (el.checked) ST_SELECTED[s.id] = true; else delete ST_SELECTED[s.id]; });
+  renderStMgmt();
+}
+function onStCheck(el) {
+  var id = el.getAttribute('data-sid');
+  if (el.checked) ST_SELECTED[id] = true; else delete ST_SELECTED[id];
 }
 function renderStMgmt() {
   var st = document.getElementById('st-f-state').value;
@@ -122,28 +161,48 @@ function renderStMgmt() {
     if (st === 'off' && s.enabled) return false;
     if (kw && s.name.indexOf(kw) < 0) return false;
     return true;
-  });
+  }).sort(function(a, b) { return a.sort - b.sort; });
   var tb = document.getElementById('st-tbody');
   var html = '';
   list.forEach(function(s){
+    var ck = ST_SELECTED[s.id] ? ' checked' : '';
     html += '<tr>' +
-      '<td><span class="st-thumb effect-' + s.id + '"><span class="photo-person"></span></span></td>' +
+      '<td><input type="checkbox" data-sid="' + s.id + '"' + ck + ' onclick="onStCheck(this)"></td>' +
+      '<td>' + (s.img
+        ? '<span class="st-thumb"><img src="' + s.img + '" style="width:100%;height:100%;object-fit:cover;display:block"></span>'
+        : '<span class="st-thumb effect-' + s.id + '"><span class="photo-person"></span></span>') + '</td>' +
       '<td>' + s.name + '</td>' +
+      '<td>' + s.mode + '</td>' +
       '<td>' + s.time + '</td>' +
       '<td class="st-leaf">' + (s.prompt || '—') + '</td>' +
       '<td style="text-align:center">' + s.gen + '</td>' +
       '<td style="text-align:center;color:#52c41a;font-weight:600">' + s.keep + '</td>' +
       '<td style="text-align:center;color:#999">' + s.drop + '</td>' +
       '<td style="text-align:center;color:#cf1322">' + s.fail + '</td>' +
-      '<td><span class="st-state ' + (s.enabled ? 'on' : 'off') + '">' + (s.enabled ? '启用' : '禁用') + '</span></td>' +
+      '<td><span class="st-state ' + (s.enabled ? 'on' : 'off') + '">' + (s.enabled ? '启用' : '停用') + '</span></td>' +
+      '<td style="text-align:center">' + s.sort + '</td>' +
       '<td>' +
         '<a class="action-link" onclick="openStModal(\'' + s.id + '\')">编辑</a>' +
-        '<a class="action-link' + (s.enabled ? '" style="color:#fa541c"' : '"') + ' onclick="stToggle(\'' + s.id + '\')">' + (s.enabled ? '禁用' : '启用') + '</a>' +
+        (s.enabled
+          ? '<a class="action-link" style="color:#f5222d" onclick="stToggle(\'' + s.id + '\')">停用</a>'
+          : '<a class="action-link" onclick="stToggle(\'' + s.id + '\')">启用</a>') +
         '<a class="action-link warn" onclick="delStyle(\'' + s.id + '\')">删除</a>' +
       '</td></tr>';
   });
-  if (!list.length) html = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的画风</td></tr>';
+  if (!list.length) html = '<tr><td colspan="12" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的画风</td></tr>';
   tb.innerHTML = html;
+  var allEl = document.getElementById('st-all');
+  if (allEl) allEl.checked = list.length > 0 && list.every(function(s) { return ST_SELECTED[s.id]; });
+  renderPager('st-pager', list.length, 1, 10);
+}
+function batchDelStyle() {
+  var ids = Object.keys(ST_SELECTED);
+  if (!ids.length) { stToast('请先勾选画风'); return; }
+  if (!confirm('确定删除所选 ' + ids.length + ' 个画风吗？删除后该画风从移动端入口消失。')) return;
+  window.__STYLE_LIST = (window.__STYLE_LIST || []).filter(function(x){ return !ST_SELECTED[x.id]; });
+  ST_SELECTED = {};
+  renderStMgmt();
+  stToast('已删除 ' + ids.length + ' 个画风');
 }
 function delStyle(id) {
   var s = stList().filter(function(x){ return x.id === id; })[0];
@@ -157,42 +216,70 @@ function stToggle(id) {
   var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0];
   if (!s) return;
   s.enabled = !s.enabled;
-  stToast((s.enabled ? '已启用：' : '已禁用：') + s.name);
+  stToast((s.enabled ? '已启用：' : '已停用：') + s.name);
   renderStMgmt();
 }
 function stResetFilter() {
   document.getElementById('st-f-state').value = '';
   document.getElementById('st-f-name').value = '';
+  ST_SELECTED = {};
   renderStMgmt();
 }
 var ST_EDIT_ID = null;
+function stRenderImg(dataUrl) {
+  var pv = document.getElementById('st-img-preview');
+  if (dataUrl) { pv.innerHTML = '<img src="' + dataUrl + '" alt="画风示例">'; pv.classList.add('has-img'); }
+  else { pv.innerHTML = '<span class="st-img-ph">预览图</span>'; pv.classList.remove('has-img'); }
+}
+function stImgChosen(inp) {
+  var f = inp.files && inp.files[0];
+  if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function(e) { stRenderImg(e.target.result); };
+  rd.readAsDataURL(f);
+  inp.value = '';
+}
+function stRemoveImg() { stRenderImg(null); }
 function openStModal(id) {
   ST_EDIT_ID = id || null;
   var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0];
   document.getElementById('st-modal-title').textContent = id ? '编辑画风' : '新增画风';
   document.getElementById('st-name').value = s ? s.name : '';
+  document.getElementById('st-mode').value = (s && s.mode) ? s.mode : '默认合成';
   document.getElementById('st-time').value = s ? (s.time || '') : '';
+  document.getElementById('st-sort').value = (s && s.sort !== undefined) ? s.sort : 0;
   document.getElementById('st-state').value = (s && s.enabled === false) ? 'off' : 'on';
+  document.getElementById('st-desc').value = s ? (s.desc || '') : '';
   document.getElementById('st-prompt').value = s ? (s.prompt || '') : '';
+  stRenderImg((s && s.img) ? s.img : null);
   document.getElementById('st-modal').style.display = 'flex';
 }
 function closeStModal() { document.getElementById('st-modal').style.display = 'none'; }
 function saveStModal() {
   var name = document.getElementById('st-name').value.trim();
   var prompt = document.getElementById('st-prompt').value.trim();
+  var sortVal = parseInt(document.getElementById('st-sort').value, 10);
   if (!name) { stToast('请填写画风名称'); return; }
   if (!prompt) { stToast('请填写提示词'); return; }
+  if (isNaN(sortVal)) { stToast('请填写排序'); return; }
+  var pv = document.getElementById('st-img-preview');
+  var img = (pv.classList.contains('has-img') && pv.querySelector('img')) ? pv.querySelector('img').src : null;
   var data = {
     name: name,
+    mode: document.getElementById('st-mode').value,
     time: document.getElementById('st-time').value.trim() || '—',
+    sort: sortVal,
     enabled: document.getElementById('st-state').value !== 'off',
-    prompt: prompt
+    desc: document.getElementById('st-desc').value.trim(),
+    prompt: prompt,
+    img: img
   };
   if (ST_EDIT_ID) {
     var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === ST_EDIT_ID; })[0];
     if (s) { for (var k in data) s[k] = data[k]; stToast('画风已保存：' + name); }
   } else {
     data.id = 'st' + ((window.__STYLE_LIST || []).length + 1);
+    data.gen = 0; data.keep = 0; data.drop = 0; data.fail = 0;
     window.__STYLE_LIST.push(data);
     stToast('画风已新增：' + name);
   }
