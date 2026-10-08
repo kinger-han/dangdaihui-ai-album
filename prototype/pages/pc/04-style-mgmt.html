@@ -55,6 +55,12 @@
       </select>
     </div>
     <div class="filter-item">
+      <select class="filter-select" id="st-f-cust" onchange="stSyncActivityFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <select class="filter-select" id="st-f-act" onchange="renderStMgmt()"></select>
+    </div>
+    <div class="filter-item">
       <input class="filter-input" id="st-f-name" placeholder="请输入画风名称" oninput="renderStMgmt()">
     </div>
     <div class="filter-item">
@@ -72,6 +78,7 @@
           <th style="width:36px"><input type="checkbox" id="st-all" onchange="toggleAllSt(this)"></th>
           <th style="width:70px">示例</th>
           <th>画风名称</th>
+          <th>归属活动</th>
           <th style="width:100px">合成模式</th>
           <th style="width:90px">预计耗时</th>
           <th>提示词</th>
@@ -126,6 +133,12 @@
           <textarea class="st-textarea" id="st-prompt" placeholder="描述画风生成规则与限制，如：背景写意虚化，人物面部区域避开重绘，保持人脸特征不变"></textarea>
         </div>
       </div>
+      <div class="st-row">
+        <div class="st-field"><label class="st-lbl">归属活动</label>
+          <select class="st-input" id="st-act"></select>
+          <div class="st-tip" style="font-size:12px;color:#999;margin-top:4px">留空 = 公共画风，所有活动都可勾选使用；指定活动 = 该活动私有，其他活动看不到</div>
+        </div>
+      </div>
       <div class="st-footer">
         <button class="st-btn" onclick="closeStModal()">取消</button>
         <button class="st-btn primary" onclick="saveStModal()">保存</button>
@@ -136,13 +149,40 @@
 <script>
 /* ================= 画风管理（V2.1：启停 + 提示词配置） ================= */
 function stList() {
-  return (window.__STYLE_LIST || []).map(function(s){ return { id: s.id, name: s.name, time: s.time || '—', mode: s.mode || '默认合成', sort: (s.sort === undefined ? 0 : s.sort), enabled: s.enabled !== false, prompt: s.prompt || '', desc: s.desc || '', img: s.img || null, gen: s.gen || 0, keep: s.keep || 0, drop: s.drop || 0, fail: s.fail || 0 }; });
+  return (window.__STYLE_LIST || []).map(function(s){ return { id: s.id, name: s.name, time: s.time || '—', mode: s.mode || '默认合成', sort: (s.sort === undefined ? 0 : s.sort), enabled: s.enabled !== false, prompt: s.prompt || '', desc: s.desc || '', img: s.img || null, gen: s.gen || 0, keep: s.keep || 0, drop: s.drop || 0, fail: s.fail || 0, actId: s.actId || '' }; });
+}
+function stActCell(s) {
+  if (!s.actId) return '<span style="color:#999">公共</span>';
+  return pcActivityName(s.actId) || '—';
 }
 function stBg(id) { var n = 0; for (var i = 0; i < id.length; i++) n += id.charCodeAt(i); return (n % 8) + 1; }
 function stToast(msg) {
   var ta = document.getElementById('st-toast-area');
   ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
   setTimeout(function(){ ta.innerHTML = ''; }, 1600);
+}
+/* ---- 筛选下拉：客户 → 活动级联 ---- */
+function stFillFilters() {
+  var cEl = document.getElementById('st-f-cust');
+  var cOpts = '<option value="">全部客户</option>';
+  (window.__CUSTOMER_LIST || []).forEach(function(c) {
+    if (c.enabled === false) return;
+    cOpts += '<option value="' + c.id + '">' + c.name + '</option>';
+  });
+  cEl.innerHTML = cOpts;
+  stSyncActivityFilter();
+}
+function stSyncActivityFilter() {
+  var custId = document.getElementById('st-f-cust').value;
+  var aEl = document.getElementById('st-f-act');
+  var aOpts = '<option value="">全部</option>';
+  (window.__ACTIVITY_LIST || []).forEach(function(a) {
+    if (custId && a.customerId !== custId) return;
+    aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
+  });
+  aOpts += '<option value="__none">公共（未指定活动）</option>';
+  aEl.innerHTML = aOpts;
+  renderStMgmt();
 }
 var ST_SELECTED = {};
 function toggleAllSt(el) {
@@ -156,10 +196,19 @@ function onStCheck(el) {
 function renderStMgmt() {
   var st = document.getElementById('st-f-state').value;
   var kw = (document.getElementById('st-f-name').value || '').trim();
+  var custF = document.getElementById('st-f-cust').value;
+  var actF = document.getElementById('st-f-act').value;
   var list = stList().filter(function(s){
     if (st === 'on' && !s.enabled) return false;
     if (st === 'off' && s.enabled) return false;
     if (kw && s.name.indexOf(kw) < 0) return false;
+    if (custF) {
+      if (!s.actId) return false;
+      var a = pcActivityOf(s.actId);
+      if (!a || a.customerId !== custF) return false;
+    }
+    if (actF === '__none') { if (s.actId) return false; }
+    else if (actF && s.actId !== actF) return false;
     return true;
   }).sort(function(a, b) { return a.sort - b.sort; });
   var tb = document.getElementById('st-tbody');
@@ -172,6 +221,7 @@ function renderStMgmt() {
         ? '<span class="st-thumb"><img src="' + s.img + '" style="width:100%;height:100%;object-fit:cover;display:block"></span>'
         : '<span class="st-thumb effect-' + s.id + '"><span class="photo-person"></span></span>') + '</td>' +
       '<td>' + s.name + '</td>' +
+      '<td>' + stActCell(s) + '</td>' +
       '<td>' + s.mode + '</td>' +
       '<td>' + s.time + '</td>' +
       '<td class="st-leaf">' + (s.prompt || '—') + '</td>' +
@@ -189,7 +239,7 @@ function renderStMgmt() {
         '<a class="action-link warn" onclick="delStyle(\'' + s.id + '\')">删除</a>' +
       '</td></tr>';
   });
-  if (!list.length) html = '<tr><td colspan="12" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的画风</td></tr>';
+  if (!list.length) html = '<tr><td colspan="13" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的画风</td></tr>';
   tb.innerHTML = html;
   var allEl = document.getElementById('st-all');
   if (allEl) allEl.checked = list.length > 0 && list.every(function(s) { return ST_SELECTED[s.id]; });
@@ -222,6 +272,8 @@ function stToggle(id) {
 function stResetFilter() {
   document.getElementById('st-f-state').value = '';
   document.getElementById('st-f-name').value = '';
+  document.getElementById('st-f-cust').value = '';
+  document.getElementById('st-f-act').value = '';
   ST_SELECTED = {};
   renderStMgmt();
 }
@@ -251,6 +303,13 @@ function openStModal(id) {
   document.getElementById('st-state').value = (s && s.enabled === false) ? 'off' : 'on';
   document.getElementById('st-desc').value = s ? (s.desc || '') : '';
   document.getElementById('st-prompt').value = s ? (s.prompt || '') : '';
+  var actSel = document.getElementById('st-act');
+  var actOpts = '<option value="">公共画风（留空）</option>';
+  (window.__ACTIVITY_LIST || []).forEach(function(a) {
+    actOpts += '<option value="' + a.id + '">' + a.name + '</option>';
+  });
+  actSel.innerHTML = actOpts;
+  actSel.value = (s && s.actId) ? s.actId : '';
   stRenderImg((s && s.img) ? s.img : null);
   document.getElementById('st-modal').style.display = 'flex';
 }
@@ -272,7 +331,8 @@ function saveStModal() {
     enabled: document.getElementById('st-state').value !== 'off',
     desc: document.getElementById('st-desc').value.trim(),
     prompt: prompt,
-    img: img
+    img: img,
+    actId: document.getElementById('st-act').value || ''
   };
   if (ST_EDIT_ID) {
     var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === ST_EDIT_ID; })[0];
@@ -286,6 +346,6 @@ function saveStModal() {
   closeStModal();
   renderStMgmt();
 }
-function init_style_mgmt() { renderStMgmt(); }
+function init_style_mgmt() { stFillFilters(); renderStMgmt(); }
 init_style_mgmt();
 </script>

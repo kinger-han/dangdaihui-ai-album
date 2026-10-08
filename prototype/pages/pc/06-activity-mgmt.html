@@ -1,0 +1,659 @@
+<!-- PAGE_META: {"id": "activity-mgmt", "title": "活动管理"} -->
+<div class="page" id="page-activity-mgmt">
+  <style>
+    /* 活动管理页：数据的最上层归属。设备 / 模板 / 画风 / 照片都挂在活动下，
+       客户由活动带出。前台扫码后只下发「公共项 + 本活动启用项」。 */
+    .act-tbl { width: 100%; border-collapse: collapse; background: #fff; }
+    .act-tbl th { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #666; font-weight: 600; background: #FAFAFA; }
+    .act-tbl td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333; }
+    .act-tbl tr:hover { background: #fafcff; }
+    .act-tbl .td-check { width: 36px; }
+    .act-tbl .act-name { color: #333; }
+    .act-state { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12px; }
+    .act-state.running { color: #52c41a; background: #f6ffed; border: 1px solid #b7eb8f; }
+    .act-state.paused  { color: #fa8c16; background: #fff7e6; border: 1px solid #ffd591; }
+    .act-state.ended   { color: #999; background: #f5f5f5; border: 1px solid #e8e8e8; }
+    .act-state.notstart{ color: #1677ff; background: #e6f4ff; border: 1px solid #91caff; }
+    .act-num { font-variant-numeric: tabular-nums; }
+
+    /* 活动配置弹窗（8 个页签） */
+    .ac-modal { position: fixed; inset: 0; z-index: 1300; display: none; align-items: center; justify-content: center; }
+    .ac-modal-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+    .ac-modal-box { position: relative; background: #fff; border-radius: 8px; width: 860px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+    .ac-modal-title { font-size: 15px; font-weight: 600; color: #333; padding: 18px 24px 12px; border-bottom: 1px solid #f0f0f0; }
+    .ac-tabs { display: flex; flex-wrap: wrap; gap: 2px; padding: 10px 24px 0; border-bottom: 1px solid #f0f0f0; }
+    .ac-tab { padding: 7px 14px; font-size: 13px; color: #666; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; margin-bottom: -1px; }
+    .ac-tab:hover { color: #0B5DEA; }
+    .ac-tab.active { color: #0B5DEA; background: #fff; border-color: #f0f0f0; font-weight: 500; }
+    .ac-body { padding: 18px 24px; overflow-y: auto; flex: 1; }
+    .ac-pane { display: none; }
+    .ac-pane.active { display: block; }
+    .ac-row { display: flex; gap: 16px; margin-bottom: 14px; }
+    .ac-field { flex: 1; min-width: 0; }
+    .ac-lbl { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+    .ac-lbl .req { color: #f5222d; margin-left: 2px; }
+    .ac-input { width: 100%; box-sizing: border-box; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 10px; font-size: 13px; color: #333; }
+    .ac-textarea { width: 100%; box-sizing: border-box; min-height: 70px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 8px 10px; font-size: 13px; color: #333; line-height: 1.6; resize: vertical; }
+    .ac-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
+    .ac-sub { font-size: 13px; font-weight: 500; color: #333; margin: 4px 0 8px; padding-left: 8px; border-left: 3px solid #0B5DEA; }
+    .ac-pick { border: 1px solid #eee; border-radius: 4px; max-height: 190px; overflow-y: auto; }
+    .ac-pick-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #f7f7f7; font-size: 13px; color: #333; }
+    .ac-pick-row:last-child { border-bottom: none; }
+    .ac-pick-row .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+    .ac-pick-row .tag.pub { color: #888; background: #f5f5f5; border: 1px solid #e8e8e8; }
+    .ac-pick-row .tag.own { color: #1677ff; background: #e6f4ff; border: 1px solid #91caff; }
+    .ac-pick-row .tag.off { color: #bbb; background: #fafafa; border: 1px solid #eee; }
+    .ac-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 14px 24px; border-top: 1px solid #f0f0f0; }
+    .ac-btn { height: 32px; padding: 0 16px; border-radius: 4px; border: 1px solid #d9d9d9; background: #fff; font-size: 13px; cursor: pointer; color: #333; }
+    .ac-btn:hover { color: #0B5DEA; border-color: #0B5DEA; }
+    .ac-btn.primary { background: #0B5DEA; border-color: #0B5DEA; color: #fff; }
+    .ac-btn.primary:hover { background: #3a7bef; border-color: #3a7bef; }
+    /* 设备绑定（活动配置 · 二维码来源屏幕） */
+    .ac-dev-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #f7f7f7; font-size: 13px; }
+    .ac-dev-row .dev-state { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; }
+    .ac-dev-row .dev-state.s-on { color: #52c41a; background: #f6ffed; border: 1px solid #b7eb8f; }
+    .ac-dev-row .dev-state.s-off { color: #999; background: #f5f5f5; border: 1px solid #e8e8e8; }
+    .ac-qr { font-family: var(--font-mono, monospace); font-size: 12px; color: #666; background: #f7f9fc; border: 1px solid #e8e8e8; border-radius: 4px; padding: 10px 12px; word-break: break-all; line-height: 1.8; }
+  </style>
+
+  <div class="filter-bar">
+    <div class="filter-item">
+      <input class="filter-input" id="act-f-name" placeholder="请输入活动名称" oninput="actApplyFilter()">
+    </div>
+    <div class="filter-item">
+      <select class="filter-select" id="act-f-cust" onchange="actApplyFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">活动状态</span>
+      <select class="filter-select" id="act-f-state" onchange="actApplyFilter()">
+        <option value="">全部</option>
+        <option value="running">进行中</option>
+        <option value="notstart">未开始</option>
+        <option value="paused">已暂停</option>
+        <option value="ended">已结束</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <button class="filter-btn" onclick="actResetFilter()">重置</button>
+      <button class="filter-btn search" onclick="actApplyFilter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>搜索</button>
+      <button class="filter-btn primary" onclick="actOpenModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>新建活动</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table class="act-tbl">
+      <thead>
+        <tr>
+          <th class="td-check"><input type="checkbox" id="act-all" onchange="actToggleAll(this)"></th>
+          <th>活动名称</th>
+          <th>活动编号</th>
+          <th>所属客户</th>
+          <th>活动状态</th>
+          <th>开始时间</th>
+          <th>结束时间</th>
+          <th>扫码人数</th>
+          <th>成功作品数</th>
+          <th>精选作品数</th>
+          <th>更新时间</th>
+          <th style="width:210px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="act-tbody"></tbody>
+    </table>
+    <div class="pagination" id="act-pager"></div>
+  </div>
+
+  <!-- 新建/编辑活动弹窗（8 个页签） -->
+  <div class="ac-modal" id="ac-modal" style="display:none">
+    <div class="ac-modal-mask" onclick="actCloseModal()"></div>
+    <div class="ac-modal-box">
+      <div class="ac-modal-title" id="ac-modal-title">新建活动</div>
+      <div class="ac-tabs">
+        <div class="ac-tab active" data-pane="basic" onclick="actSwitchTab('basic', this)">基础信息</div>
+        <div class="ac-tab" data-pane="time" onclick="actSwitchTab('time', this)">时间状态</div>
+        <div class="ac-tab" data-pane="visual" onclick="actSwitchTab('visual', this)">视觉文案</div>
+        <div class="ac-tab" data-pane="ability" onclick="actSwitchTab('ability', this)">创作能力</div>
+        <div class="ac-tab" data-pane="limit" onclick="actSwitchTab('limit', this)">生成限制</div>
+        <div class="ac-tab" data-pane="pick" onclick="actSwitchTab('pick', this)">精选规则</div>
+        <div class="ac-tab" data-pane="data" onclick="actSwitchTab('data', this)">数据保存</div>
+        <div class="ac-tab" data-pane="qr" onclick="actSwitchTab('qr', this)">二维码</div>
+      </div>
+      <div class="ac-body">
+        <div class="ac-pane active" id="ac-pane-basic">
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">活动名称 <span class="req">*</span></label>
+              <input class="ac-input" id="ac-name" placeholder="如：福建省第十二次党代会纪念相册"></div>
+            <div class="ac-field"><label class="ac-lbl">活动简称 <span class="req">*</span></label>
+              <input class="ac-input" id="ac-short" placeholder="如：党代会纪念"></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">活动编号 <span class="req">*</span></label>
+              <input class="ac-input" id="ac-code" placeholder="如：ACT-2026-005"></div>
+            <div class="ac-field"><label class="ac-lbl">所属客户 <span class="req">*</span></label>
+              <select class="ac-input" id="ac-cust"></select>
+              <div class="ac-tip">客户从系统客户表取值，活动归属客户后由活动带出到设备/照片</div></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">活动全称 <span class="req">*</span></label>
+              <input class="ac-input" id="ac-fullname" placeholder="活动全称，逐字核对">
+              <div class="ac-tip">政治表述、会议届次、文件全称须逐字核对，不得由系统自动生成</div></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">活动介绍</label>
+              <textarea class="ac-textarea" id="ac-intro" placeholder="一句话说明本活动是什么"></textarea></div>
+          </div>
+        </div>
+
+        <div class="ac-pane" id="ac-pane-time">
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">开始时间 <span class="req">*</span></label>
+              <input class="ac-input" id="ac-start" placeholder="如：2026-09-30 08:00"></div>
+            <div class="ac-field"><label class="ac-lbl">结束时间 <span class="req">*</span></label>
+              <input class="ac-input" id="ac-end" placeholder="如：2026-10-08 20:00"></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">活动状态 <span class="req">*</span></label>
+              <select class="ac-input" id="ac-state">
+                <option value="notstart">未开始</option>
+                <option value="running">进行中</option>
+                <option value="paused">已暂停</option>
+                <option value="ended">已结束</option>
+              </select>
+              <div class="ac-tip">扫码页按此状态展示：未开始不可扫、已暂停进提示页、已结束按下方「结束后可查看」决定</div></div>
+            <div class="ac-field"><label class="ac-lbl">结束后是否可查看历史作品</label>
+              <select class="ac-input" id="ac-viewafter">
+                <option value="0">否</option>
+                <option value="1">是</option>
+              </select></div>
+          </div>
+        </div>
+
+        <div class="ac-pane" id="ac-pane-visual">
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">主标题 <span class="req">*</span></label>
+              <input class="ac-input" id="ac-title" placeholder="如：永远跟党走"></div>
+            <div class="ac-field"><label class="ac-lbl">主文案</label>
+              <input class="ac-input" id="ac-slogan" placeholder="如：定格奋斗瞬间 · 共谱时代新篇"></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">Logo / 主视觉</label>
+              <input class="ac-input" id="ac-logo" placeholder="图片地址"></div>
+            <div class="ac-field"><label class="ac-lbl">主题色</label>
+              <input class="ac-input" id="ac-color" placeholder="如：#B42318"></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">免责声明</label>
+              <textarea class="ac-textarea" id="ac-disclaimer" placeholder="展示在作品保存页"></textarea></div>
+          </div>
+        </div>
+
+        <div class="ac-pane" id="ac-pane-ability">
+          <div class="ac-tip" style="margin-bottom:12px">前台扫码后能看到的画风/模板 = 下面勾选的项。公共项（归属活动留空）可被多个活动同时勾选；私有项只在本页出现。</div>
+          <div class="ac-sub">启用画风</div>
+          <div class="ac-pick" id="ac-style-pick"></div>
+          <div class="ac-sub" style="margin-top:16px">启用模板</div>
+          <div class="ac-pick" id="ac-tpl-pick"></div>
+          <div class="ac-row" style="margin-top:16px">
+            <div class="ac-field"><label class="ac-lbl">默认推荐模板</label>
+              <select class="ac-input" id="ac-default-tpl"></select>
+              <div class="ac-tip">模板自身由模板管理维护，本页只选择本活动启用哪些模板</div></div>
+          </div>
+          <div class="ac-sub" style="margin-top:16px">前台可见范围预览</div>
+          <div id="ac-scope-preview"></div>
+        </div>
+
+        <div class="ac-pane" id="ac-pane-limit">
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">单访客每日上限</label>
+              <input class="ac-input" id="ac-daily" type="number" value="3"></div>
+            <div class="ac-field"><label class="ac-lbl">AI 生成每日上限</label>
+              <input class="ac-input" id="ac-ailimit" type="number" value="5"></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">超限提示文案</label>
+              <textarea class="ac-textarea" id="ac-overtip" placeholder="如：今日拍摄次数已用完，请明天再来"></textarea></div>
+          </div>
+        </div>
+
+        <div class="ac-pane" id="ac-pane-pick">
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">是否开放提交精选</label>
+              <select class="ac-input" id="ac-pickopen"><option value="0">否</option><option value="1">是</option></select></div>
+            <div class="ac-field"><label class="ac-lbl">是否必须 AI 初审通过</label>
+              <select class="ac-input" id="ac-mustpass"><option value="0">否</option><option value="1">是</option></select></div>
+          </div>
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">精选说明</label>
+              <textarea class="ac-textarea" id="ac-picknote" placeholder="如：经审核后可在大屏展示"></textarea></div>
+          </div>
+        </div>
+
+        <div class="ac-pane" id="ac-pane-data">
+          <div class="ac-row">
+            <div class="ac-field"><label class="ac-lbl">数据保存方式</label>
+              <select class="ac-input" id="ac-savemode"><option value="long">长期保存</option><option value="custom">自定义期限</option></select>
+              <div class="ac-tip">当前默认长期保存；选自定义期限时下方生效</div></div>
+            <div class="ac-field"><label class="ac-lbl">自定义期限</label>
+              <input class="ac-input" id="ac-savedays" placeholder="如：90（天）"></div>
+          </div>
+        </div>
+
+        <div class="ac-pane" id="ac-pane-qr">
+          <div class="ac-sub">来源屏幕（本活动绑定的设备）</div>
+          <div class="ac-pick" id="ac-dev-pick"></div>
+          <div class="ac-sub" style="margin-top:16px">二维码链接</div>
+          <div class="ac-qr" id="ac-qr-url">—</div>
+          <div class="ac-row" style="margin-top:12px">
+            <div class="ac-field"><label class="ac-lbl">渠道参数</label>
+              <input class="ac-input" id="ac-channel" placeholder="如：fjdh（用于区分投放渠道）"></div>
+            <div class="ac-field" style="flex:0 0 auto"><label class="ac-lbl">&nbsp;</label>
+              <button class="ac-btn" onclick="actCopyLink()">复制链接</button>
+              <button class="ac-btn" onclick="actToast('二维码已下载（原型示意）')">下载二维码</button></div>
+          </div>
+          <div class="ac-tip" style="margin-top:8px">链接参数：activityId 必填，screenId 取上表设备；参数无效时进「活动不可用」页，不静默进其他活动</div>
+        </div>
+      </div>
+      <div class="ac-footer">
+        <button class="ac-btn" onclick="actCloseModal()">取消</button>
+        <button class="ac-btn primary" onclick="actSave()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="act-toast-area"></div>
+</div>
+
+<script>
+/* ================= 活动管理（数据的最上层归属） ================= */
+var ACT_SELECTED = {};
+var ACT_PAGE = 1;
+var ACT_PAGE_SIZE = 10;
+var ACT_EDIT_ID = null;
+/* 配置弹窗内的勾选暂存，保存时写回活动 */
+var AC_PICK_STYLE = {};
+var AC_PICK_TPL = {};
+
+function actList() { return (window.__ACTIVITY_LIST = window.__ACTIVITY_LIST || []); }
+function actShowToast(msg) {
+  var ta = document.getElementById('act-toast-area');
+  ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
+  setTimeout(function(){ ta.innerHTML = ''; }, 1800);
+}
+function actToast(msg) { actShowToast(msg); }
+function actStateTag(st) {
+  return '<span class="act-state ' + (st || 'notstart') + '">' + pcActivityStatusText(st) + '</span>';
+}
+function actFillCustomerFilter() {
+  var el = document.getElementById('act-f-cust');
+  var opts = '<option value="">全部客户</option>';
+  (window.__CUSTOMER_LIST || []).forEach(function(c) {
+    if (c.enabled === false) return;
+    opts += '<option value="' + c.id + '">' + c.name + '</option>';
+  });
+  el.innerHTML = opts;
+}
+function actToggleAll(el) {
+  actList().forEach(function(a) { if (el.checked) ACT_SELECTED[a.id] = true; else delete ACT_SELECTED[a.id]; });
+  renderActTable();
+}
+function renderActTable() {
+  var kw = (document.getElementById('act-f-name').value || '').trim();
+  var custF = document.getElementById('act-f-cust').value;
+  var stF = document.getElementById('act-f-state').value;
+  var list = actList().filter(function(a) {
+    if (kw && a.name.indexOf(kw) < 0 && (a.code || '').indexOf(kw) < 0) return false;
+    if (custF && a.customerId !== custF) return false;
+    if (stF && (a.status || 'notstart') !== stF) return false;
+    return true;
+  });
+  /* 默认按更新时间倒序 */
+  list = list.slice().sort(function(a, b) { return a.updateTime < b.updateTime ? 1 : (a.updateTime > b.updateTime ? -1 : 0); });
+  var start = (ACT_PAGE - 1) * ACT_PAGE_SIZE;
+  var pageList = list.slice(start, start + ACT_PAGE_SIZE);
+  var tb = document.getElementById('act-tbody');
+  var html = '';
+  pageList.forEach(function(a) {
+    var ck = ACT_SELECTED[a.id] ? ' checked' : '';
+    var c = pcCustomerOf(a.customerId);
+    var devCount = (window.__DEVICE_LIST || []).filter(function(d){ return d.actId === a.id; }).length;
+    html += '<tr>' +
+      '<td class="td-check"><input type="checkbox" data-aid="' + a.id + '"' + ck + ' onclick="actCheckRow(this)"></td>' +
+      '<td class="act-name">' + a.name + (devCount ? ' <span style="color:#999;font-weight:400;font-size:12px">（' + devCount + ' 台设备）</span>' : '') + '</td>' +
+      '<td>' + (a.code || '—') + '</td>' +
+      '<td>' + (c ? c.name : '—') + '</td>' +
+      '<td>' + actStateTag(a.status) + '</td>' +
+      '<td>' + (a.startTime || '—') + '</td>' +
+      '<td>' + (a.endTime || '—') + '</td>' +
+      '<td class="act-num">' + (a.scanCount || 0) + '</td>' +
+      '<td class="act-num">' + (a.workCount || 0) + '</td>' +
+      '<td class="act-num">' + (a.pickCount || 0) + '</td>' +
+      '<td>' + (a.updateTime || '—') + '</td>' +
+      '<td>' +
+        '<a class="action-link" onclick="actOpenModal(\'' + a.id + '\')">编辑</a>' +
+        '<a class="action-link" onclick="actCopy(\'' + a.id + '\')">复制</a>' +
+        '<a class="action-link" onclick="actShowQr(\'' + a.id + '\')">二维码</a>' +
+        '<a class="action-link" onclick="actShowData(\'' + a.id + '\')">数据</a>' +
+        (a.status === 'running'
+          ? '<a class="action-link" style="color:#fa8c16" onclick="actTogglePause(\'' + a.id + '\')">暂停</a>'
+          : (a.status === 'ended'
+              ? '<a class="action-link" onclick="actTogglePause(\'' + a.id + '\')">启用</a>'
+              : '<a class="action-link" onclick="actTogglePause(\'' + a.id + '\')">启用</a>')) +
+        (a.status === 'running' || a.status === 'paused'
+          ? '<a class="action-link warn" onclick="actEnd(\'' + a.id + '\')">结束</a>'
+          : '') +
+      '</td>' +
+      '</tr>';
+  });
+  if (!pageList.length) html = '<tr><td colspan="12" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的活动</td></tr>';
+  tb.innerHTML = html;
+  var allEl = document.getElementById('act-all');
+  if (allEl) allEl.checked = list.length > 0 && list.every(function(a) { return ACT_SELECTED[a.id]; });
+  window.__PAGER['act-pager'] = function(pg) { ACT_PAGE = pg; renderActTable(); };
+  renderPager('act-pager', list.length, ACT_PAGE, ACT_PAGE_SIZE);
+}
+function actCheckRow(el) {
+  var id = el.getAttribute('data-aid');
+  if (el.checked) ACT_SELECTED[id] = true; else delete ACT_SELECTED[id];
+}
+function actApplyFilter() { ACT_PAGE = 1; renderActTable(); }
+function actResetFilter() {
+  document.getElementById('act-f-name').value = '';
+  document.getElementById('act-f-cust').value = '';
+  document.getElementById('act-f-state').value = '';
+  ACT_SELECTED = {};
+  renderActTable();
+}
+/* ---- 行内状态操作：只原地置灰，不重排序 ---- */
+function actTogglePause(id) {
+  var a = pcActivityOf(id);
+  if (!a) return;
+  a.status = (a.status === 'running') ? 'paused' : 'running';
+  a.updateTime = actNowStr();
+  actShowToast(a.status === 'running' ? '已启用：' + a.name : '已暂停：' + a.name);
+  renderActTable();
+}
+function actEnd(id) {
+  var a = pcActivityOf(id);
+  if (!a) return;
+  if (!confirm('确定结束活动「' + a.name + '」吗？结束后扫码将按「结束后可查看历史作品」设置处理。')) return;
+  a.status = 'ended';
+  a.updateTime = actNowStr();
+  actShowToast('活动已结束：' + a.name);
+  renderActTable();
+}
+function actCopy(id) {
+  var a = pcActivityOf(id);
+  if (!a) return;
+  if (!confirm('确定复制活动「' + a.name + '」吗？复制后为新活动，不继承设备绑定。')) return;
+  var n = JSON.parse(JSON.stringify(a));
+  n.id = 'act' + (actList().length + 1);
+  n.code = (a.code || 'ACT') + '-COPY';
+  n.name = a.name + '（副本）';
+  n.shortName = (a.shortName || '') + '副本';
+  n.status = 'notstart';
+  n.scanCount = 0; n.workCount = 0; n.pickCount = 0;
+  n.updateTime = actNowStr();
+  actList().push(n);
+  actShowToast('已复制活动：' + n.name);
+  renderActTable();
+}
+function actShowQr(id) {
+  var a = pcActivityOf(id);
+  if (!a) return;
+  actShowToast('二维码：' + actLink(a));
+}
+function actShowData(id) {
+  var a = pcActivityOf(id);
+  if (!a) return;
+  var lines = [
+    '活动：' + a.name,
+    '扫码人数：' + (a.scanCount || 0) + ' 人',
+    '成功作品数：' + (a.workCount || 0) + ' 件',
+    '精选作品数：' + (a.pickCount || 0) + ' 件',
+    '现场风采：仅展示本活动已上屏作品'
+  ];
+  alert(lines.join('\n'));
+}
+function actLink(a) {
+  var devs = (window.__DEVICE_LIST || []).filter(function(d){ return d.actId === a.id; });
+  var sid = devs.length ? devs[0].id : '';
+  var ch = a.channel || '';
+  return 'https://domain.example/album?a=' + a.id + '&s=' + sid + (ch ? '&c=' + ch : '');
+}
+
+/* ---- 配置弹窗 ---- */
+var AC_TABS = ['basic', 'time', 'visual', 'ability', 'limit', 'pick', 'data', 'qr'];
+function actSwitchTab(name, el) {
+  AC_TABS.forEach(function(t) {
+    var pane = document.getElementById('ac-pane-' + t);
+    if (pane) pane.classList.remove('active');
+  });
+  document.querySelectorAll('.ac-tab').forEach(function(t) { t.classList.remove('active'); });
+  var p = document.getElementById('ac-pane-' + name);
+  if (p) p.classList.add('active');
+  if (el) el.classList.add('active');
+}
+function actRenderStylePick() {
+  var box = document.getElementById('ac-style-pick');
+  var html = '';
+  (window.__STYLE_LIST || []).forEach(function(s) {
+    var own = s.actId ? 'own' : 'pub';
+    var ownTxt = s.actId ? pcActivityName(s.actId) : '公共';
+    var off = s.enabled === false;
+    html += '<div class="ac-pick-row">' +
+      '<input type="checkbox" data-kind="style" data-id="' + s.id + '"' + (AC_PICK_STYLE[s.id] ? ' checked' : '') + ' onclick="acPick(this)">' +
+      '<span style="flex:1">' + s.name + '</span>' +
+      '<span class="tag ' + own + '">' + ownTxt + '</span>' +
+      (off ? '<span class="tag off">已停用</span>' : '') +
+      '</div>';
+  });
+  box.innerHTML = html || '<div class="ac-pick-row"><span style="color:#999">暂无可选画风</span></div>';
+}
+function actRenderTplPick() {
+  var box = document.getElementById('ac-tpl-pick');
+  var html = '';
+  (window.__TPL_LIST || []).forEach(function(t) {
+    var own = t.actId ? 'own' : 'pub';
+    var ownTxt = t.actId ? pcActivityName(t.actId) : '公共';
+    var off = t.state === 'off';
+    html += '<div class="ac-pick-row">' +
+      '<input type="checkbox" data-kind="tpl" data-id="' + t.id + '"' + (AC_PICK_TPL[t.id] ? ' checked' : '') + ' onclick="acPick(this)">' +
+      '<span style="flex:1">' + t.name + '</span>' +
+      '<span class="tag ' + own + '">' + ownTxt + '</span>' +
+      (off ? '<span class="tag off">已停用</span>' : '') +
+      '</div>';
+  });
+  box.innerHTML = html || '<div class="ac-pick-row"><span style="color:#999">暂无可选模板</span></div>';
+}
+function acPick(el) {
+  var kind = el.getAttribute('data-kind');
+  var id = el.getAttribute('data-id');
+  var store = (kind === 'style') ? AC_PICK_STYLE : AC_PICK_TPL;
+  if (el.checked) store[id] = true; else delete store[id];
+  if (kind === 'tpl') actRenderDefaultTpl();
+  /* 已保存的活动：实时预览勾选后的前台可见范围 */
+  if (ACT_EDIT_ID && (kind === 'style' || kind === 'tpl')) actRenderScopePreview();
+}
+function actRenderDefaultTpl() {
+  var sel = document.getElementById('ac-default-tpl');
+  var cur = sel.value;
+  var opts = '<option value="">未设置</option>';
+  Object.keys(AC_PICK_TPL).forEach(function(id) {
+    var t = (window.__TPL_LIST || []).filter(function(x){ return x.id === id; })[0];
+    if (t) opts += '<option value="' + t.id + '">' + t.name + '</option>';
+  });
+  sel.innerHTML = opts;
+  if (cur && AC_PICK_TPL[cur]) sel.value = cur;
+}
+function actRenderDevPick(aId) {
+  var box = document.getElementById('ac-dev-pick');
+  var list = (window.__DEVICE_LIST || []).filter(function(d){ return d.actId === aId; });
+  if (!list.length) {
+    box.innerHTML = '<div class="ac-pick-row"><span style="color:#999">本活动还没有绑定设备，去「设备管理」新建或改绑</span></div>';
+    return;
+  }
+  var html = '';
+  list.forEach(function(d) {
+    html += '<div class="ac-dev-row">' +
+      '<span style="flex:1">' + d.name + '　<span style="color:#999">' + d.mac + '</span></span>' +
+      '<span class="dev-state ' + (d.enabled ? 's-on' : 's-off') + '">' + (d.enabled ? '启用' : '停用') + '</span>' +
+      '</div>';
+  });
+  box.innerHTML = html;
+}
+function actUpdateQrLink(a) {
+  var el = document.getElementById('ac-qr-url');
+  if (el) el.textContent = actLink(a);
+}
+function actCopyLink() {
+  var a = ACT_EDIT_ID ? pcActivityOf(ACT_EDIT_ID) : { id: '(新活动保存后生成)' };
+  actShowToast('已复制链接：' + actLink(a));
+}
+function actRenderScopePreview() {
+  var a = ACT_EDIT_ID ? pcActivityOf(ACT_EDIT_ID) : null;
+  var el = document.getElementById('ac-scope-preview');
+  if (!el) return;
+  if (!a) {
+    el.innerHTML = '<div class="ac-tip">保存活动后，这里显示扫码进本活动时前台实际能看到的画风与模板。</div>';
+    return;
+  }
+  /* 按当前勾选实时算，不用已保存值 */
+  var styles = Object.keys(AC_PICK_STYLE).map(function(id) {
+    var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0];
+    return s ? s.name : '';
+  }).filter(Boolean);
+  var tpls = Object.keys(AC_PICK_TPL).map(function(id) {
+    var t = (window.__TPL_LIST || []).filter(function(x){ return x.id === id; })[0];
+    return t ? t.name : '';
+  }).filter(Boolean);
+  var devs = pcActivityEnabledDevices(a.id);
+  var allDevs = pcActivityDevices(a.id);
+  var html = '<div class="ac-row" style="margin:0 0 12px"><div class="ac-field">' +
+    '<label class="ac-lbl">扫码进本活动时，前台可见画风（' + styles.length + '）</label>' +
+    '<div class="ac-tip" style="font-size:13px;color:#333">' + (styles.length ? styles.join('、') : '无') + '</div>' +
+    '</div><div class="ac-field">' +
+    '<label class="ac-lbl">前台可见模板（' + tpls.length + '）</label>' +
+    '<div class="ac-tip" style="font-size:13px;color:#333">' + (tpls.length ? tpls.join('、') : '无') + '</div>' +
+    '</div></div>' +
+    '<div class="ac-tip">扫码入口设备：本活动共绑定 ' + allDevs.length + ' 台，其中启用 ' + devs.length +
+    ' 台。停用设备的二维码不生效；现场风采只展示本活动已上屏作品。</div>';
+  el.innerHTML = html;
+}
+function actNowStr() {
+  var d = new Date();
+  function p(n) { return ('0' + n).slice(-2); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
+function actOpenModal(id) {
+  ACT_EDIT_ID = id || null;
+  var a = id ? pcActivityOf(id) : null;
+  document.getElementById('ac-modal-title').textContent = id ? '编辑活动' : '新建活动';
+  var cOpts = '<option value="">请选择所属客户</option>';
+  (window.__CUSTOMER_LIST || []).forEach(function(c) {
+    if (c.enabled === false) return;
+    cOpts += '<option value="' + c.id + '">' + c.name + '</option>';
+  });
+  var custSel = document.getElementById('ac-cust');
+  custSel.innerHTML = cOpts;
+  document.getElementById('ac-name').value = a ? a.name : '';
+  document.getElementById('ac-short').value = a ? (a.shortName || '') : '';
+  document.getElementById('ac-code').value = a ? (a.code || '') : '';
+  custSel.value = a ? (a.customerId || '') : '';
+  document.getElementById('ac-fullname').value = a ? (a.fullName || '') : '';
+  document.getElementById('ac-intro').value = a ? (a.intro || '') : '';
+  document.getElementById('ac-start').value = a ? (a.startTime || '') : '';
+  document.getElementById('ac-end').value = a ? (a.endTime || '') : '';
+  document.getElementById('ac-state').value = a ? (a.status || 'notstart') : 'notstart';
+  document.getElementById('ac-viewafter').value = (a && a.viewAfterEnd) ? '1' : '0';
+  document.getElementById('ac-title').value = a ? (a.title || '') : '';
+  document.getElementById('ac-slogan').value = a ? (a.slogan || '') : '';
+  document.getElementById('ac-logo').value = a ? (a.logo || '') : '';
+  document.getElementById('ac-color').value = a ? (a.themeColor || '') : '';
+  document.getElementById('ac-disclaimer').value = a ? (a.disclaimer || '') : '';
+  document.getElementById('ac-daily').value = a ? (a.dailyLimit || 3) : 3;
+  document.getElementById('ac-ailimit').value = a ? (a.aiLimit || 5) : 5;
+  document.getElementById('ac-overtip').value = a ? (a.overTip || '') : '';
+  document.getElementById('ac-pickopen').value = (a && a.pickOpen) ? '1' : '0';
+  document.getElementById('ac-mustpass').value = (a && a.mustAiPass) ? '1' : '0';
+  document.getElementById('ac-picknote').value = a ? (a.pickNote || '') : '';
+  document.getElementById('ac-savemode').value = a ? (a.saveMode || 'long') : 'long';
+  document.getElementById('ac-savedays').value = a ? (a.saveDays || '') : '';
+  document.getElementById('ac-channel').value = a ? (a.channel || '') : '';
+  AC_PICK_STYLE = {};
+  AC_PICK_TPL = {};
+  ((a && a.styleIds) || []).forEach(function(id2) { AC_PICK_STYLE[id2] = true; });
+  ((a && a.tplIds) || []).forEach(function(id2) { AC_PICK_TPL[id2] = true; });
+  actRenderStylePick();
+  actRenderTplPick();
+  actRenderDefaultTpl();
+  actRenderScopePreview();
+  if (a && a.defaultTpl) { var s = document.getElementById('ac-default-tpl'); if (s.querySelector('option[value="' + a.defaultTpl + '"]')) s.value = a.defaultTpl; }
+  actRenderDevPick(a ? a.id : '');
+  actUpdateQrLink(a || { id: '(新活动保存后生成)' });
+  document.querySelectorAll('.ac-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
+  AC_TABS.forEach(function(t) { var p = document.getElementById('ac-pane-' + t); if (p) p.classList.remove('active'); });
+  var p0 = document.getElementById('ac-pane-basic');
+  if (p0) p0.classList.add('active');
+  document.getElementById('ac-modal').style.display = 'flex';
+}
+function actCloseModal() { document.getElementById('ac-modal').style.display = 'none'; }
+function actSave() {
+  var name = document.getElementById('ac-name').value.trim();
+  var short = document.getElementById('ac-short').value.trim();
+  var code = document.getElementById('ac-code').value.trim();
+  var custId = document.getElementById('ac-cust').value;
+  var fullName = document.getElementById('ac-fullname').value.trim();
+  if (!name) { actShowToast('请填写活动名称'); return; }
+  if (!short) { actShowToast('请填写活动简称'); return; }
+  if (!code) { actShowToast('请填写活动编号'); return; }
+  if (!custId) { actShowToast('请选择所属客户'); return; }
+  if (!fullName) { actShowToast('请填写活动全称'); return; }
+  var styleIds = Object.keys(AC_PICK_STYLE);
+  var tplIds = Object.keys(AC_PICK_TPL);
+  if (!tplIds.length && !confirm('本活动没有勾选任何模板，前台将没有可用模板。确定继续吗？')) return;
+  var data = {
+    name: name, shortName: short, code: code, customerId: custId, fullName: fullName,
+    intro: document.getElementById('ac-intro').value.trim(),
+    status: document.getElementById('ac-state').value,
+    startTime: document.getElementById('ac-start').value.trim(),
+    endTime: document.getElementById('ac-end').value.trim(),
+    viewAfterEnd: document.getElementById('ac-viewafter').value === '1',
+    title: document.getElementById('ac-title').value.trim(),
+    slogan: document.getElementById('ac-slogan').value.trim(),
+    logo: document.getElementById('ac-logo').value.trim(),
+    themeColor: document.getElementById('ac-color').value.trim(),
+    disclaimer: document.getElementById('ac-disclaimer').value.trim(),
+    styleIds: styleIds, tplIds: tplIds,
+    defaultTpl: document.getElementById('ac-default-tpl').value || '',
+    dailyLimit: parseInt(document.getElementById('ac-daily').value, 10) || 0,
+    aiLimit: parseInt(document.getElementById('ac-ailimit').value, 10) || 0,
+    overTip: document.getElementById('ac-overtip').value.trim(),
+    pickOpen: document.getElementById('ac-pickopen').value === '1',
+    mustAiPass: document.getElementById('ac-mustpass').value === '1',
+    pickNote: document.getElementById('ac-picknote').value.trim(),
+    saveMode: document.getElementById('ac-savemode').value,
+    saveDays: document.getElementById('ac-savedays').value.trim(),
+    channel: document.getElementById('ac-channel').value.trim(),
+    updateTime: actNowStr()
+  };
+  if (ACT_EDIT_ID) {
+    var a = pcActivityOf(ACT_EDIT_ID);
+    if (a) {
+      for (var k in data) a[k] = data[k];
+      actShowToast('活动已保存：' + name);
+    }
+  } else {
+    data.id = 'act' + (actList().length + 1);
+    data.scanCount = 0; data.workCount = 0; data.pickCount = 0;
+    actList().push(data);
+    actShowToast('活动已新建：' + name);
+  }
+  actCloseModal();
+  renderActTable();
+  /* 客户下拉可能新增，刷新其他页口径 */
+  if (typeof renderPhotoTable === 'function') { try { photoSyncScreenFilters(); } catch (e) {} }
+  if (typeof renderSelTable === 'function') { try { selSyncScreenFilters(); } catch (e) {} }
+}
+function init_activity_mgmt() { actFillCustomerFilter(); renderActTable(); }
+init_activity_mgmt();
+</script>

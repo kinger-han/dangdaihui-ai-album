@@ -34,9 +34,26 @@
     .dev-input { width: 100%; box-sizing: border-box; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 10px; font-size: 13px; color: #333; }
     .dev-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
     .dev-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    /* 启用状态标签：状态切换只原地变色，不重排序 */
+    .dev-state { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12px; }
+    .dev-state.s-on { color: #52c41a; background: #f6ffed; border: 1px solid #b7eb8f; }
+    .dev-state.s-off { color: #999; background: #f5f5f5; border: 1px solid #e8e8e8; }
   </style>
 
   <div class="filter-bar">
+    <div class="filter-item">
+      <select class="filter-select" id="f-dev-cust" onchange="devSyncActivityFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <select class="filter-select" id="f-dev-act" onchange="renderDevTable()"></select>
+    </div>
+    <div class="filter-item">
+      <select class="filter-select" id="f-dev-state" onchange="renderDevTable()">
+        <option value="">全部</option>
+        <option value="on">启用</option>
+        <option value="off">停用</option>
+      </select>
+    </div>
     <div class="filter-item">
       <input class="filter-input" id="f-dev-name" placeholder="请输入设备名称" oninput="renderDevTable()">
     </div>
@@ -54,7 +71,10 @@
         <tr>
           <th style="width:36px"><input type="checkbox" id="dev-all" onchange="toggleAllDev2(this)"></th>
           <th>设备名称</th>
+          <th>所属活动</th>
+          <th>所属客户</th>
           <th>设备 MAC</th>
+          <th style="width:80px">启用状态</th>
           <th style="width:90px">轮播首图</th>
           <th style="width:90px">设备二维码</th>
           <th style="width:100px">悬浮二维码</th>
@@ -106,13 +126,31 @@
       <div class="dev-row">
         <div class="dev-field">
           <label class="dev-lbl">设备名称 <span style="color:#f5222d">*</span></label>
-          <input class="dev-input" id="dev-name" placeholder="如：测试、P43-纪念相册">
+          <input class="dev-input" id="dev-name" placeholder="如：主会场大屏-左">
         </div>
       </div>
       <div class="dev-row">
         <div class="dev-field">
           <label class="dev-lbl">设备 MAC <span style="color:#f5222d">*</span></label>
           <input class="dev-input" id="dev-mac" placeholder="如：A0BB3EDC28E8">
+          <div class="dev-tip">同一块物理屏在两个活动间改投时，MAC 相同；系统只允许其中一条记录为「启用」</div>
+        </div>
+      </div>
+      <div class="dev-row">
+        <div class="dev-field">
+          <label class="dev-lbl">所属活动 <span style="color:#f5222d">*</span></label>
+          <select class="dev-input" id="dev-act" onchange="devSyncCustomerTip()"></select>
+          <div class="dev-tip" id="dev-cust-tip"></div>
+        </div>
+      </div>
+      <div class="dev-row">
+        <div class="dev-field">
+          <label class="dev-lbl">启用状态 <span style="color:#f5222d">*</span></label>
+          <select class="dev-input" id="dev-state">
+            <option value="on">启用</option>
+            <option value="off">停用</option>
+          </select>
+          <div class="dev-tip">同一 MAC 地址只能有一条「启用」记录；停用的记录不接收上屏、扫码不生效</div>
         </div>
       </div>
       <div class="dev-footer">
@@ -139,10 +177,59 @@ function onDevRowCheck(el) {
   var id = el.getAttribute('data-did');
   if (el.checked) DEV_SELECTED[id] = true; else delete DEV_SELECTED[id];
 }
+/* ---- 筛选下拉：客户 → 活动级联 ---- */
+function devFillFilters() {
+  var cEl = document.getElementById('f-dev-cust');
+  var cOpts = '<option value="">全部客户</option>';
+  (window.__CUSTOMER_LIST || []).forEach(function(c) {
+    if (c.enabled === false) return;
+    cOpts += '<option value="' + c.id + '">' + c.name + '</option>';
+  });
+  cEl.innerHTML = cOpts;
+  devSyncActivityFilter();
+}
+function devSyncActivityFilter() {
+  var custId = document.getElementById('f-dev-cust').value;
+  var aEl = document.getElementById('f-dev-act');
+  var aOpts = '<option value="">全部</option>';
+  (window.__ACTIVITY_LIST || []).forEach(function(a) {
+    if (custId && a.customerId !== custId) return;
+    aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
+  });
+  aOpts += '<option value="__none">未分配</option>';
+  aEl.innerHTML = aOpts;
+  renderDevTable();
+}
+function devIsAssigned(d) { return !!d.actId; }
+function devActName(d) { return d.actId ? (pcActivityName(d.actId) || '—') : ''; }
+function devCustName(d) {
+  if (!d.actId) return '';
+  var a = pcActivityOf(d.actId);
+  if (!a) return '';
+  var c = pcCustomerOf(a.customerId);
+  return c ? c.name : '';
+}
+function devStateTag(on) {
+  return on ? '<span class="dev-state s-on">启用</span>' : '<span class="dev-state s-off">停用</span>';
+}
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
 function renderDevTable() {
   var kw = (document.getElementById('f-dev-name').value || '').trim();
+  var custF = document.getElementById('f-dev-cust').value;
+  var actF = document.getElementById('f-dev-act').value;
+  var stF = document.getElementById('f-dev-state').value;
   var list = (window.__DEVICE_LIST || []).filter(function(d) {
-    return !kw || d.name.indexOf(kw) >= 0 || (d.mac || '').indexOf(kw) >= 0;
+    if (kw && d.name.indexOf(kw) < 0 && (d.mac || '').indexOf(kw) < 0) return false;
+    if (custF) {
+      var a = d.actId ? pcActivityOf(d.actId) : null;
+      if (!a || a.customerId !== custF) return false;
+    }
+    if (actF === '__none') { if (devIsAssigned(d)) return false; }
+    else if (actF && d.actId !== actF) return false;
+    if (stF === 'on' && !d.enabled) return false;
+    if (stF === 'off' && d.enabled) return false;
+    return true;
   });
   var tbody = document.getElementById('dev-tbody');
   var html = '';
@@ -150,8 +237,11 @@ function renderDevTable() {
     var ck = DEV_SELECTED[d.id] ? ' checked' : '';
     html += '<tr>' +
       '<td><input type="checkbox" data-did="' + d.id + '"' + ck + ' onclick="onDevRowCheck(this)"></td>' +
-      '<td>' + d.name + '</td>' +
+      '<td>' + escHtml(d.name) + '</td>' +
+      '<td>' + (devIsAssigned(d) ? escHtml(devActName(d)) : '<span style="color:#999">—</span>') + '</td>' +
+      '<td>' + (devIsAssigned(d) ? escHtml(devCustName(d)) : '<span style="color:#999">—</span>') + '</td>' +
       '<td>' + d.mac + '</td>' +
+      '<td>' + devStateTag(d.enabled) + '</td>' +
       '<td>' + (d.carousel
         ? (d.carouselImg ? '<span class="dev-thumb"><img src="' + d.carouselImg + '" style="width:100%;height:100%;object-fit:cover;display:block"></span>' : '<span class="dev-thumb"><span class="dev-thumb-ph">首图</span></span>')
         : '<span style="color:#999">—</span>') + '</td>' +
@@ -166,7 +256,7 @@ function renderDevTable() {
       '</tr>';
   });
   if (!list.length) {
-    html = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的设备</td></tr>';
+    html = '<tr><td colspan="12" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的设备</td></tr>';
   }
   tbody.innerHTML = html;
   var allEl = document.getElementById('dev-all');
@@ -174,9 +264,12 @@ function renderDevTable() {
   renderPager('dev-pager', list.length, 1, 10);
 }
 function resetDevFilter() {
+  document.getElementById('f-dev-cust').value = '';
+  document.getElementById('f-dev-act').value = '';
+  document.getElementById('f-dev-state').value = '';
   document.getElementById('f-dev-name').value = '';
   DEV_SELECTED = {};
-  renderDevTable();
+  devSyncActivityFilter();
 }
 function batchDelDev() {
   var ids = Object.keys(DEV_SELECTED);
@@ -199,6 +292,25 @@ function delDev(id) {
 /* ---- 新增/编辑弹窗 ---- */
 var DEV_EDIT_ID = null;
 var DEV_IMG = { carousel: null, float: null };
+function devFillActSelect(sel) {
+  var opts = '<option value="">请选择所属活动</option>';
+  (window.__ACTIVITY_LIST || []).forEach(function(a) {
+    opts += '<option value="' + a.id + '">' + a.name + '</option>';
+  });
+  opts += '<option value="__none">未分配（公司自持）</option>';
+  sel.innerHTML = opts;
+}
+function devSyncCustomerTip() {
+  var v = document.getElementById('dev-act').value;
+  var tip = document.getElementById('dev-cust-tip');
+  if (!v || v === '__none') {
+    tip.textContent = '未分配时不带出客户，该屏不归属任何活动，扫码不进入活动流程';
+    return;
+  }
+  var a = pcActivityOf(v);
+  var c = a ? pcCustomerOf(a.customerId) : null;
+  tip.textContent = '所属客户（由活动带出）：' + (c ? c.name : '—');
+}
 function devRenderImg(kind) {
   var pv = document.getElementById(kind === 'carousel' ? 'dev-carousel-preview' : 'dev-float-preview');
   var url = DEV_IMG[kind];
@@ -220,6 +332,10 @@ function openDevModal(id) {
   document.getElementById('dev-modal-title').textContent = id ? '编辑设备' : '新增设备';
   document.getElementById('dev-name').value = d ? d.name : '';
   document.getElementById('dev-mac').value = d ? (d.mac || '') : '';
+  devFillActSelect(document.getElementById('dev-act'));
+  document.getElementById('dev-act').value = d ? (d.actId || '__none') : '';
+  document.getElementById('dev-state').value = (d && d.enabled === false) ? 'off' : 'on';
+  devSyncCustomerTip();
   DEV_IMG.carousel = (d && d.carouselImg) ? d.carouselImg : null;
   DEV_IMG.float = (d && d.floatImg) ? d.floatImg : null;
   devRenderImg('carousel');
@@ -230,11 +346,25 @@ function closeDevModal() { document.getElementById('dev-modal').style.display = 
 function saveDevModal() {
   var name = document.getElementById('dev-name').value.trim();
   var mac = document.getElementById('dev-mac').value.trim();
+  var actV = document.getElementById('dev-act').value;
+  var stateOn = document.getElementById('dev-state').value !== 'off';
   if (!name) { devShowToast('请填写设备名称'); return; }
   if (!mac) { devShowToast('请填写设备 MAC'); return; }
+  if (!actV) { devShowToast('请选择所属活动'); return; }
+  /* 硬约束：同一 MAC 同时只能有一条「启用」记录（原型仅前端拦截，正式版由服务端校验） */
+  if (stateOn) {
+    var conflict = pcEnabledDeviceByMac(mac, DEV_EDIT_ID);
+    if (conflict) {
+      var ca = conflict.actId ? pcActivityName(conflict.actId) : '未分配';
+      devShowToast('该 MAC（' + mac + '）已被「' + ca + '」的设备「' + conflict.name + '」启用，请先停用那条记录');
+      return;
+    }
+  }
   var data = {
     name: name,
     mac: mac,
+    actId: (actV === '__none') ? '' : actV,
+    enabled: stateOn,
     carousel: !!DEV_IMG.carousel,
     carouselImg: DEV_IMG.carousel,
     floatImg: DEV_IMG.float,
@@ -259,6 +389,6 @@ function nowStr() {
   function p(n) { return ('0' + n).slice(-2); }
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
-function init_device_mgmt() { renderDevTable(); }
+function init_device_mgmt() { devFillFilters(); renderDevTable(); }
 init_device_mgmt();
 </script>

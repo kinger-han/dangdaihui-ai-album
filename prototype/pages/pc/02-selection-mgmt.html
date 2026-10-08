@@ -64,6 +64,7 @@
     .dv-tbl td { padding: 10px 12px; font-size: 13px; color: #333; border-bottom: 1px solid #f0f0f0; }
     .dv-tbl tr:hover { background: #f9fbff; }
     .dv-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .dv-scope { font-size: 12px; color: #666; background: #f7f9fc; border: 1px solid #e8e8e8; border-radius: 4px; padding: 8px 10px; margin-bottom: 10px; line-height: 1.6; }
     .dv-btn { padding: 7px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #333; }
     .dv-btn.primary { background: #1677ff; border-color: #1677ff; color: #fff; }
     .dv-btn.disabled { background: #f5f5f5; color: #bfbfbf; border-color: #d9d9d9; cursor: not-allowed; }
@@ -74,6 +75,12 @@
   </div>
 
   <div class="filter-bar">
+    <div class="filter-item">
+      <select class="filter-select" id="f-sel-cust" onchange="selSyncActivityFilter()"></select>
+    </div>
+    <div class="filter-item">
+      <select class="filter-select" id="f-sel-act" onchange="selSyncScreenFilters(); selApplyFilter()"></select>
+    </div>
     <div class="filter-item">
       <span class="filter-label">状态</span>
       <select class="filter-select" id="f-sel-onscreen" onchange="selApplyFilter()">
@@ -134,6 +141,8 @@
           <th class="td-check"></th>
           <th class="thumb-cell">纪念照</th>
           <th>编号</th>
+          <th>所属活动</th>
+          <th>所属客户</th>
           <th>模板</th>
           <th>画风</th>
           <th>账号</th>
@@ -162,12 +171,14 @@
   <div class="device-modal" id="device-modal" onclick="closeDeviceModal()">
     <div class="device-box" onclick="event.stopPropagation()">
       <div class="dv-title">选择上屏设备</div>
+      <div class="dv-scope" id="dv-scope"></div>
       <div class="dv-search"><input class="filter-input" id="dv-kw" placeholder="请输入设备名称" oninput="renderDevPicker()"></div>
       <table class="dv-tbl">
         <thead>
           <tr>
             <th class="td-check"><input type="checkbox" id="dv-all" onchange="toggleAllDev(this)"></th>
             <th>设备名称</th>
+            <th>所属活动</th>
             <th>设备MAC</th>
             <th>更新时间</th>
           </tr>
@@ -185,20 +196,41 @@
 </div>
 
 <script>
-/* ================= 申请上屏（用户已授权同意上屏） ================= */
+/* ================= 申请上屏（用户已授权同意上屏） =================
+   照片归属来自 photos 同一份数据的镜像；screenId / onScreen 存设备记录 id，不是名称 */
 function _sSelName(id) { var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; return s ? s.name : id; }
+function _sDevName(id) { var d = (window.__DEVICE_LIST || []).filter(function(x){ return x.id === id; })[0]; return d ? d.name : '—'; }
+function _sActOf(p) {
+  if (p.actId) return p.actId;
+  var d = (window.__DEVICE_LIST || []).filter(function(x){ return x.id === p.screenId; })[0];
+  return d ? (d.actId || '') : '';
+}
+function _sOnScreenText(p) {
+  if (!p.onScreen) return '—';
+  var ids = String(p.onScreen).split(',').filter(Boolean);
+  var names = ids.map(function(id){ return _sDevName(id); });
+  return names.length ? names.join('、') : '—';
+}
 var SEL_LIST = [
-  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞',   screen: '测试',        onScreen: '测试',              on: true,  onTime: '2026-09-30 10:21:05', offTime: null, time: '2026-09-30 10:21:05' },
-  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screen: 'P43-纪念相册', onScreen: '测试、P43-纪念相册', on: true,  onTime: '2026-09-30 09:12:18', offTime: null, time: '2026-09-30 09:12:18' },
-  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 09:26:51', sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo' },
-  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章',   screen: 'P43-纪念相册', onScreen: 'P43-纪念相册',       on: true,  onTime: '2026-09-30 09:20:33', offTime: null, time: '2026-09-30 09:20:33' },
-  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章',   screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 09:31:26' },
-  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河',   screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 09:44:12' },
-  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screen: '测试',        onScreen: '测试',              on: true,  onTime: '2026-09-30 10:02:55', offTime: null, time: '2026-09-30 10:02:55' },
-  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海',   screen: 'P43-纪念相册', onScreen: 'P43-纪念相册',       on: true,  onTime: '2026-09-30 10:15:09', offTime: null, time: '2026-09-30 10:15:09' },
-  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 10:26:38' },
-  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章',   screen: 'P43-纪念相册', onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 10:30:14' },
-  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章',   screen: '测试',        onScreen: '—',                on: false, onTime: null, offTime: null, time: '2026-09-30 10:35:47' }
+  { no: 'FJDH-0328-01', wx: '138****0328', tpl: '党旗礼赞',   screenId: 'dev1', onScreen: 'dev2',        on: true,  onTime: '2026-09-30 10:21:05', offTime: null, time: '2026-09-30 10:21:05' },
+  { no: 'FJDH-0002-01', wx: '139****8002', tpl: '盛会留念框', screenId: 'dev2', onScreen: 'dev1、dev2',   on: true,  onTime: '2026-09-30 09:12:18', offTime: null, time: '2026-09-30 09:12:18' },
+  { no: 'FJDH-0002-02', wx: '139****8002', tpl: '盛会留念框', screenId: 'dev2', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-30 09:26:51', sourceWorkId: 'FJDH-0002-01', styleId: 'shuimo' },
+  { no: 'FJDH-0009-01', wx: '135****9009', tpl: '工笔华章',   screenId: 'dev2', onScreen: 'dev2',        on: true,  onTime: '2026-09-30 09:20:33', offTime: null, time: '2026-09-30 09:20:33' },
+  { no: 'FJDH-0015-01', wx: '137****0015', tpl: '盛世华章',   screenId: 'dev1', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-30 09:31:26' },
+  { no: 'FJDH-0021-01', wx: '136****0021', tpl: '水墨山河',   screenId: 'dev2', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-30 09:44:12' },
+  { no: 'FJDH-0033-01', wx: '139****0033', tpl: '盛会留念框', screenId: 'dev1', onScreen: 'dev1',        on: true,  onTime: '2026-09-30 10:02:55', offTime: null, time: '2026-09-30 10:02:55' },
+  { no: 'FJDH-0052-01', wx: '135****0052', tpl: '福见山海',   screenId: 'dev2', onScreen: 'dev2',        on: true,  onTime: '2026-09-30 10:15:09', offTime: null, time: '2026-09-30 10:15:09' },
+  { no: 'FJDH-0068-01', wx: '136****0068', tpl: '奋进新征程', screenId: 'dev2', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-30 10:26:38' },
+  { no: 'FJDH-0077-01', wx: '139****0077', tpl: '工笔华章',   screenId: 'dev2', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-30 10:30:14' },
+  { no: 'FJDH-0084-01', wx: '135****0084', tpl: '盛世华章',   screenId: 'dev1', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-30 10:35:47' },
+  { no: 'FZWA-0101-01', wx: '137****0101', tpl: '党旗礼赞',   screenId: 'dev3', onScreen: 'dev3',        on: true,  onTime: '2026-09-29 15:12:08', offTime: null, time: '2026-09-29 15:12:08' },
+  { no: 'FZWA-0101-02', wx: '137****0101', tpl: '水墨山河',   screenId: 'dev3', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-29 15:19:44', sourceWorkId: 'FZWA-0101-01', styleId: 'shouhui' },
+  { no: 'FZWA-0102-01', wx: '136****0102', tpl: '工笔华章',   screenId: 'dev4', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-09-29 15:24:10' },
+  { no: 'FZWA-0103-01', wx: '138****0103', tpl: '古田星火',   screenId: 'dev4', onScreen: 'dev4',        on: true,  onTime: '2026-09-29 15:41:02', offTime: null, time: '2026-09-29 15:41:02' },
+  { no: 'XMZG-0201-01', wx: '139****0201', tpl: '福见山海',   screenId: 'dev5', onScreen: 'dev5',        on: true,  onTime: '2026-08-20 11:05:30', offTime: null, time: '2026-08-20 11:05:30' },
+  { no: 'XMZG-0201-02', wx: '139****0201', tpl: '盛世华章',   screenId: 'dev5', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-08-20 11:12:55' },
+  { no: 'XMZG-0202-01', wx: '135****0202', tpl: '奋进新征程', screenId: 'dev5', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-08-20 11:18:03' },
+  { no: 'QZHX-0301-01', wx: '137****0301', tpl: '盛会留念框', screenId: 'dev6', onScreen: '',            on: false, onTime: null, offTime: null, time: '2026-10-08 10:06:20' }
 ];
 var SEL_SELECTED = {};
 var SEL_PAGE = 1;
@@ -223,12 +255,55 @@ function selShowToast(msg) {
   setTimeout(function(){ ta.innerHTML = ''; }, 1600);
 }
 function selDirOf(tpl) { return SEL_TPL_DIR[tpl] || '竖屏'; }
-function selFillScreenFilters() {
+/* ---- 筛选下拉：客户 → 活动级联 ---- */
+function selFillFilters() {
+  var cEl = document.getElementById('f-sel-cust');
+  var cOpts = '<option value="">全部客户</option>';
+  (window.__CUSTOMER_LIST || []).forEach(function(c) {
+    if (c.enabled === false) return;
+    cOpts += '<option value="' + c.id + '">' + c.name + '</option>';
+  });
+  cEl.innerHTML = cOpts;
+  selSyncActivityFilter();
+}
+function selSyncActivityFilter() {
+  var custId = document.getElementById('f-sel-cust').value;
+  var aEl = document.getElementById('f-sel-act');
+  var aOpts = '<option value="">全部活动</option>';
+  (window.__ACTIVITY_LIST || []).forEach(function(a) {
+    if (custId && a.customerId !== custId) return;
+    aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
+  });
+  aOpts += '<option value="__none">未分配</option>';
+  aEl.innerHTML = aOpts;
+  selSyncScreenFilters();
+  renderSelTable();
+}
+function selSyncScreenFilters() {
+  var actF = document.getElementById('f-sel-act').value;
   var opts = '<option value="">全部</option>';
-  (window.__DEVICE_LIST || []).forEach(function(d) { opts += '<option value="' + d.name + '">' + d.name + '</option>'; });
+  (window.__DEVICE_LIST || []).forEach(function(d) {
+    if (actF && actF !== '__none' && d.actId !== actF) return;
+    if (actF === '__none' && d.actId) return;
+    var label = d.name;
+    if (d.actId) { var a = pcActivityOf(d.actId); if (a) label += '（' + a.shortName + '）'; }
+    opts += '<option value="' + d.id + '">' + label + '</option>';
+  });
   var a = document.getElementById('f-sel-src-screen'), b = document.getElementById('f-sel-on-screen');
   if (a) a.innerHTML = opts;
   if (b) b.innerHTML = opts;
+}
+function selMatchFilter(p) {
+  var custF = document.getElementById('f-sel-cust').value;
+  var actF  = document.getElementById('f-sel-act').value;
+  var actId = _sActOf(p);
+  if (custF) {
+    var a = actId ? pcActivityOf(actId) : null;
+    if (!a || a.customerId !== custF) return false;
+  }
+  if (actF === '__none') { if (actId) return false; }
+  else if (actF && actId !== actF) return false;
+  return true;
 }
 function renderSelTable() {
   var osF  = document.getElementById('f-sel-onscreen').value;
@@ -238,15 +313,20 @@ function renderSelTable() {
   var onF  = document.getElementById('f-sel-on-screen').value;
   var noF  = (document.getElementById('f-sel-no').value || '').trim();
   var list = SEL_LIST.filter(function(p) {
+    if (!selMatchFilter(p)) return false;
     if (osF === 'onscreen' && !p.on) return false;
     if (osF === 'off' && p.on) return false;
     if (tplF && p.tpl !== tplF) return false;
     if (dirF && selDirOf(p.tpl) !== dirF) return false;
-    if (srcF && p.screen !== srcF) return false;
-    if (onF && (p.onScreen || '') !== onF) return false;
+    if (srcF && p.screenId !== srcF) return false;
+    if (onF) {
+      var ids = p.onScreen ? String(p.onScreen).split(',') : [];
+      if (ids.indexOf(onF) < 0) return false;
+    }
     if (noF && p.no.indexOf(noF) < 0) return false;
     return true;
   });
+  list = list.slice().sort(function(a, b) { return a.time < b.time ? 1 : (a.time > b.time ? -1 : 0); });
   var tbody = document.getElementById('sel-tbody');
   var start = (SEL_PAGE - 1) * SEL_PAGE_SIZE;
   var pageList = list.slice(start, start + SEL_PAGE_SIZE);
@@ -256,6 +336,7 @@ function renderSelTable() {
     var checked = SEL_SELECTED[p.no] ? ' checked' : '';
     var rowCls = SEL_SELECTED[p.no] ? ' class="row-selected"' : '';
     var eff = p.styleId ? (' effect-' + p.styleId) : '';
+    var actId = _sActOf(p);
     var styleTd = p.styleId
       ? '<td><span style="display:inline-block;padding:0 6px;font-size:11px;color:#8a641e;background:#fdf6e3;border:1px solid #eadfc4;border-radius:3px">' + _sSelName(p.styleId) + '</span></td>'
       : '<td><span style="display:inline-block;padding:0 6px;font-size:11px;color:#1677ff;background:#e6f4ff;border:1px solid #91caff;border-radius:3px">原图</span></td>';
@@ -264,11 +345,13 @@ function renderSelTable() {
       '<td><span class="sel-thumb' + eff + '" onclick="openSelPreview(\'' + p.no + '\')">' +
         '<span class="pt-bg wb-' + bg + '"></span><span class="pt-person"></span></span></td>' +
       '<td>' + p.no + '</td>' +
+      '<td>' + (actId ? pcActivityName(actId) : '<span style="color:#999">—</span>') + '</td>' +
+      '<td>' + (actId ? pcActivityCustomerName(actId) : '<span style="color:#999">—</span>') + '</td>' +
       '<td>' + p.tpl + '</td>' +
       styleTd +
       '<td>' + p.wx + '</td>' +
-      '<td>' + (p.onScreen && p.onScreen !== '—' ? p.onScreen : '—') + '</td>' +
-      '<td>' + p.screen + '</td>' +
+      '<td>' + _sOnScreenText(p) + '</td>' +
+      '<td>' + _sDevName(p.screenId) + '</td>' +
       '<td>' + (p.on ? '<span class="badge-status active" style="background:#f6ffed;color:#52c41a">正在展示</span>'
                     : '<span class="badge-status" style="background:#e6f4ff;color:#1677ff">等待上屏</span>') + '</td>' +
       '<td>' + (p.onTime || '—') + '</td>' +
@@ -279,29 +362,36 @@ function renderSelTable() {
       '</tr>';
   });
   if (!pageList.length) {
-    html = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
+    html = '<tr><td colspan="12" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的照片</td></tr>';
   }
   tbody.innerHTML = html;
   window.__PAGER['sel-pager'] = function(pg) { SEL_PAGE = pg; renderSelTable(); };
   renderPager('sel-pager', list.length, SEL_PAGE, SEL_PAGE_SIZE);
   updateBatchBtns();
 }
-/* 批量按钮：按勾选数据类型精确判断
-   全部未上屏 → 批量上屏可点；全部已上屏 → 批量下屏可点；
-   混合勾选（含已上屏+未上屏）→ 两个按钮都禁用 */
+/* 批量按钮：按勾选数据类型 + 是否跨活动判断
+   全部未上屏且同活动 → 批量上屏可点；全部已上屏 → 批量下屏可点；
+   混合勾选或跨活动混选 → 两个按钮都禁用 */
 function updateBatchBtns() {
   var keys = Object.keys(SEL_SELECTED);
   var hasSel = keys.length > 0;
-  var allOff = true, allOn = true;
+  var allOff = true, allOn = true, sameAct = true;
+  var actRef = null;
   keys.forEach(function(no) {
     var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
     if (!p) return;
     if (p.on) allOff = false; else allOn = false;
+    var actId = _sActOf(p) || '__none';
+    if (actRef === null) actRef = actId;
+    else if (actRef !== actId) sameAct = false;
   });
-  var canOn = hasSel && allOff;    /* 勾选的都为未上屏 → 批量上屏可点 */
-  var canOff = hasSel && allOn;    /* 勾选的都为已上屏 → 批量下屏可点 */
-  document.getElementById('btn-batch-on').className = 'filter-btn' + (canOn ? ' primary' : ' disabled');
-  document.getElementById('btn-batch-off').className = 'filter-btn' + (canOff ? '' : ' disabled');
+  var canOn = hasSel && allOff && sameAct;
+  var canOff = hasSel && allOn;
+  var onBtn = document.getElementById('btn-batch-on');
+  var offBtn = document.getElementById('btn-batch-off');
+  onBtn.className = 'filter-btn' + (canOn ? ' primary' : ' disabled');
+  offBtn.className = 'filter-btn' + (canOff ? '' : ' disabled');
+  onBtn.title = (hasSel && allOff && !sameAct) ? '所选照片属于不同活动，不能一起上屏' : '';
 }
 function onSelRowCheck(el) {
   var no = el.getAttribute('data-no');
@@ -319,7 +409,7 @@ function askOffScreen(no) {
   if (!p) return;
   p.on = false;
   p.onTime = null;
-  p.onScreen = '—';
+  p.onScreen = '';
   selShowToast('已下屏：' + no);
   renderSelTable();
 }
@@ -330,6 +420,10 @@ function selBatchOnScreen() {
   /* 只对未上屏的照片执行批量上屏（按钮已按类型禁用，这里兜底） */
   var unsel = SEL_LIST.filter(function(x){ return SEL_SELECTED[x.no] && !x.on; });
   if (!unsel.length) { selShowToast('勾选的照片均已上屏'); return; }
+  /* 跨活动混选拦截：不留跨客户/跨活动投放后门 */
+  var acts = {};
+  unsel.forEach(function(p) { acts[_sActOf(p) || '__none'] = true; });
+  if (Object.keys(acts).length > 1) { selShowToast('所选照片属于不同活动，不能一起上屏，请只勾选同一活动的照片'); return; }
   CURRENT_DEVICE_NO = null;
   CURRENT_DEVICE_MODE = 'batch';
   openDeviceModal();
@@ -340,17 +434,52 @@ function selBatchOffScreen() {
   /* 只对已上屏的照片执行批量下屏（按钮已按类型禁用，这里兜底） */
   var onlist = SEL_LIST.filter(function(x){ return SEL_SELECTED[x.no] && x.on; });
   if (!onlist.length) { selShowToast('勾选的照片均未上屏'); return; }
-  onlist.forEach(function(p) { p.on = false; p.onTime = null; p.onScreen = '—'; });
+  onlist.forEach(function(p) { p.on = false; p.onTime = null; p.onScreen = ''; });
   var n = onlist.length;
   SEL_SELECTED = {};
   selShowToast('已批量下屏 ' + n + ' 张');
   renderSelTable();
 }
-/* ---- 设备选择弹窗（多选，对齐真实系统） ---- */
+/* ---- 设备选择弹窗（多选，对齐真实系统） ----
+   上屏限制：候选屏幕 = 照片所属活动的已启用设备。跨活动照片混选时按钮禁用，不留跨活动投放后门。 */
 var DV_SELECTED = {};
+function dvTargetActs() {
+  var ids = CURRENT_DEVICE_MODE === 'batch' ? Object.keys(SEL_SELECTED) : (CURRENT_DEVICE_NO ? [CURRENT_DEVICE_NO] : []);
+  var set = {};
+  ids.forEach(function(no) {
+    var p = SEL_LIST.filter(function(x){ return x.no === no; })[0];
+    if (p) set[_sActOf(p) || '__none'] = true;
+  });
+  return Object.keys(set);
+}
+function dvScopeText() {
+  var acts = dvTargetActs();
+  var names = acts.map(function(id) {
+    if (id === '__none') return '未分配活动';
+    var a = pcActivityOf(id);
+    return a ? a.name : id;
+  });
+  var head = names.length > 1
+    ? '勾选的照片属于 ' + names.length + ' 个不同活动，不能一起上屏。请取消勾选，只保留同一活动的照片。'
+    : '只显示「' + (names[0] || '—') + '」下已启用的设备，跨活动屏幕不会出现在候选里。';
+  return head;
+}
+function dvCandidateDevices() {
+  var acts = dvTargetActs();
+  if (acts.length !== 1) return [];
+  var actId = acts[0];
+  return (window.__DEVICE_LIST || []).filter(function(d) {
+    if (!d.enabled) return false;
+    if (actId === '__none') return !d.actId;
+    return d.actId === actId;
+  });
+}
 function renderDevPicker() {
+  var scopeEl = document.getElementById('dv-scope');
+  if (scopeEl) scopeEl.textContent = dvScopeText();
   var kw = (document.getElementById('dv-kw').value || '').trim();
-  var list = (window.__DEVICE_LIST || []).filter(function(d) { return !kw || d.name.indexOf(kw) >= 0; });
+  var cand = dvCandidateDevices();
+  var list = cand.filter(function(d) { return !kw || d.name.indexOf(kw) >= 0 || (d.mac || '').indexOf(kw) >= 0; });
   var tb = document.getElementById('dv-tbody');
   var html = '';
   list.forEach(function(d) {
@@ -358,11 +487,15 @@ function renderDevPicker() {
     html += '<tr>' +
       '<td class="td-check"><input type="checkbox" data-did="' + d.id + '"' + ck + ' onclick="onDevCheck(this)"></td>' +
       '<td>' + d.name + '</td>' +
+      '<td>' + (d.actId ? (pcActivityName(d.actId) || '—') : '<span style="color:#999">—</span>') + '</td>' +
       '<td>' + d.mac + '</td>' +
       '<td>' + d.time + '</td>' +
       '</tr>';
   });
-  if (!list.length) html = '<tr><td colspan="4" style="text-align:center;color:#999;padding:24px 0">暂无符合条件的设备</td></tr>';
+  if (!list.length) {
+    html = '<tr><td colspan="5" style="text-align:center;color:#999;padding:24px 0">' +
+      (dvTargetActs().length !== 1 ? '所选照片跨多个活动，无法选择上屏设备' : '该活动下没有已启用的设备') + '</td></tr>';
+  }
   tb.innerHTML = html;
   var allEl = document.getElementById('dv-all');
   if (allEl) allEl.checked = list.length > 0 && list.every(function(d) { return DV_SELECTED[d.id]; });
@@ -374,11 +507,11 @@ function onDevCheck(el) {
   updateDvConfirm();
 }
 function toggleAllDev(el) {
-  (window.__DEVICE_LIST || []).forEach(function(d) { if (el.checked) DV_SELECTED[d.id] = true; else delete DV_SELECTED[d.id]; });
+  dvCandidateDevices().forEach(function(d) { if (el.checked) DV_SELECTED[d.id] = true; else delete DV_SELECTED[d.id]; });
   renderDevPicker();
 }
-function dvPickedNames() {
-  return (window.__DEVICE_LIST || []).filter(function(d) { return DV_SELECTED[d.id]; }).map(function(d) { return d.name; });
+function dvPickedIds() {
+  return (window.__DEVICE_LIST || []).filter(function(d) { return DV_SELECTED[d.id]; }).map(function(d) { return d.id; });
 }
 function updateDvConfirm() {
   var n = Object.keys(DV_SELECTED).length;
@@ -399,9 +532,9 @@ function nowStr() {
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
 function confirmDevice() {
-  var names = dvPickedNames();
-  if (!names.length) return;
-  var dev = names.join('、');
+  var ids = dvPickedIds();
+  if (!ids.length) return;
+  var dev = ids.join('、');
   var ts = nowStr();
   if (CURRENT_DEVICE_MODE === 'batch') {
     var keys = Object.keys(SEL_SELECTED);
@@ -424,21 +557,27 @@ function openSelPreview(no) {
   var bg = selTplBg(p.no);
   var img = document.getElementById('sel-pv-img');
   img.innerHTML = '<div class="photo-bg wb-' + bg + '"></div><div class="photo-person"></div>';
+  var actId = _sActOf(p);
   document.getElementById('sel-pv-meta').innerHTML =
     '<b>编号：</b>' + p.no + '<br><b>模板：</b>' + p.tpl + '（' + selCapNameOf(p.tpl) + '）<br>' +
-    '<b>账号：</b>' + p.wx + '　<b>来源屏幕：</b>' + p.screen + '　<b>创建时间：</b>' + p.time;
+    '<b>所属活动：</b>' + (actId ? pcActivityName(actId) : '—') + '　<b>所属客户：</b>' + (actId ? pcActivityCustomerName(actId) : '—') + '<br>' +
+    '<b>账号：</b>' + p.wx + '　<b>来源屏幕：</b>' + _sDevName(p.screenId) + '　<b>创建时间：</b>' + p.time;
   document.getElementById('sel-preview-overlay').classList.add('show');
 }
 function closeSelPreview() { document.getElementById('sel-preview-overlay').classList.remove('show'); }
 function selApplyFilter() { SEL_PAGE = 1; renderSelTable(); }
 function selResetFilter() {
+  document.getElementById('f-sel-cust').value = '';
+  document.getElementById('f-sel-act').value = '';
   document.getElementById('f-sel-onscreen').value = '';
   document.getElementById('f-sel-tpl').value = '';
   document.getElementById('f-sel-dir').value = '';
   document.getElementById('f-sel-src-screen').value = '';
   document.getElementById('f-sel-on-screen').value = '';
   document.getElementById('f-sel-no').value = '';
+  SEL_SELECTED = {};
   SEL_PAGE = 1;
+  selSyncScreenFilters();
   renderSelTable();
 }
 function selBuildDetails() {
@@ -446,9 +585,13 @@ function selBuildDetails() {
   SEL_LIST.forEach(function(p) {
     var root = p;
     if (p.sourceWorkId) { var r = SEL_LIST.filter(function(x){ return x.no === p.sourceWorkId; })[0]; if (r) root = r; }
+    var actId = _sActOf(p);
     window.__PHOTO_DETAILS[p.no] = {
-      no: p.no, tpl: p.tpl, wx: p.wx, screen: p.screen || '—',
-      onScreen: p.onScreen || '—',
+      no: p.no, tpl: p.tpl, wx: p.wx, screen: _sDevName(p.screenId) || '—',
+      activity: actId ? pcActivityName(actId) : '—',
+      customer: actId ? pcActivityCustomerName(actId) : '—',
+      styleName: p.styleId ? _sSelName(p.styleId) : '原图',
+      onScreen: _sOnScreenText(p),
       status: p.on ? 'selected' : 'wait', time: p.time || '—',
       onTime: p.onTime || (p.on ? p.onTime : null),
       offTime: p.offTime || null,
@@ -462,6 +605,6 @@ function selOpenDetail(no) {
   selBuildDetails();
   if (typeof window.pdShowDetail === 'function') window.pdShowDetail(no);
 }
-function init_selection_mgmt() { selFillScreenFilters(); renderSelTable(); }
+function init_selection_mgmt() { selFillFilters(); renderSelTable(); }
 init_selection_mgmt();
 </script>
