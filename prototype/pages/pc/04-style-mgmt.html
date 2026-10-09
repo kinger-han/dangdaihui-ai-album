@@ -39,9 +39,6 @@
     .st-input { width: 100%; box-sizing: border-box; height: 32px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 0 10px; font-size: 13px; color: #333; }
     .st-textarea { width: 100%; box-sizing: border-box; min-height: 92px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px 10px; font-size: 13px; color: #333; line-height: 1.6; resize: vertical; }
     .st-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
-    /* 归属活动多选 */
-    .st-act-pick { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; max-height: 110px; overflow-y: auto; }
-    .st-act-pick label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
   </style>
 
   <div class="page-header">
@@ -137,9 +134,15 @@
         </div>
       </div>
       <div class="st-row">
-        <div class="st-field"><label class="st-lbl">归属活动</label>
-          <div class="st-act-pick" id="st-act-pick"></div>
-          <div class="st-tip" style="font-size:12px;color:#999;margin-top:4px">不勾选 = 公共画风，所有活动都能选；勾选 = 仅这些活动可用。保存后自动同步到「活动管理 → 创作能力 → 启用画风」</div>
+        <div class="st-field"><label class="st-lbl">归属活动 <span style="color:#f5222d">*</span></label>
+          <div class="ms-box" id="st-act-ms">
+            <div class="ms-btn" onclick="msToggle('st-act-ms')"><span class="ms-label ph">请选择归属活动</span></div>
+            <div class="ms-panel">
+              <input class="ms-search" placeholder="搜索活动名称">
+              <div class="ms-list"></div>
+            </div>
+          </div>
+          <div class="st-tip" style="font-size:12px;color:#999;margin-top:4px">可多选。选中的活动都能用到该画风；保存后自动同步到「活动管理 → 创作能力 → 启用画风」</div>
         </div>
       </div>
       <div class="st-footer">
@@ -156,12 +159,13 @@ function stList() {
 }
 function stActCell(s) {
   var ids = s.actIds || [];
-  if (!ids.length) return '<span style="color:#999">公共</span>';
-  var names = ids.map(function(id) { return pcActivityOf(id) ? pcActivityOf(id).name : ''; }).filter(Boolean);
-  if (!names.length) return '<span style="color:#999">公共</span>';
-  var first = names[0];
-  var rest = names.length - 1;
-  return '<span title="' + names.join('、') + '">' + first + (rest > 0 ? ' <span style="color:#0B5DEA">+' + rest + '</span>' : '') + '</span>';
+  if (!ids.length) return '<span style="color:#bbb">未设置</span>';
+  var acts = ids.map(function(id) { return pcActivityOf(id); }).filter(Boolean);
+  if (!acts.length) return '<span style="color:#bbb">未设置</span>';
+  var short = acts.map(function(a) { return a.shortName || a.name; });
+  var full = acts.map(function(a) { return a.name; });
+  return '<span title="' + full.join('\n') + '">' + short[0] +
+    (short.length > 1 ? ' <span style="color:#0B5DEA">+' + (short.length - 1) + '</span>' : '') + '</span>';
 }
 function stBg(id) { var n = 0; for (var i = 0; i < id.length; i++) n += id.charCodeAt(i); return (n % 8) + 1; }
 function stToast(msg) {
@@ -311,14 +315,7 @@ function openStModal(id) {
   document.getElementById('st-state').value = (s && s.enabled === false) ? 'off' : 'on';
   document.getElementById('st-desc').value = s ? (s.desc || '') : '';
   document.getElementById('st-prompt').value = s ? (s.prompt || '') : '';
-  var actBox = document.getElementById('st-act-pick');
-  var ahtml = '';
-  (window.__ACTIVITY_LIST || []).forEach(function(a) {
-    var on = s && (s.actIds || []).indexOf(a.id) >= 0;
-    ahtml += '<label><input type="checkbox" class="st-act-cb" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + a.name + '</label>';
-  });
-  if (!ahtml) ahtml = '<span style="color:#999;font-size:13px">暂无可选活动</span>';
-  actBox.innerHTML = ahtml;
+  msSetSelected('st-act-ms', s ? (s.actIds || []) : []);
   stRenderImg((s && s.img) ? s.img : null);
   document.getElementById('st-modal').style.display = 'flex';
 }
@@ -332,10 +329,8 @@ function saveStModal() {
   if (isNaN(sortVal)) { stToast('请填写排序'); return; }
   var pv = document.getElementById('st-img-preview');
   var img = (pv.classList.contains('has-img') && pv.querySelector('img')) ? pv.querySelector('img').src : null;
-  var actIds = [];
-  document.querySelectorAll('#st-act-pick .st-act-cb').forEach(function(cb) {
-    if (cb.checked) actIds.push(cb.getAttribute('value'));
-  });
+  var actIds = msSelected('st-act-ms');
+  if (!actIds.length) { stToast('请至少选择一个归属活动'); return; }
   var data = {
     name: name,
     mode: document.getElementById('st-mode').value,

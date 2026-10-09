@@ -45,9 +45,6 @@
     .tpl-img-ph::after { content: '模板图片'; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 12px; color: #b8a88f; }
     .tpl-img-ops { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
     .tpl-img-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
-    /* 归属活动多选 */
-    .tf-act-pick { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 4px; max-height: 110px; overflow-y: auto; }
-    .tf-act-pick label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
   </style>
 
   <div class="filter-bar">
@@ -151,9 +148,15 @@
         </div>
         <div class="tf-row">
           <div class="tf-field">
-            <label class="tf-label">归属活动</label>
-            <div class="tf-act-pick" id="tpl-act-pick"></div>
-            <div class="tf-tip">不勾选 = 公共模板，所有活动都能选；勾选 = 仅这些活动可用。保存后自动同步到「活动管理 → 创作能力 → 启用模板」</div>
+            <label class="tf-label">归属活动 <span class="req">*</span></label>
+            <div class="ms-box" id="tpl-act-ms">
+              <div class="ms-btn" onclick="msToggle('tpl-act-ms')"><span class="ms-label ph">请选择归属活动</span></div>
+              <div class="ms-panel">
+                <input class="ms-search" placeholder="搜索活动名称">
+                <div class="ms-list"></div>
+              </div>
+            </div>
+            <div class="tf-tip">可多选。选中的活动都能用到该模板；保存后自动同步到「活动管理 → 创作能力 → 启用模板」</div>
           </div>
         </div>
 
@@ -178,12 +181,13 @@ function tplBgOf(id) {
 }
 function tplActCell(t) {
   var ids = t.actIds || [];
-  if (!ids.length) return '<span style="color:#999">公共</span>';
-  var names = ids.map(function(id) { return pcActivityOf(id) ? pcActivityOf(id).name : ''; }).filter(Boolean);
-  if (!names.length) return '<span style="color:#999">公共</span>';
-  var first = names[0];
-  var rest = names.length - 1;
-  return '<span title="' + names.join('、') + '">' + first + (rest > 0 ? ' <span style="color:#0B5DEA">+' + rest + '</span>' : '') + '</span>';
+  if (!ids.length) return '<span style="color:#bbb">未设置</span>';
+  var acts = ids.map(function(id) { return pcActivityOf(id); }).filter(Boolean);
+  if (!acts.length) return '<span style="color:#bbb">未设置</span>';
+  var short = acts.map(function(a) { return a.shortName || a.name; });
+  var full = acts.map(function(a) { return a.name; });
+  return '<span title="' + full.join('\n') + '">' + short[0] +
+    (short.length > 1 ? ' <span style="color:#0B5DEA">+' + (short.length - 1) + '</span>' : '') + '</span>';
 }
 function tplShowToast(msg) {
   var ta = document.getElementById('tpl-toast-area');
@@ -324,14 +328,7 @@ function openTplModal(id) {
   document.getElementById('tpl-state').value = t ? t.state : 'on';
   document.getElementById('tpl-direction').value = t ? (t.direction || '竖屏') : '竖屏';
   document.getElementById('tpl-guide').value = t ? t.guide : '';
-  var actBox = document.getElementById('tpl-act-pick');
-  var ahtml = '';
-  (window.__ACTIVITY_LIST || []).forEach(function(a) {
-    var on = t && (t.actIds || []).indexOf(a.id) >= 0;
-    ahtml += '<label><input type="checkbox" class="tpl-act-cb" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + a.name + '</label>';
-  });
-  if (!ahtml) ahtml = '<span style="color:#999;font-size:13px">暂无可选活动</span>';
-  actBox.innerHTML = ahtml;
+  msSetSelected('tpl-act-ms', t ? (t.actIds || []) : []);
   tplRenderImg(t ? t.img : null);
   document.getElementById('tpl-modal').style.display = 'flex';
 }
@@ -363,10 +360,8 @@ function saveTplModal() {
   var imgEl = document.getElementById('tpl-img-preview');
   var hasImg = imgEl.classList.contains('has-img');
   var img = hasImg ? (imgEl.querySelector('img') ? imgEl.querySelector('img').src : null) : null;
-  var actIds = [];
-  document.querySelectorAll('#tpl-act-pick .tpl-act-cb').forEach(function(cb) {
-    if (cb.checked) actIds.push(cb.getAttribute('value'));
-  });
+  var actIds = msSelected('tpl-act-ms');
+  if (!actIds.length) { showToast('请至少选择一个归属活动', 'warn'); return; }
   var data = {
     name: name,
     img: img,

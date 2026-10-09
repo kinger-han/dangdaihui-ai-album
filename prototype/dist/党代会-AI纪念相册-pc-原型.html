@@ -778,6 +778,22 @@ table tr { cursor: pointer; }
     .pg-right { display: flex; align-items: center; gap: 10px; }
     .page-size-txt { display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 13px; color: #333; }
     .page-btn.pg-arrow.disabled:hover { color: #d9d9d9; border-color: #d9d9d9; }
+    /* ===== 可搜索下拉多选（.ms-box） ===== */
+    .ms-box { position: relative; }
+    .ms-btn { width: 100%; box-sizing: border-box; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; background: #fff; padding: 0 26px 0 10px; font-size: 13px; color: #333; cursor: pointer; text-align: left; position: relative; }
+    .ms-btn:hover { border-color: #0B5DEA; }
+    .ms-box.open .ms-btn { border-color: #0B5DEA; box-shadow: 0 0 0 2px rgba(11,93,234,0.08); }
+    .ms-btn .ms-label { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+    .ms-btn .ms-label.ph { color: #bbb; }
+    .ms-btn::after { content: ''; position: absolute; right: 10px; top: 50%; margin-top: -2px; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #999; }
+    .ms-panel { display: none; position: absolute; top: 34px; left: 0; min-width: 100%; width: max-content; max-width: 320px; background: #fff; border: 1px solid #e8e8e8; border-radius: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 1400; padding: 8px; }
+    .ms-box.open .ms-panel { display: block; }
+    .ms-search { width: 100%; box-sizing: border-box; height: 28px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 8px; font-size: 13px; margin-bottom: 6px; }
+    .ms-all { display: flex; align-items: center; justify-content: space-between; padding: 5px 4px 7px; border-bottom: 1px solid #f0f0f0; margin-bottom: 4px; font-size: 12px; color: #999; }
+    .ms-all label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666; cursor: pointer; }
+    .ms-opt { display: flex; align-items: center; gap: 6px; padding: 6px 4px; font-size: 13px; color: #333; cursor: pointer; border-radius: 3px; }
+    .ms-opt:hover { background: #f5f8ff; }
+    .ms-empty { padding: 14px 4px; text-align: center; font-size: 12px; color: #bbb; }
   </style></style>
 </head>
 <body>
@@ -1248,9 +1264,6 @@ table tr { cursor: pointer; }
     .tpl-img-ph::after { content: '模板图片'; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 12px; color: #b8a88f; }
     .tpl-img-ops { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
     .tpl-img-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
-    /* 归属活动多选 */
-    .tf-act-pick { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 4px; max-height: 110px; overflow-y: auto; }
-    .tf-act-pick label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
   </style>
 
   <div class="filter-bar">
@@ -1354,9 +1367,15 @@ table tr { cursor: pointer; }
         </div>
         <div class="tf-row">
           <div class="tf-field">
-            <label class="tf-label">归属活动</label>
-            <div class="tf-act-pick" id="tpl-act-pick"></div>
-            <div class="tf-tip">不勾选 = 公共模板，所有活动都能选；勾选 = 仅这些活动可用。保存后自动同步到「活动管理 → 创作能力 → 启用模板」</div>
+            <label class="tf-label">归属活动 <span class="req">*</span></label>
+            <div class="ms-box" id="tpl-act-ms">
+              <div class="ms-btn" onclick="msToggle('tpl-act-ms')"><span class="ms-label ph">请选择归属活动</span></div>
+              <div class="ms-panel">
+                <input class="ms-search" placeholder="搜索活动名称">
+                <div class="ms-list"></div>
+              </div>
+            </div>
+            <div class="tf-tip">可多选。选中的活动都能用到该模板；保存后自动同步到「活动管理 → 创作能力 → 启用模板」</div>
           </div>
         </div>
 
@@ -1413,9 +1432,6 @@ table tr { cursor: pointer; }
     .st-input { width: 100%; box-sizing: border-box; height: 32px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 0 10px; font-size: 13px; color: #333; }
     .st-textarea { width: 100%; box-sizing: border-box; min-height: 92px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px 10px; font-size: 13px; color: #333; line-height: 1.6; resize: vertical; }
     .st-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
-    /* 归属活动多选 */
-    .st-act-pick { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; max-height: 110px; overflow-y: auto; }
-    .st-act-pick label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
   </style>
 
   <div class="page-header">
@@ -1511,9 +1527,15 @@ table tr { cursor: pointer; }
         </div>
       </div>
       <div class="st-row">
-        <div class="st-field"><label class="st-lbl">归属活动</label>
-          <div class="st-act-pick" id="st-act-pick"></div>
-          <div class="st-tip" style="font-size:12px;color:#999;margin-top:4px">不勾选 = 公共画风，所有活动都能选；勾选 = 仅这些活动可用。保存后自动同步到「活动管理 → 创作能力 → 启用画风」</div>
+        <div class="st-field"><label class="st-lbl">归属活动 <span style="color:#f5222d">*</span></label>
+          <div class="ms-box" id="st-act-ms">
+            <div class="ms-btn" onclick="msToggle('st-act-ms')"><span class="ms-label ph">请选择归属活动</span></div>
+            <div class="ms-panel">
+              <input class="ms-search" placeholder="搜索活动名称">
+              <div class="ms-list"></div>
+            </div>
+          </div>
+          <div class="st-tip" style="font-size:12px;color:#999;margin-top:4px">可多选。选中的活动都能用到该画风；保存后自动同步到「活动管理 → 创作能力 → 启用画风」</div>
         </div>
       </div>
       <div class="st-footer">
@@ -1783,7 +1805,7 @@ table tr { cursor: pointer; }
           <th>活动名称</th>
           <th>所属客户</th>
           <th>活动状态</th>
-          <th>开始/结束时间</th>
+          <th>开始/结束日期</th>
           <th>更新时间</th>
           <th style="width:180px">操作</th>
         </tr>
@@ -1825,10 +1847,10 @@ table tr { cursor: pointer; }
               <textarea class="ac-textarea" id="ac-intro" placeholder="一句话说明本活动是什么"></textarea></div>
           </div>
           <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">开始时间</label>
-              <input class="ac-input" id="ac-start" placeholder="如：2026-09-30 08:00"></div>
-            <div class="ac-field"><label class="ac-lbl">结束时间</label>
-              <input class="ac-input" id="ac-end" placeholder="如：2026-10-08 20:00"></div>
+            <div class="ac-field"><label class="ac-lbl">开始日期</label>
+              <input class="ac-input" id="ac-start" type="date"></div>
+            <div class="ac-field"><label class="ac-lbl">结束日期</label>
+              <input class="ac-input" id="ac-end" type="date"></div>
           </div>
         </div>
 
@@ -2053,7 +2075,7 @@ window.__STYLE_LIST = window.__STYLE_LIST || [
   { id: 'shuimo',    name: '水墨国风', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 4,  actIds: ['act3'], prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', gen: 9, keep: 6, drop: 3, fail: 2 },
   { id: 'guochao',   name: '国潮插画', time: '约30秒',    enabled: false, mode: '默认合成', sort: 99, actIds: ['act4'], prompt: '国潮插画质感，色彩明快，人物形象保持完整，背景做插画化处理', gen: 3, keep: 1, drop: 1, fail: 1 },
   { id: 'wangsuo',   name: '科技蓝调', time: '约30秒',    enabled: true,  mode: '默认合成', sort: 5,  actIds: ['act2'], prompt: '冷蓝色调科技质感，背景数据流元素，人物面部保持清晰', gen: 4, keep: 3, drop: 1, fail: 0 },
-  { id: 'youhua',    name: '油画艺术', time: '约30秒',    enabled: false, mode: '默认合成', sort: 99, actIds: [],       prompt: '油画笔触质感，冷暖对比明显，人物五官保持清晰可辨', gen: 2, keep: 1, drop: 0, fail: 1 }
+  { id: 'youhua',    name: '油画艺术', time: '约30秒',    enabled: false, mode: '默认合成', sort: 99, actIds: ['act1', 'act2'],       prompt: '油画笔触质感，冷暖对比明显，人物五官保持清晰可辨', gen: 2, keep: 1, drop: 0, fail: 1 }
 ];
 function pcStyleOf(id) { return (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; }
 
@@ -2066,38 +2088,151 @@ window.__CUSTOMER_LIST = window.__CUSTOMER_LIST || [
 ];
 function pcCustomerOf(id) { return (window.__CUSTOMER_LIST || []).filter(function(x){ return x.id === id; })[0]; }
 
+/* ===== 通用：可搜索的下拉多选（模板/画风「归属活动」共用） =====
+   用法：容器内放 .ms-btn / .ms-panel / .ms-search / .ms-list，由 shell 统一代理事件。
+   值存活动 id 数组；label 显示首个名称 +N。 */
+function msOptions() {
+  return (window.__ACTIVITY_LIST || []).map(function(a) {
+    /* 活动名可能很长，下拉里用「简称 + 编号」做短标签，全名留在 title */
+    var short = a.shortName || a.name;
+    return { id: a.id, name: short, full: a.name };
+  });
+}
+function msSelected(containerId) {
+  var box = document.getElementById(containerId);
+  if (!box) return [];
+  return Array.prototype.slice.call(box.querySelectorAll('.ms-opt input:checked')).map(function(i) {
+    return i.getAttribute('data-id');
+  });
+}
+function msSetSelected(containerId, ids) {
+  var box = document.getElementById(containerId);
+  if (!box) return;
+  box.querySelectorAll('.ms-opt input').forEach(function(i) {
+    i.checked = ids.indexOf(i.getAttribute('data-id')) >= 0;
+  });
+  msRenderLabel(containerId);
+}
+function msRenderLabel(containerId) {
+  var box = document.getElementById(containerId);
+  if (!box) return;
+  var label = box.querySelector('.ms-btn .ms-label');
+  if (!label) return;
+  var ids = msSelected(containerId);
+  if (!ids.length) { label.textContent = '请选择归属活动'; label.className = 'ms-label ph'; label.title = ''; return; }
+  var opts = msOptions().filter(function(o) { return ids.indexOf(o.id) >= 0; });
+  var names = opts.map(function(o) { return o.name; });
+  var fulls = opts.map(function(o) { return o.full; });
+  label.className = 'ms-label';
+  label.textContent = names.length === 1 ? names[0] : names[0] + ' +' + (names.length - 1);
+  label.title = fulls.join('\n');
+}
+/* 浮层渲染：搜索框 + 全选 + 选项列表（只渲染 .ms-list，不动搜索框） */
+function msRenderPanel(containerId) {
+  var box = document.getElementById(containerId);
+  if (!box) return;
+  var list = box.querySelector('.ms-list');
+  if (!list) return;
+  var kwInput = box.querySelector('.ms-search');
+  var kw = kwInput ? (kwInput.value || '').trim() : '';
+  var opts = msOptions().filter(function(o) { return !kw || o.name.indexOf(kw) >= 0; });
+  var html = '<div class="ms-all"><label><input type="checkbox" class="ms-check-all">全选</label><span>' + opts.length + ' 个活动</span></div>';
+  opts.forEach(function(o) {
+    html += '<label class="ms-opt"><input type="checkbox" data-id="' + o.id + '"><span>' + o.name + '</span></label>';
+  });
+  if (!opts.length) html += '<div class="ms-empty">没有匹配的活动</div>';
+  list.innerHTML = html;
+  var sel = msSelected(containerId);
+  list.querySelectorAll('.ms-opt input').forEach(function(i) {
+    i.checked = sel.indexOf(i.getAttribute('data-id')) >= 0;
+  });
+  var all = list.querySelector('.ms-check-all');
+  if (all) all.checked = opts.length > 0 && opts.every(function(o) { return sel.indexOf(o.id) >= 0; });
+}
+/* 全局代理：一次绑定，管所有 .ms-box */
+document.addEventListener('click', function(e) {
+  var t = e.target;
+  /* 点复选框 / 选项：只更新，不重渲染面板（避免焦点丢失） */
+  if (t.classList && t.classList.contains('ms-opt')) {
+    var box = t.closest('.ms-box');
+    if (box) {
+      setTimeout(function() { msRenderLabel(box.id); }, 0);
+      if (typeof msOnChange === 'function') { try { msOnChange(box.id); } catch (err) {} }
+    }
+    return;
+  }
+  if (t.classList && t.classList.contains('ms-check-all')) {
+    var pbox = t.closest('.ms-box');
+    var plist = pbox && pbox.querySelector('.ms-list');
+    if (plist) {
+      plist.querySelectorAll('.ms-opt input').forEach(function(i) { i.checked = t.checked; });
+      msRenderLabel(pbox.id);
+      if (typeof msOnChange === 'function') { try { msOnChange(pbox.id); } catch (err) {} }
+    }
+    return;
+  }
+  /* 点其它地方：收起所有浮层 */
+  document.querySelectorAll('.ms-box.open').forEach(function(b) {
+    if (!b.contains(t)) b.classList.remove('open');
+  });
+});
+document.addEventListener('input', function(e) {
+  if (e.target.classList && e.target.classList.contains('ms-search')) {
+    var box = e.target.closest('.ms-box');
+    if (box) {
+      var pos = e.target.selectionStart;
+      msRenderPanel(box.id);
+      var s = box.querySelector('.ms-search');
+      s.focus();
+      try { s.setSelectionRange(pos, pos); } catch (err) {}
+    }
+  }
+});
+function msToggle(boxId) {
+  var box = document.getElementById(boxId);
+  if (!box) return;
+  var willOpen = !box.classList.contains('open');
+  document.querySelectorAll('.ms-box.open').forEach(function(b) { b.classList.remove('open'); });
+  if (willOpen) {
+    box.classList.add('open');
+    msRenderPanel(boxId);
+    var s = box.querySelector('.ms-search');
+    if (s) s.focus();
+  }
+}
+
 /* ===== 活动（数据的最上层归属：活动 → 客户 → 设备/模板/画风/照片） =====
    状态枚举：notstart 未开始 / running 进行中 / ended 已结束。
    状态由运营手动控制，不与开始/结束时间做强制联动。 */
 window.__ACTIVITY_LIST = window.__ACTIVITY_LIST || [
   {
-    id: 'act1', code: 'ACT-2026-001', name: '福建省第十二次党代会纪念相册',
+    id: 'act1', code: 'ACT-2026-001', name: '福建省第十二次党代会纪念相册', shortName: '党代会纪念',
     customerId: 'cus1', status: 'running',
-    startTime: '2026-09-30 08:00', endTime: '2026-10-08 20:00',
+    startTime: '2026-09-30', endTime: '2026-10-08',
     scanCount: 328, workCount: 612, pickCount: 86,
     updateTime: '2026-09-30 10:21:05',
     intro: '扫码即拍，AI 生成专属纪念照',
   },
   {
-    id: 'act2', code: 'ACT-2026-002', name: '福州市网络安全宣传周纪念相册',
+    id: 'act2', code: 'ACT-2026-002', name: '福州市网络安全宣传周纪念相册', shortName: '网安周',
     customerId: 'cus2', status: 'running',
-    startTime: '2026-09-28 09:00', endTime: '2026-10-15 18:00',
+    startTime: '2026-09-28', endTime: '2026-10-15',
     scanCount: 156, workCount: 233, pickCount: 31,
     updateTime: '2026-09-29 16:02:40',
     intro: '扫码即拍，生成网络安全主题纪念照',
   },
   {
-    id: 'act3', code: 'ACT-2026-003', name: '厦门基层党组织建设成果展',
+    id: 'act3', code: 'ACT-2026-003', name: '厦门基层党组织建设成果展', shortName: '党建成果展',
     customerId: 'cus3', status: 'ended',
-    startTime: '2026-08-01 09:00', endTime: '2026-08-31 18:00',
+    startTime: '2026-08-01', endTime: '2026-08-31',
     scanCount: 892, workCount: 1456, pickCount: 203,
     updateTime: '2026-09-01 09:12:00',
     intro: '党建成果云相册，照片长期保存',
   },
   {
-    id: 'act4', code: 'ACT-2026-004', name: '泉州丰泽区红色文化主题活动',
+    id: 'act4', code: 'ACT-2026-004', name: '泉州丰泽区红色文化主题活动', shortName: '红色文化',
     customerId: 'cus4', status: 'notstart',
-    startTime: '2026-10-20 09:00', endTime: '2026-11-10 18:00',
+    startTime: '2026-10-20', endTime: '2026-11-10',
     scanCount: 0, workCount: 0, pickCount: 0,
     updateTime: '2026-10-08 10:00:00',
     intro: '扫码即拍，生成红色主题纪念照',
@@ -2155,7 +2290,7 @@ function pcActivityEnabledDevices(actId) {
 /* ===== 模板全局列表（模板管理页 + 活动配置页共用；单条数据只有一份） ===== */
 window.__TPL_LIST = window.__TPL_LIST || [
   { id: 'shenghui', name: '盛会留念框', direction: '横屏', group: 'classic',    groupName: '庄重经典', people: '1-6 人', guide: '建议多人合照，原图居中，红金边框', estTime: '约 3 秒',  state: 'on',  uses: 158, time: '2026-09-28 14:30:12', actIds: ['act1', 'act2'] },
-  { id: 'fenjin',   name: '奋进新征程', direction: '竖屏', group: 'classic',    groupName: '庄重经典', people: '1-4 人', guide: '竖版照片 + 金色题字 + 福建剪影',      estTime: '约 3 秒',  state: 'on',  uses: 121, time: '2026-09-28 14:31:05', actIds: [] },
+  { id: 'fenjin',   name: '奋进新征程', direction: '竖屏', group: 'classic',    groupName: '庄重经典', people: '1-4 人', guide: '竖版照片 + 金色题字 + 福建剪影',      estTime: '约 3 秒',  state: 'on',  uses: 121, time: '2026-09-28 14:31:05', actIds: ['act1', 'act3'] },
   { id: 'dangqi',   name: '党旗礼赞',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-2 人', guide: '建议单人、正面、半身，红色主题场景', estTime: '约 10 秒', state: 'on',  uses: 203, time: '2026-09-28 14:28:33', actIds: ['act1'] },
   { id: 'shengshi', name: '盛世华章',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-2 人', guide: '人物居中，金色光影与山河纹理',      estTime: '约 10 秒', state: 'on',  uses: 176, time: '2026-09-28 14:28:47', actIds: ['act1'] },
   { id: 'gongbi',   name: '工笔华章',   direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: '建议单人、正面、半身，光线充足',    estTime: '约 30 秒', state: 'on',  uses: 187, time: '2026-09-28 14:32:20', actIds: ['act1'] },
@@ -2166,7 +2301,7 @@ window.__TPL_LIST = window.__TPL_LIST || [
   { id: 'act1tpl2', name: '薪火相传', direction: '竖屏', group: 'aiguofeng',  groupName: '活动专属', people: '1-4 人', guide: '主题海报样式，底部题字',              estTime: '约 5 秒',  state: 'on',  uses: 64,  time: '2026-09-29 09:12:00', actIds: ['act1'] },
   { id: 'act2tpl1', name: '网络安全盾', direction: '竖屏', group: 'smart', groupName: '活动专属', people: '1-2 人', guide: '盾牌锁元素，安全主题',            estTime: '约 8 秒',  state: 'on',  uses: 41,  time: '2026-09-28 09:40:00', actIds: ['act2'] },
   { id: 'act2tpl2', name: '数字防线',   direction: '竖屏', group: 'smart',      groupName: '活动专属', people: '1-2 人', guide: '代码网格背景，科技感',                estTime: '约 8 秒',  state: 'on',  uses: 38,  time: '2026-09-28 09:42:00', actIds: ['act2'] },
-  { id: 'qban',     name: 'Q版先锋',    direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: 'Q 版卡通风格',                      estTime: '约 30 秒', state: 'off', uses: 45,  time: '2026-09-28 14:39:44', actIds: [] }
+  { id: 'qban',     name: 'Q版先锋',    direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: 'Q 版卡通风格',                      estTime: '约 30 秒', state: 'off', uses: 45,  time: '2026-09-28 14:39:44', actIds: ['act3'] }
 ];
 /* 数据就绪后做一次归属同步：活动.tplIds / styleIds 由模板·画风的 actIds 派生 */
 pcSyncActivityFromAssets();
@@ -3027,12 +3162,13 @@ function tplBgOf(id) {
 }
 function tplActCell(t) {
   var ids = t.actIds || [];
-  if (!ids.length) return '<span style="color:#999">公共</span>';
-  var names = ids.map(function(id) { return pcActivityOf(id) ? pcActivityOf(id).name : ''; }).filter(Boolean);
-  if (!names.length) return '<span style="color:#999">公共</span>';
-  var first = names[0];
-  var rest = names.length - 1;
-  return '<span title="' + names.join('、') + '">' + first + (rest > 0 ? ' <span style="color:#0B5DEA">+' + rest + '</span>' : '') + '</span>';
+  if (!ids.length) return '<span style="color:#bbb">未设置</span>';
+  var acts = ids.map(function(id) { return pcActivityOf(id); }).filter(Boolean);
+  if (!acts.length) return '<span style="color:#bbb">未设置</span>';
+  var short = acts.map(function(a) { return a.shortName || a.name; });
+  var full = acts.map(function(a) { return a.name; });
+  return '<span title="' + full.join('\n') + '">' + short[0] +
+    (short.length > 1 ? ' <span style="color:#0B5DEA">+' + (short.length - 1) + '</span>' : '') + '</span>';
 }
 function tplShowToast(msg) {
   var ta = document.getElementById('tpl-toast-area');
@@ -3173,14 +3309,7 @@ function openTplModal(id) {
   document.getElementById('tpl-state').value = t ? t.state : 'on';
   document.getElementById('tpl-direction').value = t ? (t.direction || '竖屏') : '竖屏';
   document.getElementById('tpl-guide').value = t ? t.guide : '';
-  var actBox = document.getElementById('tpl-act-pick');
-  var ahtml = '';
-  (window.__ACTIVITY_LIST || []).forEach(function(a) {
-    var on = t && (t.actIds || []).indexOf(a.id) >= 0;
-    ahtml += '<label><input type="checkbox" class="tpl-act-cb" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + a.name + '</label>';
-  });
-  if (!ahtml) ahtml = '<span style="color:#999;font-size:13px">暂无可选活动</span>';
-  actBox.innerHTML = ahtml;
+  msSetSelected('tpl-act-ms', t ? (t.actIds || []) : []);
   tplRenderImg(t ? t.img : null);
   document.getElementById('tpl-modal').style.display = 'flex';
 }
@@ -3212,10 +3341,8 @@ function saveTplModal() {
   var imgEl = document.getElementById('tpl-img-preview');
   var hasImg = imgEl.classList.contains('has-img');
   var img = hasImg ? (imgEl.querySelector('img') ? imgEl.querySelector('img').src : null) : null;
-  var actIds = [];
-  document.querySelectorAll('#tpl-act-pick .tpl-act-cb').forEach(function(cb) {
-    if (cb.checked) actIds.push(cb.getAttribute('value'));
-  });
+  var actIds = msSelected('tpl-act-ms');
+  if (!actIds.length) { showToast('请至少选择一个归属活动', 'warn'); return; }
   var data = {
     name: name,
     img: img,
@@ -3258,12 +3385,13 @@ function stList() {
 }
 function stActCell(s) {
   var ids = s.actIds || [];
-  if (!ids.length) return '<span style="color:#999">公共</span>';
-  var names = ids.map(function(id) { return pcActivityOf(id) ? pcActivityOf(id).name : ''; }).filter(Boolean);
-  if (!names.length) return '<span style="color:#999">公共</span>';
-  var first = names[0];
-  var rest = names.length - 1;
-  return '<span title="' + names.join('、') + '">' + first + (rest > 0 ? ' <span style="color:#0B5DEA">+' + rest + '</span>' : '') + '</span>';
+  if (!ids.length) return '<span style="color:#bbb">未设置</span>';
+  var acts = ids.map(function(id) { return pcActivityOf(id); }).filter(Boolean);
+  if (!acts.length) return '<span style="color:#bbb">未设置</span>';
+  var short = acts.map(function(a) { return a.shortName || a.name; });
+  var full = acts.map(function(a) { return a.name; });
+  return '<span title="' + full.join('\n') + '">' + short[0] +
+    (short.length > 1 ? ' <span style="color:#0B5DEA">+' + (short.length - 1) + '</span>' : '') + '</span>';
 }
 function stBg(id) { var n = 0; for (var i = 0; i < id.length; i++) n += id.charCodeAt(i); return (n % 8) + 1; }
 function stToast(msg) {
@@ -3413,14 +3541,7 @@ function openStModal(id) {
   document.getElementById('st-state').value = (s && s.enabled === false) ? 'off' : 'on';
   document.getElementById('st-desc').value = s ? (s.desc || '') : '';
   document.getElementById('st-prompt').value = s ? (s.prompt || '') : '';
-  var actBox = document.getElementById('st-act-pick');
-  var ahtml = '';
-  (window.__ACTIVITY_LIST || []).forEach(function(a) {
-    var on = s && (s.actIds || []).indexOf(a.id) >= 0;
-    ahtml += '<label><input type="checkbox" class="st-act-cb" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + a.name + '</label>';
-  });
-  if (!ahtml) ahtml = '<span style="color:#999;font-size:13px">暂无可选活动</span>';
-  actBox.innerHTML = ahtml;
+  msSetSelected('st-act-ms', s ? (s.actIds || []) : []);
   stRenderImg((s && s.img) ? s.img : null);
   document.getElementById('st-modal').style.display = 'flex';
 }
@@ -3434,10 +3555,8 @@ function saveStModal() {
   if (isNaN(sortVal)) { stToast('请填写排序'); return; }
   var pv = document.getElementById('st-img-preview');
   var img = (pv.classList.contains('has-img') && pv.querySelector('img')) ? pv.querySelector('img').src : null;
-  var actIds = [];
-  document.querySelectorAll('#st-act-pick .st-act-cb').forEach(function(cb) {
-    if (cb.checked) actIds.push(cb.getAttribute('value'));
-  });
+  var actIds = msSelected('st-act-ms');
+  if (!actIds.length) { stToast('请至少选择一个归属活动'); return; }
   var data = {
     name: name,
     mode: document.getElementById('st-mode').value,
