@@ -155,7 +155,7 @@
 <script>
 /* ================= 画风管理（V2.1：启停 + 提示词配置） ================= */
 function stList() {
-  return (window.__STYLE_LIST || []).map(function(s){ return { id: s.id, name: s.name, time: s.time || '—', mode: s.mode || '默认合成', sort: (s.sort === undefined ? 0 : s.sort), enabled: s.enabled !== false, prompt: s.prompt || '', desc: s.desc || '', img: s.img || null, gen: s.gen || 0, keep: s.keep || 0, drop: s.drop || 0, fail: s.fail || 0, actId: s.actId || '' }; });
+  return (window.__STYLE_LIST || []).map(function(s){ return { id: s.id, name: s.name, time: s.time || '—', mode: s.mode || '默认合成', sort: (s.sort === undefined ? 0 : s.sort), enabled: s.enabled !== false, prompt: s.prompt || '', desc: s.desc || '', img: s.img || null, gen: s.gen || 0, keep: s.keep || 0, drop: s.drop || 0, fail: s.fail || 0, actIds: s.actIds || [] }; });
 }
 function stActCell(s) {
   var ids = s.actIds || [];
