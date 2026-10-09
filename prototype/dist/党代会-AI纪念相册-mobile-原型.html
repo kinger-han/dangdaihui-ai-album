@@ -966,23 +966,21 @@ body {
 .terms-sec li { font-size: 13px; color: var(--gray); line-height: 1.9; }
 
 /* ============ H12 活动状态页 ============ */
-.status-page { justify-content: center; align-items: center; text-align: center; background: linear-gradient(165deg, #50100F 0%, #7A1712 60%, #B42318 100%); color: #fff; }
-.status-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.9; }
-.status-title { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
-.status-desc { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 12px; line-height: 1.7; }
-.status-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; width: 220px; }
-.status-btn { min-height: 46px; border-radius: 8px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; }
-.status-btn.primary { background: linear-gradient(135deg, #B42318, #D03824); color: #fff; }
-.status-btn.plain { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
-
-/* ============ Toast ============ */
-.toast {
-  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%) scale(0.9);
-  background: rgba(0,0,0,0.82); color: #fff; border-radius: 12px;
-  padding: 14px 22px; font-size: 14px; z-index: 9999;
-  opacity: 0; pointer-events: none; transition: all 0.25s; text-align: center;
-  max-width: 270px;
-}
+.status-page { justify-content: center; align-items: center; padding: 24px 20px; background: linear-gradient(165deg, #50100F 0%, #7A1712 60%, #B42318 100%); color: #fff; }
+    .st-card { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .st-icon { font-size: 56px; line-height: 0; margin-bottom: 18px; opacity: 0.92; }
+    .st-icon svg { width: 52px; height: 52px; }
+    .st-title { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+    .st-desc { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 12px; line-height: 1.7; }
+    .st-meta { width: 100%; margin-top: 26px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; padding: 4px 14px; }
+    .st-meta-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.12); }
+    .st-meta-row:last-child { border-bottom: none; }
+    .st-meta-k { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .st-meta-v { font-size: 13px; color: #fff; font-weight: 500; text-align: right; }
+    .st-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 26px; width: 100%; max-width: 220px; }
+    .status-btn { min-height: 46px; border-radius: 8px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .status-btn.primary { background: linear-gradient(135deg, #B42318, #D03824); color: #fff; }
+    .status-btn.plain { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
 .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .toast .t-icon { display: block; font-size: 30px; margin-bottom: 6px; }
 
@@ -1389,10 +1387,19 @@ body {
 </div>
 
 <div class="page status-page" id="page-status">
-  <div class="status-icon" id="status-icon"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-  <div class="status-title" id="status-title">活动即将开始</div>
-  <div class="status-desc" id="status-desc">敬请期待现场纪念相册</div>
-  <div class="status-btns" id="status-btns"></div>
+  <div class="st-card">
+    <div class="st-icon" id="status-icon"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <div class="st-title" id="status-title">活动即将开始</div>
+    <div class="st-desc" id="status-desc">敬请期待现场纪念相册</div>
+
+    <div class="st-meta">
+      <div class="st-meta-row"><span class="st-meta-k">活动名称</span><span class="st-meta-v" id="st-meta-name">—</span></div>
+      <div class="st-meta-row"><span class="st-meta-k">活动时间</span><span class="st-meta-v" id="st-meta-time">—</span></div>
+      <div class="st-meta-row" id="st-meta-count-row"><span class="st-meta-k">已有多少人参与</span><span class="st-meta-v" id="st-meta-count">—</span></div>
+    </div>
+
+    <div class="st-btns" id="status-btns"></div>
+  </div>
 </div>
       </div>
       <!-- 照片使用说明弹窗（全局：选模板 / 拍同款 首次提醒，确认后不再弹） -->
@@ -1451,7 +1458,6 @@ body {
     <div class="demo-menu" id="demo-menu">
       <div class="dm-title">状态演示</div>
       <div class="dm-item" onclick="demoStatus('notstart')">活动未开始</div>
-      <div class="dm-item" onclick="demoStatus('paused')">活动已暂停</div>
       <div class="dm-item" onclick="demoStatus('ended')">活动已结束</div>
       <div class="dm-item" onclick="demoStatus('invalid')">链接无效</div>
       <div class="dm-item" onclick="demoStatus('network')">网络异常</div>
@@ -1494,6 +1500,8 @@ var ACTIVITY = {
   fullName: '中国共产党福建省第十二次代表大会',
   productName: '纪念相册',
   slogan: '定格奋斗身影 共绘时代华章',
+  startDate: '2026-09-30',
+  endDate: '2026-10-08',
   joinerCount: 328,
   workCount: 612,
   archiveIndex: 328,
@@ -2302,7 +2310,8 @@ function openWorkFromMine(idx) {
 
 /* H11 说明与授权：静态页，无独立逻辑 */
 
-/* H12 活动状态：页面切换由 shell 演示菜单驱动 demoStatus() */
+/* H12 活动状态页：内容由 shell 演示菜单驱动 demoStatus() 填充
+   活动状态枚举与 PC 端一致：notstart 未开始 / running 进行中 / ended 已结束（无暂停） */
   </script>
   <script>
 /* ============================
@@ -2563,16 +2572,30 @@ function mockRequest(data, delay) {
     function demoStatus(type) {
       var states = {
         notstart: { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`, title: '活动即将开始', desc: '敬请期待现场纪念相册', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
-        paused:   { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>`, title: '系统正在准备中', desc: '请稍后再次扫码体验', btns: '<button class="status-btn primary" onclick="demoStatus(\'paused\')">刷新</button>' },
         ended:    { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg>`, title: '本次活动已结束', desc: '感谢参与，共同珍藏这份大会记忆', btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button>' },
-        invalid:  { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/></svg>`, title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码', btns: '' },
+        invalid:  { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/></svg>`, title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码', btns: '<button class="status-btn plain" onclick="goHome()">返回</button>' },
         network:  { icon: `<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8a15 15 0 0 1 22 0"/><path d="M5 12a10 10 0 0 1 14 0"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></svg>`, title: '网络连接不稳定', desc: '请检查网络后重试', btns: '<button class="status-btn primary" onclick="goHome()">重新加载</button>' }
       };
       var st = states[type];
-      document.getElementById('status-icon').textContent = st.icon;
+      if (!st) return;
+      /* 图标必须用 innerHTML：textContent 会把 SVG 当纯文本输出，页面上只看到一串代码 */
+      document.getElementById('status-icon').innerHTML = st.icon;
       document.getElementById('status-title').textContent = st.title;
       document.getElementById('status-desc').textContent = st.desc;
       document.getElementById('status-btns').innerHTML = st.btns;
+      /* 活动信息：演示态取当前活动的活动名/档期/参与人数 */
+      var A = window.ACTIVITY || {};
+      document.getElementById('st-meta-name').textContent = A.fullName || '—';
+      document.getElementById('st-meta-time').textContent =
+        (A.startDate || '—') + ' 至 ' + (A.endDate || '—');
+      var cntRow = document.getElementById('st-meta-count-row');
+      if (type === 'notstart') {
+        /* 未开始：没人参与过，隐藏该行，不显示 0 */
+        cntRow.style.display = 'none';
+      } else {
+        cntRow.style.display = '';
+        document.getElementById('st-meta-count').textContent = (A.joinerCount || 0) + ' 人';
+      }
       toggleDemoMenu();
       goStatus();
     }

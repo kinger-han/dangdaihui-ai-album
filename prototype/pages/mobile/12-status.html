@@ -1,10 +1,20 @@
 <!-- PAGE_META: {"id": "status", "title": "活动状态"} -->
 <div class="page status-page" id="page-status">
-  <div class="status-icon" id="status-icon"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-  <div class="status-title" id="status-title">活动即将开始</div>
-  <div class="status-desc" id="status-desc">敬请期待现场纪念相册</div>
-  <div class="status-btns" id="status-btns"></div>
+  <div class="st-card">
+    <div class="st-icon" id="status-icon"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <div class="st-title" id="status-title">活动即将开始</div>
+    <div class="st-desc" id="status-desc">敬请期待现场纪念相册</div>
+
+    <div class="st-meta">
+      <div class="st-meta-row"><span class="st-meta-k">活动名称</span><span class="st-meta-v" id="st-meta-name">—</span></div>
+      <div class="st-meta-row"><span class="st-meta-k">活动时间</span><span class="st-meta-v" id="st-meta-time">—</span></div>
+      <div class="st-meta-row" id="st-meta-count-row"><span class="st-meta-k">已有多少人参与</span><span class="st-meta-v" id="st-meta-count">—</span></div>
+    </div>
+
+    <div class="st-btns" id="status-btns"></div>
+  </div>
 </div>
 <script>
-/* H12 活动状态：页面切换由 shell 演示菜单驱动 demoStatus() */
+/* H12 活动状态页：内容由 shell 演示菜单驱动 demoStatus() 填充
+   活动状态枚举与 PC 端一致：notstart 未开始 / running 进行中 / ended 已结束（无暂停） */
 </script>
