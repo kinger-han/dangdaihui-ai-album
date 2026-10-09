@@ -1248,6 +1248,9 @@ table tr { cursor: pointer; }
     .tpl-img-ph::after { content: '模板图片'; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 12px; color: #b8a88f; }
     .tpl-img-ops { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
     .tpl-img-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
+    /* 归属活动多选 */
+    .tf-act-pick { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 4px; max-height: 110px; overflow-y: auto; }
+    .tf-act-pick label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
   </style>
 
   <div class="filter-bar">
@@ -1352,8 +1355,8 @@ table tr { cursor: pointer; }
         <div class="tf-row">
           <div class="tf-field">
             <label class="tf-label">归属活动</label>
-            <select class="tf-input" id="tpl-act"></select>
-            <div class="tf-tip">留空 = 公共模板，所有活动都可勾选使用；指定活动 = 该活动私有，其他活动看不到</div>
+            <div class="tf-act-pick" id="tpl-act-pick"></div>
+            <div class="tf-tip">不勾选 = 公共模板，所有活动都能选；勾选 = 仅这些活动可用。保存后自动同步到「活动管理 → 创作能力 → 启用模板」</div>
           </div>
         </div>
 
@@ -1410,6 +1413,9 @@ table tr { cursor: pointer; }
     .st-input { width: 100%; box-sizing: border-box; height: 32px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 0 10px; font-size: 13px; color: #333; }
     .st-textarea { width: 100%; box-sizing: border-box; min-height: 92px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px 10px; font-size: 13px; color: #333; line-height: 1.6; resize: vertical; }
     .st-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    /* 归属活动多选 */
+    .st-act-pick { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; max-height: 110px; overflow-y: auto; }
+    .st-act-pick label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
   </style>
 
   <div class="page-header">
@@ -1506,8 +1512,8 @@ table tr { cursor: pointer; }
       </div>
       <div class="st-row">
         <div class="st-field"><label class="st-lbl">归属活动</label>
-          <select class="st-input" id="st-act"></select>
-          <div class="st-tip" style="font-size:12px;color:#999;margin-top:4px">留空 = 公共画风，所有活动都可勾选使用；指定活动 = 该活动私有，其他活动看不到</div>
+          <div class="st-act-pick" id="st-act-pick"></div>
+          <div class="st-tip" style="font-size:12px;color:#999;margin-top:4px">不勾选 = 公共画风，所有活动都能选；勾选 = 仅这些活动可用。保存后自动同步到「活动管理 → 创作能力 → 启用画风」</div>
         </div>
       </div>
       <div class="st-footer">
@@ -1687,27 +1693,23 @@ table tr { cursor: pointer; }
 <div class="page" id="page-activity-mgmt">
   <style>
     /* 活动管理页：数据的最上层归属。设备 / 模板 / 画风 / 照片都挂在活动下，
-       客户由活动带出。前台扫码后只下发「公共项 + 本活动启用项」。 */
+       客户由活动带出。状态由运营手动控制，不与起止时间强耦合。 */
     .act-tbl { width: 100%; border-collapse: collapse; background: #fff; }
     .act-tbl th { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #666; font-weight: 600; background: #FAFAFA; }
     .act-tbl td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333; }
     .act-tbl tr:hover { background: #fafcff; }
-    .act-tbl .td-check { width: 36px; }
-    .act-tbl .act-name { color: #333; }
     .act-state { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12px; }
     .act-state.running { color: #52c41a; background: #f6ffed; border: 1px solid #b7eb8f; }
-    .act-state.paused  { color: #fa8c16; background: #fff7e6; border: 1px solid #ffd591; }
     .act-state.ended   { color: #999; background: #f5f5f5; border: 1px solid #e8e8e8; }
     .act-state.notstart{ color: #1677ff; background: #e6f4ff; border: 1px solid #91caff; }
-    .act-num { font-variant-numeric: tabular-nums; }
 
-    /* 活动配置弹窗（8 个页签） */
+    /* 活动配置弹窗：两个页签 */
     .ac-modal { position: fixed; inset: 0; z-index: 1300; display: none; align-items: center; justify-content: center; }
     .ac-modal-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
-    .ac-modal-box { position: relative; background: #fff; border-radius: 8px; width: 860px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+    .ac-modal-box { position: relative; background: #fff; border-radius: 8px; width: 900px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
     .ac-modal-title { font-size: 15px; font-weight: 600; color: #333; padding: 18px 24px 12px; border-bottom: 1px solid #f0f0f0; }
-    .ac-tabs { display: flex; flex-wrap: wrap; gap: 2px; padding: 10px 24px 0; border-bottom: 1px solid #f0f0f0; }
-    .ac-tab { padding: 7px 14px; font-size: 13px; color: #666; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; margin-bottom: -1px; }
+    .ac-tabs { display: flex; gap: 2px; padding: 10px 24px 0; border-bottom: 1px solid #f0f0f0; }
+    .ac-tab { padding: 7px 16px; font-size: 13px; color: #666; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; margin-bottom: -1px; }
     .ac-tab:hover { color: #0B5DEA; }
     .ac-tab.active { color: #0B5DEA; background: #fff; border-color: #f0f0f0; font-weight: 500; }
     .ac-body { padding: 18px 24px; overflow-y: auto; flex: 1; }
@@ -1721,24 +1723,34 @@ table tr { cursor: pointer; }
     .ac-textarea { width: 100%; box-sizing: border-box; min-height: 70px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 8px 10px; font-size: 13px; color: #333; line-height: 1.6; resize: vertical; }
     .ac-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
     .ac-sub { font-size: 13px; font-weight: 500; color: #333; margin: 4px 0 8px; padding-left: 8px; border-left: 3px solid #0B5DEA; }
-    .ac-pick { border: 1px solid #eee; border-radius: 4px; max-height: 190px; overflow-y: auto; }
-    .ac-pick-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #f7f7f7; font-size: 13px; color: #333; }
-    .ac-pick-row:last-child { border-bottom: none; }
-    .ac-pick-row .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
-    .ac-pick-row .tag.pub { color: #888; background: #f5f5f5; border: 1px solid #e8e8e8; }
-    .ac-pick-row .tag.own { color: #1677ff; background: #e6f4ff; border: 1px solid #91caff; }
-    .ac-pick-row .tag.off { color: #bbb; background: #fafafa; border: 1px solid #eee; }
     .ac-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 14px 24px; border-top: 1px solid #f0f0f0; }
     .ac-btn { height: 32px; padding: 0 16px; border-radius: 4px; border: 1px solid #d9d9d9; background: #fff; font-size: 13px; cursor: pointer; color: #333; }
     .ac-btn:hover { color: #0B5DEA; border-color: #0B5DEA; }
     .ac-btn.primary { background: #0B5DEA; border-color: #0B5DEA; color: #fff; }
     .ac-btn.primary:hover { background: #3a7bef; border-color: #3a7bef; }
-    /* 设备绑定（活动配置 · 二维码来源屏幕） */
-    .ac-dev-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #f7f7f7; font-size: 13px; }
-    .ac-dev-row .dev-state { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; }
-    .ac-dev-row .dev-state.s-on { color: #52c41a; background: #f6ffed; border: 1px solid #b7eb8f; }
-    .ac-dev-row .dev-state.s-off { color: #999; background: #f5f5f5; border: 1px solid #e8e8e8; }
-    .ac-qr { font-family: var(--font-mono, monospace); font-size: 12px; color: #666; background: #f7f9fc; border: 1px solid #e8e8e8; border-radius: 4px; padding: 10px 12px; word-break: break-all; line-height: 1.8; }
+
+    /* 创作能力选择器：搜索 + 全选 + 表格 */
+    .ac-pick-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+    .ac-pick-bar .filter-input { width: 200px; height: 30px; }
+    .ac-pick-bar .ac-all-label { font-size: 13px; color: #333; display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+    .ac-pick-tbl { width: 100%; border-collapse: collapse; }
+    .ac-pick-tbl th { background: #FAFAFA; padding: 8px 10px; font-size: 12px; color: #666; font-weight: 600; text-align: left; border-bottom: 1px solid #eee; position: sticky; top: 0; }
+    .ac-pick-tbl td { padding: 7px 10px; font-size: 13px; color: #333; border-bottom: 1px solid #f7f7f7; }
+    .ac-pick-tbl tr:last-child td { border-bottom: none; }
+    .ac-pick-tbl tr:hover td { background: #fafcff; }
+    .ac-pick-wrap { max-height: 220px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; }
+    .ac-thumb { width: 34px; height: 46px; border-radius: 3px; overflow: hidden; position: relative; display: inline-block; background: #F0EAE0; vertical-align: middle; }
+    .ac-thumb .pt-bg2 { position: absolute; inset: 0; }
+    .ac-thumb .pt-person2 { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 55%; aspect-ratio: 3/4; border-radius: 2px; background: linear-gradient(135deg,#F5D0A9,#D9A066); }
+    .ac-thumb.style { background: #F2F2F2; }
+    .ac-thumb.style .pt-person2 { width: 62%; border-radius: 4px; background: linear-gradient(135deg,#B9C6D6,#8FA3B8); }
+    .ac-thumb.style.effect-guangying .pt-person2 { filter: brightness(1.08) contrast(1.06); }
+    .ac-thumb.style.effect-shuimo .pt-person2 { filter: grayscale(0.55) sepia(0.35); }
+    .ac-thumb.style.effect-hongchou .pt-person2 { filter: sepia(0.22) saturate(1.12); }
+    .ac-thumb.style.effect-shouhui .pt-person2 { filter: saturate(0.45) contrast(1.12); }
+    .ac-state-tag { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; }
+    .ac-state-tag.on { color: #52c41a; background: #f6ffed; border: 1px solid #b7eb8f; }
+    .ac-state-tag.off { color: #999; background: #f5f5f5; border: 1px solid #e8e8e8; }
   </style>
 
   <div class="filter-bar">
@@ -1752,9 +1764,8 @@ table tr { cursor: pointer; }
       <span class="filter-label">活动状态</span>
       <select class="filter-select" id="act-f-state" onchange="actApplyFilter()">
         <option value="">全部</option>
-        <option value="running">进行中</option>
         <option value="notstart">未开始</option>
-        <option value="paused">已暂停</option>
+        <option value="running">进行中</option>
         <option value="ended">已结束</option>
       </select>
     </div>
@@ -1769,18 +1780,12 @@ table tr { cursor: pointer; }
     <table class="act-tbl">
       <thead>
         <tr>
-          <th class="td-check"><input type="checkbox" id="act-all" onchange="actToggleAll(this)"></th>
           <th>活动名称</th>
-          <th>活动编号</th>
           <th>所属客户</th>
           <th>活动状态</th>
-          <th>开始时间</th>
-          <th>结束时间</th>
-          <th>扫码人数</th>
-          <th>成功作品数</th>
-          <th>精选作品数</th>
+          <th>开始/结束时间</th>
           <th>更新时间</th>
-          <th style="width:210px">操作</th>
+          <th style="width:180px">操作</th>
         </tr>
       </thead>
       <tbody id="act-tbody"></tbody>
@@ -1788,154 +1793,71 @@ table tr { cursor: pointer; }
     <div class="pagination" id="act-pager"></div>
   </div>
 
-  <!-- 新建/编辑活动弹窗（8 个页签） -->
+  <!-- 新建/编辑活动弹窗（2 个页签） -->
   <div class="ac-modal" id="ac-modal" style="display:none">
     <div class="ac-modal-mask" onclick="actCloseModal()"></div>
     <div class="ac-modal-box">
       <div class="ac-modal-title" id="ac-modal-title">新建活动</div>
       <div class="ac-tabs">
-        <div class="ac-tab active" data-pane="basic" onclick="actSwitchTab('basic', this)">基础信息</div>
-        <div class="ac-tab" data-pane="time" onclick="actSwitchTab('time', this)">时间状态</div>
-        <div class="ac-tab" data-pane="visual" onclick="actSwitchTab('visual', this)">视觉文案</div>
-        <div class="ac-tab" data-pane="ability" onclick="actSwitchTab('ability', this)">创作能力</div>
-        <div class="ac-tab" data-pane="limit" onclick="actSwitchTab('limit', this)">生成限制</div>
-        <div class="ac-tab" data-pane="pick" onclick="actSwitchTab('pick', this)">精选规则</div>
-        <div class="ac-tab" data-pane="data" onclick="actSwitchTab('data', this)">数据保存</div>
-        <div class="ac-tab" data-pane="qr" onclick="actSwitchTab('qr', this)">二维码</div>
+        <div class="ac-tab active" onclick="actSwitchTab('basic', this)">基础信息</div>
+        <div class="ac-tab" onclick="actSwitchTab('ability', this)">创作能力</div>
       </div>
       <div class="ac-body">
         <div class="ac-pane active" id="ac-pane-basic">
           <div class="ac-row">
             <div class="ac-field"><label class="ac-lbl">活动名称 <span class="req">*</span></label>
               <input class="ac-input" id="ac-name" placeholder="如：福建省第十二次党代会纪念相册"></div>
-            <div class="ac-field"><label class="ac-lbl">活动简称 <span class="req">*</span></label>
-              <input class="ac-input" id="ac-short" placeholder="如：党代会纪念"></div>
           </div>
           <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">活动编号 <span class="req">*</span></label>
-              <input class="ac-input" id="ac-code" placeholder="如：ACT-2026-005"></div>
             <div class="ac-field"><label class="ac-lbl">所属客户 <span class="req">*</span></label>
               <select class="ac-input" id="ac-cust"></select>
-              <div class="ac-tip">客户从系统客户表取值，活动归属客户后由活动带出到设备/照片</div></div>
-          </div>
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">活动全称 <span class="req">*</span></label>
-              <input class="ac-input" id="ac-fullname" placeholder="活动全称，逐字核对">
-              <div class="ac-tip">政治表述、会议届次、文件全称须逐字核对，不得由系统自动生成</div></div>
+              <div class="ac-tip">客户取自系统客户表。活动归属客户后，设备与照片的客户由活动带出</div></div>
+            <div class="ac-field"><label class="ac-lbl">活动状态 <span class="req">*</span></label>
+              <select class="ac-input" id="ac-state">
+                <option value="notstart">未开始</option>
+                <option value="running">进行中</option>
+                <option value="ended">已结束</option>
+              </select>
+              <div class="ac-tip">由运营手动控制，不随起止时间自动变化</div></div>
           </div>
           <div class="ac-row">
             <div class="ac-field"><label class="ac-lbl">活动介绍</label>
               <textarea class="ac-textarea" id="ac-intro" placeholder="一句话说明本活动是什么"></textarea></div>
           </div>
-        </div>
-
-        <div class="ac-pane" id="ac-pane-time">
           <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">开始时间 <span class="req">*</span></label>
+            <div class="ac-field"><label class="ac-lbl">开始时间</label>
               <input class="ac-input" id="ac-start" placeholder="如：2026-09-30 08:00"></div>
-            <div class="ac-field"><label class="ac-lbl">结束时间 <span class="req">*</span></label>
+            <div class="ac-field"><label class="ac-lbl">结束时间</label>
               <input class="ac-input" id="ac-end" placeholder="如：2026-10-08 20:00"></div>
-          </div>
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">活动状态 <span class="req">*</span></label>
-              <select class="ac-input" id="ac-state">
-                <option value="notstart">未开始</option>
-                <option value="running">进行中</option>
-                <option value="paused">已暂停</option>
-                <option value="ended">已结束</option>
-              </select>
-              <div class="ac-tip">扫码页按此状态展示：未开始不可扫、已暂停进提示页、已结束按下方「结束后可查看」决定</div></div>
-            <div class="ac-field"><label class="ac-lbl">结束后是否可查看历史作品</label>
-              <select class="ac-input" id="ac-viewafter">
-                <option value="0">否</option>
-                <option value="1">是</option>
-              </select></div>
-          </div>
-        </div>
-
-        <div class="ac-pane" id="ac-pane-visual">
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">主标题 <span class="req">*</span></label>
-              <input class="ac-input" id="ac-title" placeholder="如：永远跟党走"></div>
-            <div class="ac-field"><label class="ac-lbl">主文案</label>
-              <input class="ac-input" id="ac-slogan" placeholder="如：定格奋斗瞬间 · 共谱时代新篇"></div>
-          </div>
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">Logo / 主视觉</label>
-              <input class="ac-input" id="ac-logo" placeholder="图片地址"></div>
-            <div class="ac-field"><label class="ac-lbl">主题色</label>
-              <input class="ac-input" id="ac-color" placeholder="如：#B42318"></div>
-          </div>
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">免责声明</label>
-              <textarea class="ac-textarea" id="ac-disclaimer" placeholder="展示在作品保存页"></textarea></div>
           </div>
         </div>
 
         <div class="ac-pane" id="ac-pane-ability">
-          <div class="ac-tip" style="margin-bottom:12px">前台扫码后能看到的画风/模板 = 下面勾选的项。公共项（归属活动留空）可被多个活动同时勾选；私有项只在本页出现。</div>
+          <div class="ac-tip" style="margin-bottom:14px">勾选本活动可用的画风与模板。保存后自动同步到模板/画风管理的「归属活动」；在那边改归属，这里也会同步。</div>
           <div class="ac-sub">启用画风</div>
-          <div class="ac-pick" id="ac-style-pick"></div>
-          <div class="ac-sub" style="margin-top:16px">启用模板</div>
-          <div class="ac-pick" id="ac-tpl-pick"></div>
-          <div class="ac-row" style="margin-top:16px">
-            <div class="ac-field"><label class="ac-lbl">默认推荐模板</label>
-              <select class="ac-input" id="ac-default-tpl"></select>
-              <div class="ac-tip">模板自身由模板管理维护，本页只选择本活动启用哪些模板</div></div>
+          <div class="ac-pick-bar">
+            <input class="filter-input" id="ac-style-kw" placeholder="请输入画风名称" oninput="actRenderStylePick()">
+            <span class="ac-all-label" onclick="actToggleAllStyle()"><input type="checkbox" id="ac-style-all">全选</span>
+            <span class="ac-tip" id="ac-style-count"></span>
           </div>
-          <div class="ac-sub" style="margin-top:16px">前台可见范围预览</div>
-          <div id="ac-scope-preview"></div>
-        </div>
-
-        <div class="ac-pane" id="ac-pane-limit">
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">单访客每日上限</label>
-              <input class="ac-input" id="ac-daily" type="number" value="3"></div>
-            <div class="ac-field"><label class="ac-lbl">AI 生成每日上限</label>
-              <input class="ac-input" id="ac-ailimit" type="number" value="5"></div>
+          <div class="ac-pick-wrap">
+            <table class="ac-pick-tbl">
+              <thead><tr><th style="width:40px"></th><th style="width:60px">示例</th><th>画风名称</th><th style="width:100px">合成模式</th><th style="width:80px">状态</th></tr></thead>
+              <tbody id="ac-style-rows"></tbody>
+            </table>
           </div>
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">超限提示文案</label>
-              <textarea class="ac-textarea" id="ac-overtip" placeholder="如：今日拍摄次数已用完，请明天再来"></textarea></div>
+          <div class="ac-sub" style="margin-top:20px">启用模板</div>
+          <div class="ac-pick-bar">
+            <input class="filter-input" id="ac-tpl-kw" placeholder="请输入模板名称" oninput="actRenderTplPick()">
+            <span class="ac-all-label" onclick="actToggleAllTpl()"><input type="checkbox" id="ac-tpl-all">全选</span>
+            <span class="ac-tip" id="ac-tpl-count"></span>
           </div>
-        </div>
-
-        <div class="ac-pane" id="ac-pane-pick">
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">是否开放提交精选</label>
-              <select class="ac-input" id="ac-pickopen"><option value="0">否</option><option value="1">是</option></select></div>
-            <div class="ac-field"><label class="ac-lbl">是否必须 AI 初审通过</label>
-              <select class="ac-input" id="ac-mustpass"><option value="0">否</option><option value="1">是</option></select></div>
+          <div class="ac-pick-wrap">
+            <table class="ac-pick-tbl">
+              <thead><tr><th style="width:40px"></th><th style="width:60px">模板图片</th><th>模板名称</th><th style="width:90px">模板方向</th><th style="width:80px">状态</th></tr></thead>
+              <tbody id="ac-tpl-rows"></tbody>
+            </table>
           </div>
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">精选说明</label>
-              <textarea class="ac-textarea" id="ac-picknote" placeholder="如：经审核后可在大屏展示"></textarea></div>
-          </div>
-        </div>
-
-        <div class="ac-pane" id="ac-pane-data">
-          <div class="ac-row">
-            <div class="ac-field"><label class="ac-lbl">数据保存方式</label>
-              <select class="ac-input" id="ac-savemode"><option value="long">长期保存</option><option value="custom">自定义期限</option></select>
-              <div class="ac-tip">当前默认长期保存；选自定义期限时下方生效</div></div>
-            <div class="ac-field"><label class="ac-lbl">自定义期限</label>
-              <input class="ac-input" id="ac-savedays" placeholder="如：90（天）"></div>
-          </div>
-        </div>
-
-        <div class="ac-pane" id="ac-pane-qr">
-          <div class="ac-sub">来源屏幕（本活动绑定的设备）</div>
-          <div class="ac-pick" id="ac-dev-pick"></div>
-          <div class="ac-sub" style="margin-top:16px">二维码链接</div>
-          <div class="ac-qr" id="ac-qr-url">—</div>
-          <div class="ac-row" style="margin-top:12px">
-            <div class="ac-field"><label class="ac-lbl">渠道参数</label>
-              <input class="ac-input" id="ac-channel" placeholder="如：fjdh（用于区分投放渠道）"></div>
-            <div class="ac-field" style="flex:0 0 auto"><label class="ac-lbl">&nbsp;</label>
-              <button class="ac-btn" onclick="actCopyLink()">复制链接</button>
-              <button class="ac-btn" onclick="actToast('二维码已下载（原型示意）')">下载二维码</button></div>
-          </div>
-          <div class="ac-tip" style="margin-top:8px">链接参数：activityId 必填，screenId 取上表设备；参数无效时进「活动不可用」页，不静默进其他活动</div>
         </div>
       </div>
       <div class="ac-footer">
@@ -2124,13 +2046,14 @@ function updateBreadcrumb(title) {
 /* 画风全局列表（PC 详情弹窗 / 画风管理页 / 活动配置页共用；字段含提示词）
    actId：归属活动（空 = 公共画风，全活动可用） */
 window.__STYLE_LIST = window.__STYLE_LIST || [
-  { id: 'jingdian',  name: '经典庄重', time: '约1~2分钟', enabled: true,  mode: '模型合成', sort: 0,  actId: '',       prompt: '请以我提供的照片为依据，生成「标准化背景」效果：保留人物形象与神态，将背景替换为标准背景模板，输出统一的纪念照效果，不改变人物面部特征', gen: 2, keep: 0, drop: 0, fail: 2 },
-  { id: 'guangying', name: '光影焕新', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 1,  actId: '',       prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', gen: 12, keep: 9, drop: 3, fail: 1 },
-  { id: 'hongchou',  name: '红绸环绕', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 2,  actId: '',       prompt: '浅红丝绸飘带局部环绕，画面要素与相框保持不变，人物清晰不被遮挡', gen: 7, keep: 5, drop: 2, fail: 0 },
-  { id: 'shouhui',   name: '手绘插画', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 3,  actId: 'act2', prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', gen: 5, keep: 2, drop: 3, fail: 5 },
-  { id: 'shuimo',    name: '水墨国风', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 4,  actId: 'act3', prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', gen: 9, keep: 6, drop: 3, fail: 2 },
-  { id: 'guochao',   name: '国潮插画', time: '约30秒',    enabled: false, mode: '默认合成', sort: 99, actId: 'act4', prompt: '国潮插画质感，色彩明快，人物形象保持完整，背景做插画化处理', gen: 3, keep: 1, drop: 1, fail: 1 },
-  { id: 'youhua',    name: '油画艺术', time: '约30秒',    enabled: false, mode: '默认合成', sort: 99, actId: '',       prompt: '油画笔触质感，冷暖对比明显，人物五官保持清晰可辨', gen: 2, keep: 1, drop: 0, fail: 1 }
+  { id: 'jingdian',  name: '经典庄重', time: '约1~2分钟', enabled: true,  mode: '模型合成', sort: 0,  actIds: ['act1', 'act2'],       prompt: '请以我提供的照片为依据，生成「标准化背景」效果：保留人物形象与神态，将背景替换为标准背景模板，输出统一的纪念照效果，不改变人物面部特征', gen: 2, keep: 0, drop: 0, fail: 2 },
+  { id: 'guangying', name: '光影焕新', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 1,  actIds: ['act1', 'act2'],       prompt: '优化光影氛围，增强画面通透感，保持人物面部特征与原图一致，不发生产物性重绘', gen: 12, keep: 9, drop: 3, fail: 1 },
+  { id: 'hongchou',  name: '红绸环绕', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 2,  actIds: ['act1', 'act3'],       prompt: '浅红丝绸飘带局部环绕，画面要素与相框保持不变，人物清晰不被遮挡', gen: 7, keep: 5, drop: 2, fail: 0 },
+  { id: 'shouhui',   name: '手绘插画', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 3,  actIds: ['act1', 'act2'], prompt: '限定水彩/清新插画/厚涂质感，禁用动漫二次元风格，人脸区域保持识别一致', gen: 5, keep: 2, drop: 3, fail: 5 },
+  { id: 'shuimo',    name: '水墨国风', time: '约1~2分钟', enabled: true,  mode: '默认合成', sort: 4,  actIds: ['act3'], prompt: '背景写意虚化，水墨晕染质感，人物面部区域避开重绘，保持人脸特征不变', gen: 9, keep: 6, drop: 3, fail: 2 },
+  { id: 'guochao',   name: '国潮插画', time: '约30秒',    enabled: false, mode: '默认合成', sort: 99, actIds: ['act4'], prompt: '国潮插画质感，色彩明快，人物形象保持完整，背景做插画化处理', gen: 3, keep: 1, drop: 1, fail: 1 },
+  { id: 'wangsuo',   name: '科技蓝调', time: '约30秒',    enabled: true,  mode: '默认合成', sort: 5,  actIds: ['act2'], prompt: '冷蓝色调科技质感，背景数据流元素，人物面部保持清晰', gen: 4, keep: 3, drop: 1, fail: 0 },
+  { id: 'youhua',    name: '油画艺术', time: '约30秒',    enabled: false, mode: '默认合成', sort: 99, actIds: [],       prompt: '油画笔触质感，冷暖对比明显，人物五官保持清晰可辨', gen: 2, keep: 1, drop: 0, fail: 1 }
 ];
 function pcStyleOf(id) { return (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0]; }
 
@@ -2144,83 +2067,66 @@ window.__CUSTOMER_LIST = window.__CUSTOMER_LIST || [
 function pcCustomerOf(id) { return (window.__CUSTOMER_LIST || []).filter(function(x){ return x.id === id; })[0]; }
 
 /* ===== 活动（数据的最上层归属：活动 → 客户 → 设备/模板/画风/照片） =====
-   状态枚举：notstart 未开始 / running 进行中 / paused 已暂停 / ended 已结束 */
+   状态枚举：notstart 未开始 / running 进行中 / ended 已结束。
+   状态由运营手动控制，不与开始/结束时间做强制联动。 */
 window.__ACTIVITY_LIST = window.__ACTIVITY_LIST || [
   {
-    id: 'act1', code: 'ACT-2026-001', name: '福建省第十二次党代会纪念相册', shortName: '党代会纪念',
+    id: 'act1', code: 'ACT-2026-001', name: '福建省第十二次党代会纪念相册',
     customerId: 'cus1', status: 'running',
     startTime: '2026-09-30 08:00', endTime: '2026-10-08 20:00',
     scanCount: 328, workCount: 612, pickCount: 86,
     updateTime: '2026-09-30 10:21:05',
-    fullName: '中国共产党福建省第十二次代表大会', intro: '扫码即拍，AI 生成专属纪念照',
-    title: '永远跟党走', slogan: '定格奋斗瞬间 · 共谱时代新篇',
-    themeColor: '#B42318', disclaimer: '本活动照片仅用于现场大屏展示',
-    viewAfterEnd: false,
-    tplIds: ['shenghui', 'fenjin', 'dangqi', 'shengshi', 'gongbi'],
-    styleIds: ['jingdian', 'guangying', 'hongchou'],
-    dailyLimit: 3, aiLimit: 5, overTip: '今日拍摄次数已用完，请明天再来',
-    pickOpen: true, pickNote: '经审核后可在大屏展示', mustAiPass: true,
-    saveMode: 'long'
+    intro: '扫码即拍，AI 生成专属纪念照',
   },
   {
-    id: 'act2', code: 'ACT-2026-002', name: '福州市网络安全宣传周纪念相册', shortName: '网安周',
+    id: 'act2', code: 'ACT-2026-002', name: '福州市网络安全宣传周纪念相册',
     customerId: 'cus2', status: 'running',
     startTime: '2026-09-28 09:00', endTime: '2026-10-15 18:00',
     scanCount: 156, workCount: 233, pickCount: 31,
     updateTime: '2026-09-29 16:02:40',
-    fullName: '福州市网络安全宣传周', intro: '扫码即拍，生成网络安全主题纪念照',
-    title: '安全同行', slogan: '共建网络安全 · 共享数字生活',
-    themeColor: '#0B5DEA', disclaimer: '本活动照片仅用于现场大屏展示',
-    viewAfterEnd: false,
-    tplIds: ['shenghui', 'dangqi', 'gongbi'],
-    styleIds: ['jingdian', 'guangying', 'shouhui'],
-    dailyLimit: 2, aiLimit: 4, overTip: '今日拍摄次数已用完，请明天再来',
-    pickOpen: false, pickNote: '', mustAiPass: false,
-    saveMode: 'long'
+    intro: '扫码即拍，生成网络安全主题纪念照',
   },
   {
-    id: 'act3', code: 'ACT-2026-003', name: '厦门基层党组织建设成果展', shortName: '党建成果展',
+    id: 'act3', code: 'ACT-2026-003', name: '厦门基层党组织建设成果展',
     customerId: 'cus3', status: 'ended',
     startTime: '2026-08-01 09:00', endTime: '2026-08-31 18:00',
     scanCount: 892, workCount: 1456, pickCount: 203,
     updateTime: '2026-09-01 09:12:00',
-    fullName: '厦门基层党组织建设成果展', intro: '党建成果云相册',
-    title: '党旗领航', slogan: '红色引擎 · 聚力发展',
-    themeColor: '#8A641E', disclaimer: '本活动照片已归档',
-    viewAfterEnd: true,
-    tplIds: ['shenghui', 'fenjin', 'shengshi'],
-    styleIds: ['jingdian', 'shuimo', 'hongchou'],
-    dailyLimit: 3, aiLimit: 6, overTip: '今日拍摄次数已用完',
-    pickOpen: true, pickNote: '经审核后可在大屏展示', mustAiPass: true,
-    saveMode: 'long'
+    intro: '党建成果云相册，照片长期保存',
   },
   {
-    id: 'act4', code: 'ACT-2026-004', name: '泉州丰泽区红色文化主题活动', shortName: '红色文化',
+    id: 'act4', code: 'ACT-2026-004', name: '泉州丰泽区红色文化主题活动',
     customerId: 'cus4', status: 'notstart',
     startTime: '2026-10-20 09:00', endTime: '2026-11-10 18:00',
     scanCount: 0, workCount: 0, pickCount: 0,
     updateTime: '2026-10-08 10:00:00',
-    fullName: '泉州丰泽区红色文化主题活动', intro: '扫码即拍，生成红色主题纪念照',
-    title: '红薪薪火', slogan: '传承红色基因 · 汲取奋进力量',
-    themeColor: '#993C1D', disclaimer: '本活动照片仅用于现场大屏展示',
-    viewAfterEnd: false,
-    tplIds: ['shenghui', 'fenjin'],
-    styleIds: ['jingdian', 'hongchou'],
-    dailyLimit: 3, aiLimit: 5, overTip: '今日拍摄次数已用完',
-    pickOpen: true, pickNote: '经审核后可在大屏展示', mustAiPass: false,
-    saveMode: 'long'
+    intro: '扫码即拍，生成红色主题纪念照',
   }
 ];
+/* 活动侧的启用清单由模板/画风的归属活动派生（下方sync 统一处理） */
 function pcActivityOf(id) { return (window.__ACTIVITY_LIST || []).filter(function(x){ return x.id === id; })[0]; }
 function pcActivityName(id) { var a = pcActivityOf(id); return a ? a.name : ''; }
 function pcActivityCustomerName(id) { var a = pcActivityOf(id); return a ? (pcCustomerOf(a.customerId) || {}).name || '' : ''; }
 function pcActivityStatusText(st) {
   if (st === 'running') return '进行中';
-  if (st === 'paused') return '已暂停';
   if (st === 'ended')   return '已结束';
   return '未开始';
 }
-/* 某活动前台可见的模板/画风 = 该活动启用的（公共项由运营勾选后进入各活动） */
+
+/* ===== 归属：模板/画风的 actIds（多选） ↔ 活动的 tplIds/styleIds =====
+   两侧是同一份归属关系的两个方向。任一侧保存后调用 pcSyncActivityFromAssets()
+   由「模板/画风的归属活动」重建活动的启用清单，保证双向一致。 */
+function pcSyncActivityFromAssets() {
+  (window.__ACTIVITY_LIST || []).forEach(function(a) {
+    a.tplIds = (window.__TPL_LIST || []).filter(function(t) {
+      return (t.actIds || []).indexOf(a.id) >= 0;
+    }).map(function(t) { return t.id; });
+    a.styleIds = (window.__STYLE_LIST || []).filter(function(s) {
+      return (s.actIds || []).indexOf(a.id) >= 0;
+    }).map(function(s) { return s.id; });
+  });
+}
+/* 某活动前台可见的模板/画风名称（用于展示与校验） */
 function pcActivityTemplates(actId) {
   var a = pcActivityOf(actId);
   if (!a) return [];
@@ -2248,16 +2154,22 @@ function pcActivityEnabledDevices(actId) {
 
 /* ===== 模板全局列表（模板管理页 + 活动配置页共用；单条数据只有一份） ===== */
 window.__TPL_LIST = window.__TPL_LIST || [
-  { id: 'shenghui', name: '盛会留念框', direction: '横屏', group: 'classic',    groupName: '庄重经典', people: '1-6 人', guide: '建议多人合照，原图居中，红金边框', estTime: '约 3 秒',  state: 'on',  uses: 158, time: '2026-09-28 14:30:12', actId: '' },
-  { id: 'fenjin',   name: '奋进新征程', direction: '竖屏', group: 'classic',    groupName: '庄重经典', people: '1-4 人', guide: '竖版照片 + 金色题字 + 福建剪影',      estTime: '约 3 秒',  state: 'on',  uses: 121, time: '2026-09-28 14:31:05', actId: '' },
-  { id: 'dangqi',   name: '党旗礼赞',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-2 人', guide: '建议单人、正面、半身，红色主题场景', estTime: '约 10 秒', state: 'on',  uses: 203, time: '2026-09-28 14:28:33', actId: 'act1' },
-  { id: 'shengshi', name: '盛世华章',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-2 人', guide: '人物居中，金色光影与山河纹理',      estTime: '约 10 秒', state: 'on',  uses: 176, time: '2026-09-28 14:28:47', actId: 'act1' },
-  { id: 'gongbi',   name: '工笔华章',   direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: '建议单人、正面、半身，光线充足',    estTime: '约 30 秒', state: 'on',  uses: 187, time: '2026-09-28 14:32:20', actId: 'act1' },
-  { id: 'shuimo',   name: '水墨山河',   direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: '写意留白，人物居中',                estTime: '约 30 秒', state: 'on',  uses: 96,  time: '2026-09-28 14:35:11', actId: 'act2' },
-  { id: 'gutian',   name: '古田星火',   direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: '红色历史题材风格',                  estTime: '约 30 秒', state: 'on',  uses: 88,  time: '2026-09-28 14:36:20', actId: 'act2' },
-  { id: 'fujian',   name: '福见山海',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-4 人', guide: '山海元素 + 人像合影',                estTime: '约 10 秒', state: 'on',  uses: 132, time: '2026-09-28 14:38:02', actId: 'act3' },
-  { id: 'qban',     name: 'Q版先锋',    direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: 'Q 版卡通风格',                      estTime: '约 30 秒', state: 'off', uses: 45,  time: '2026-09-28 14:39:44', actId: '' }
+  { id: 'shenghui', name: '盛会留念框', direction: '横屏', group: 'classic',    groupName: '庄重经典', people: '1-6 人', guide: '建议多人合照，原图居中，红金边框', estTime: '约 3 秒',  state: 'on',  uses: 158, time: '2026-09-28 14:30:12', actIds: ['act1', 'act2'] },
+  { id: 'fenjin',   name: '奋进新征程', direction: '竖屏', group: 'classic',    groupName: '庄重经典', people: '1-4 人', guide: '竖版照片 + 金色题字 + 福建剪影',      estTime: '约 3 秒',  state: 'on',  uses: 121, time: '2026-09-28 14:31:05', actIds: [] },
+  { id: 'dangqi',   name: '党旗礼赞',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-2 人', guide: '建议单人、正面、半身，红色主题场景', estTime: '约 10 秒', state: 'on',  uses: 203, time: '2026-09-28 14:28:33', actIds: ['act1'] },
+  { id: 'shengshi', name: '盛世华章',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-2 人', guide: '人物居中，金色光影与山河纹理',      estTime: '约 10 秒', state: 'on',  uses: 176, time: '2026-09-28 14:28:47', actIds: ['act1'] },
+  { id: 'gongbi',   name: '工笔华章',   direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: '建议单人、正面、半身，光线充足',    estTime: '约 30 秒', state: 'on',  uses: 187, time: '2026-09-28 14:32:20', actIds: ['act1'] },
+  { id: 'shuimo',   name: '水墨山河',   direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: '写意留白，人物居中',                estTime: '约 30 秒', state: 'on',  uses: 96,  time: '2026-09-28 14:35:11', actIds: ['act2'] },
+  { id: 'gutian',   name: '古田星火',   direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: '红色历史题材风格',                  estTime: '约 30 秒', state: 'on',  uses: 88,  time: '2026-09-28 14:36:20', actIds: ['act2'] },
+  { id: 'fujian',   name: '福见山海',   direction: '竖屏', group: 'smart',      groupName: '智能海报', people: '1-4 人', guide: '山海元素 + 人像合影',                estTime: '约 10 秒', state: 'on',  uses: 132, time: '2026-09-28 14:38:02', actIds: ['act3'] },
+  { id: 'act1tpl1', name: '红绸相框', direction: '竖屏', group: 'aiguofeng',  groupName: '活动专属', people: '1-2 人', guide: '党代会专属边框，红绸元素',            estTime: '约 5 秒',  state: 'on',  uses: 76,  time: '2026-09-29 09:10:00', actIds: ['act1'] },
+  { id: 'act1tpl2', name: '薪火相传', direction: '竖屏', group: 'aiguofeng',  groupName: '活动专属', people: '1-4 人', guide: '主题海报样式，底部题字',              estTime: '约 5 秒',  state: 'on',  uses: 64,  time: '2026-09-29 09:12:00', actIds: ['act1'] },
+  { id: 'act2tpl1', name: '网络安全盾', direction: '竖屏', group: 'smart', groupName: '活动专属', people: '1-2 人', guide: '盾牌锁元素，安全主题',            estTime: '约 8 秒',  state: 'on',  uses: 41,  time: '2026-09-28 09:40:00', actIds: ['act2'] },
+  { id: 'act2tpl2', name: '数字防线',   direction: '竖屏', group: 'smart',      groupName: '活动专属', people: '1-2 人', guide: '代码网格背景，科技感',                estTime: '约 8 秒',  state: 'on',  uses: 38,  time: '2026-09-28 09:42:00', actIds: ['act2'] },
+  { id: 'qban',     name: 'Q版先锋',    direction: '竖屏', group: 'aiguofeng',  groupName: 'AI 国风', people: '1 人',   guide: 'Q 版卡通风格',                      estTime: '约 30 秒', state: 'off', uses: 45,  time: '2026-09-28 14:39:44', actIds: [] }
 ];
+/* 数据就绪后做一次归属同步：活动.tplIds / styleIds 由模板·画风的 actIds 派生 */
+pcSyncActivityFromAssets();
 
 /* 设备全局列表（设备管理页 / 上屏审核设备选择弹窗 / 来源屏幕·上屏屏幕筛选 / 活动配置页共用）
    一条记录 = 一台屏在某活动下的一次投放。同一块物理屏（同 MAC）跨活动不复用，
@@ -2479,7 +2391,6 @@ function photoSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">未分配</option>';
   aEl.innerHTML = aOpts;
   photoSyncScreenFilters();
   renderPhotoTable();
@@ -2488,8 +2399,7 @@ function photoSyncActivityFilter() {
 function photoSyncScreenFilters() {
   var actF = document.getElementById('f-act').value;
   var devs = (window.__DEVICE_LIST || []).filter(function(d) {
-    if (!actF || actF === '__none') return true;
-    return actF === '__none' ? false : (d.actId === actF);
+    return !actF || d.actId === actF;
   });
   var opts = '<option value="">全部</option>';
   devs.forEach(function(d) {
@@ -2513,8 +2423,7 @@ function photoMatchFilter(p) {
     var a = actId ? pcActivityOf(actId) : null;
     if (!a || a.customerId !== custF) return false;
   }
-  if (actF === '__none') { if (actId) return false; }
-  else if (actF && actId !== actF) return false;
+  if (actF && actId !== actF) return false;
   return true;
 }
 function renderStatCards(list) {
@@ -2778,7 +2687,6 @@ function selSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">未分配</option>';
   aEl.innerHTML = aOpts;
   selSyncScreenFilters();
   renderSelTable();
@@ -2787,8 +2695,7 @@ function selSyncScreenFilters() {
   var actF = document.getElementById('f-sel-act').value;
   var opts = '<option value="">全部</option>';
   (window.__DEVICE_LIST || []).forEach(function(d) {
-    if (actF && actF !== '__none' && d.actId !== actF) return;
-    if (actF === '__none' && d.actId) return;
+    if (actF && d.actId !== actF) return;
     var label = d.name;
     if (d.actId) { var a = pcActivityOf(d.actId); if (a) label += '（' + a.shortName + '）'; }
     opts += '<option value="' + d.id + '">' + label + '</option>';
@@ -2805,8 +2712,7 @@ function selMatchFilter(p) {
     var a = actId ? pcActivityOf(actId) : null;
     if (!a || a.customerId !== custF) return false;
   }
-  if (actF === '__none') { if (actId) return false; }
-  else if (actF && actId !== actF) return false;
+  if (actF && actId !== actF) return false;
   return true;
 }
 function renderSelTable() {
@@ -3120,8 +3026,13 @@ function tplBgOf(id) {
   return (n % 8) + 1;
 }
 function tplActCell(t) {
-  if (!t.actId) return '<span style="color:#999">公共</span>';
-  return pcActivityName(t.actId) || '—';
+  var ids = t.actIds || [];
+  if (!ids.length) return '<span style="color:#999">公共</span>';
+  var names = ids.map(function(id) { return pcActivityOf(id) ? pcActivityOf(id).name : ''; }).filter(Boolean);
+  if (!names.length) return '<span style="color:#999">公共</span>';
+  var first = names[0];
+  var rest = names.length - 1;
+  return '<span title="' + names.join('、') + '">' + first + (rest > 0 ? ' <span style="color:#0B5DEA">+' + rest + '</span>' : '') + '</span>';
 }
 function tplShowToast(msg) {
   var ta = document.getElementById('tpl-toast-area');
@@ -3147,7 +3058,6 @@ function tplSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">公共（未指定活动）</option>';
   aEl.innerHTML = aOpts;
   renderTplMgmt();
 }
@@ -3172,12 +3082,13 @@ function renderTplMgmt() {
     if (dir && (t.direction || '') !== dir) return false;
     if (kw && t.name.indexOf(kw) < 0) return false;
     if (custF) {
-      if (!t.actId) return false;
-      var a = pcActivityOf(t.actId);
-      if (!a || a.customerId !== custF) return false;
+      var hit = (t.actIds || []).some(function(id) {
+        var a = pcActivityOf(id);
+        return a && a.customerId === custF;
+      });
+      if (!hit) return false;
     }
-    if (actF === '__none') { if (t.actId) return false; }
-    else if (actF && (t.actId || '') !== actF) return false;
+    if (actF && (t.actIds || []).indexOf(actF) < 0) return false;
     return true;
   });
   var tbody = document.getElementById('tpl-tbody');
@@ -3262,13 +3173,14 @@ function openTplModal(id) {
   document.getElementById('tpl-state').value = t ? t.state : 'on';
   document.getElementById('tpl-direction').value = t ? (t.direction || '竖屏') : '竖屏';
   document.getElementById('tpl-guide').value = t ? t.guide : '';
-  var actSel = document.getElementById('tpl-act');
-  var opts = '<option value="">公共模板（留空）</option>';
+  var actBox = document.getElementById('tpl-act-pick');
+  var ahtml = '';
   (window.__ACTIVITY_LIST || []).forEach(function(a) {
-    opts += '<option value="' + a.id + '">' + a.name + '</option>';
+    var on = t && (t.actIds || []).indexOf(a.id) >= 0;
+    ahtml += '<label><input type="checkbox" class="tpl-act-cb" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + a.name + '</label>';
   });
-  actSel.innerHTML = opts;
-  actSel.value = (t && t.actId) ? t.actId : '';
+  if (!ahtml) ahtml = '<span style="color:#999;font-size:13px">暂无可选活动</span>';
+  actBox.innerHTML = ahtml;
   tplRenderImg(t ? t.img : null);
   document.getElementById('tpl-modal').style.display = 'flex';
 }
@@ -3300,13 +3212,17 @@ function saveTplModal() {
   var imgEl = document.getElementById('tpl-img-preview');
   var hasImg = imgEl.classList.contains('has-img');
   var img = hasImg ? (imgEl.querySelector('img') ? imgEl.querySelector('img').src : null) : null;
+  var actIds = [];
+  document.querySelectorAll('#tpl-act-pick .tpl-act-cb').forEach(function(cb) {
+    if (cb.checked) actIds.push(cb.getAttribute('value'));
+  });
   var data = {
     name: name,
     img: img,
     state: document.getElementById('tpl-state').value,
     direction: document.getElementById('tpl-direction').value,
     guide: guide,
-    actId: document.getElementById('tpl-act').value || ''
+    actIds: actIds
   };
   if (TPL_MODAL_EDIT_ID) {
     var t = TPL_ALL().filter(function(x){ return x.id === TPL_MODAL_EDIT_ID; })[0];
@@ -3316,17 +3232,24 @@ function saveTplModal() {
     }
   } else {
     TPL_ALL().push({
-      id: 'tpl' + (TPL_ALL().length + 1), uses: 0, time: '09-02 现在',
+      id: 'tpl' + (TPL_ALL().length + 1), uses: 0, time: actNowStr(),
       img: data.img,
       state: data.state,
       direction: data.direction,
       name: data.name, guide: data.guide,
-      actId: data.actId
+      actIds: data.actIds
     });
     showToast('模板已新增：' + name, 'success');
   }
+  /* 归属活动变了 → 同步活动侧的启用清单 */
+  if (typeof pcSyncActivityFromAssets === 'function') pcSyncActivityFromAssets();
   closeTplModal();
   renderTplMgmt();
+}
+function actNowStr() {
+  var d = new Date();
+  function p(n) { return ('0' + n).slice(-2); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
 
 /* ================= 画风管理（V2.1：启停 + 提示词配置） ================= */
@@ -3334,8 +3257,13 @@ function stList() {
   return (window.__STYLE_LIST || []).map(function(s){ return { id: s.id, name: s.name, time: s.time || '—', mode: s.mode || '默认合成', sort: (s.sort === undefined ? 0 : s.sort), enabled: s.enabled !== false, prompt: s.prompt || '', desc: s.desc || '', img: s.img || null, gen: s.gen || 0, keep: s.keep || 0, drop: s.drop || 0, fail: s.fail || 0, actId: s.actId || '' }; });
 }
 function stActCell(s) {
-  if (!s.actId) return '<span style="color:#999">公共</span>';
-  return pcActivityName(s.actId) || '—';
+  var ids = s.actIds || [];
+  if (!ids.length) return '<span style="color:#999">公共</span>';
+  var names = ids.map(function(id) { return pcActivityOf(id) ? pcActivityOf(id).name : ''; }).filter(Boolean);
+  if (!names.length) return '<span style="color:#999">公共</span>';
+  var first = names[0];
+  var rest = names.length - 1;
+  return '<span title="' + names.join('、') + '">' + first + (rest > 0 ? ' <span style="color:#0B5DEA">+' + rest + '</span>' : '') + '</span>';
 }
 function stBg(id) { var n = 0; for (var i = 0; i < id.length; i++) n += id.charCodeAt(i); return (n % 8) + 1; }
 function stToast(msg) {
@@ -3362,7 +3290,6 @@ function stSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">公共（未指定活动）</option>';
   aEl.innerHTML = aOpts;
   renderStMgmt();
 }
@@ -3385,12 +3312,13 @@ function renderStMgmt() {
     if (st === 'off' && s.enabled) return false;
     if (kw && s.name.indexOf(kw) < 0) return false;
     if (custF) {
-      if (!s.actId) return false;
-      var a = pcActivityOf(s.actId);
-      if (!a || a.customerId !== custF) return false;
+      var hit = (s.actIds || []).some(function(id) {
+        var a = pcActivityOf(id);
+        return a && a.customerId === custF;
+      });
+      if (!hit) return false;
     }
-    if (actF === '__none') { if (s.actId) return false; }
-    else if (actF && s.actId !== actF) return false;
+    if (actF && (s.actIds || []).indexOf(actF) < 0) return false;
     return true;
   }).sort(function(a, b) { return a.sort - b.sort; });
   var tb = document.getElementById('st-tbody');
@@ -3485,13 +3413,14 @@ function openStModal(id) {
   document.getElementById('st-state').value = (s && s.enabled === false) ? 'off' : 'on';
   document.getElementById('st-desc').value = s ? (s.desc || '') : '';
   document.getElementById('st-prompt').value = s ? (s.prompt || '') : '';
-  var actSel = document.getElementById('st-act');
-  var actOpts = '<option value="">公共画风（留空）</option>';
+  var actBox = document.getElementById('st-act-pick');
+  var ahtml = '';
   (window.__ACTIVITY_LIST || []).forEach(function(a) {
-    actOpts += '<option value="' + a.id + '">' + a.name + '</option>';
+    var on = s && (s.actIds || []).indexOf(a.id) >= 0;
+    ahtml += '<label><input type="checkbox" class="st-act-cb" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + a.name + '</label>';
   });
-  actSel.innerHTML = actOpts;
-  actSel.value = (s && s.actId) ? s.actId : '';
+  if (!ahtml) ahtml = '<span style="color:#999;font-size:13px">暂无可选活动</span>';
+  actBox.innerHTML = ahtml;
   stRenderImg((s && s.img) ? s.img : null);
   document.getElementById('st-modal').style.display = 'flex';
 }
@@ -3505,6 +3434,10 @@ function saveStModal() {
   if (isNaN(sortVal)) { stToast('请填写排序'); return; }
   var pv = document.getElementById('st-img-preview');
   var img = (pv.classList.contains('has-img') && pv.querySelector('img')) ? pv.querySelector('img').src : null;
+  var actIds = [];
+  document.querySelectorAll('#st-act-pick .st-act-cb').forEach(function(cb) {
+    if (cb.checked) actIds.push(cb.getAttribute('value'));
+  });
   var data = {
     name: name,
     mode: document.getElementById('st-mode').value,
@@ -3514,7 +3447,7 @@ function saveStModal() {
     desc: document.getElementById('st-desc').value.trim(),
     prompt: prompt,
     img: img,
-    actId: document.getElementById('st-act').value || ''
+    actIds: actIds
   };
   if (ST_EDIT_ID) {
     var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === ST_EDIT_ID; })[0];
@@ -3525,6 +3458,8 @@ function saveStModal() {
     window.__STYLE_LIST.push(data);
     stToast('画风已新增：' + name);
   }
+  /* 归属活动变了 → 同步活动侧的启用清单 */
+  if (typeof pcSyncActivityFromAssets === 'function') pcSyncActivityFromAssets();
   closeStModal();
   renderStMgmt();
 }
@@ -3565,7 +3500,6 @@ function devSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">未分配</option>';
   aEl.innerHTML = aOpts;
   renderDevTable();
 }
@@ -3583,6 +3517,31 @@ function devStateTag(on) {
 }
 function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+/* ---- 行内启用/停用快捷操作：只原地变色，不重排序 ---- */
+function devQuickToggle(id) {
+  var d = pcDeviceOf(id);
+  if (!d) return;
+  if (d.enabled) {
+    if (!confirm('确定停用设备「' + d.name + '」吗？停用后该屏二维码不生效、不接收上屏。')) return;
+    d.enabled = false;
+    d.time = nowStr();
+    devShowToast('已停用：' + d.name);
+    renderDevTable();
+    return;
+  }
+  var conflict = pcEnabledDeviceByMac(d.mac, d.id);
+  if (conflict) {
+    var ca = conflict.actId ? pcActivityName(conflict.actId) : '未分配';
+    alert('启用失败：同一 MAC（' + d.mac + '）已被「' + conflict.name + '」启用，该设备属于' + ca + '。\n\n' +
+      '同一 MAC 地址只能同时启用一个设备。请先停用那条记录，再启用本条。');
+    return;
+  }
+  d.enabled = true;
+  d.time = nowStr();
+  devShowToast('已启用：' + d.name);
+  renderDevTable();
+}
+
 function renderDevTable() {
   var kw = (document.getElementById('f-dev-name').value || '').trim();
   var custF = document.getElementById('f-dev-cust').value;
@@ -3594,8 +3553,7 @@ function renderDevTable() {
       var a = d.actId ? pcActivityOf(d.actId) : null;
       if (!a || a.customerId !== custF) return false;
     }
-    if (actF === '__none') { if (devIsAssigned(d)) return false; }
-    else if (actF && d.actId !== actF) return false;
+    if (actF && d.actId !== actF) return false;
     if (stF === 'on' && !d.enabled) return false;
     if (stF === 'off' && d.enabled) return false;
     return true;
@@ -3620,6 +3578,9 @@ function renderDevTable() {
       '<td>' + (d.time || '—') + '</td>' +
       '<td>' +
         '<a class="action-link" onclick="openDevModal(\'' + d.id + '\')">编辑</a>' +
+        (d.enabled
+          ? '<a class="action-link" style="color:#fa8c16" onclick="devQuickToggle(\'' + d.id + '\')">停用</a>'
+          : '<a class="action-link" onclick="devQuickToggle(\'' + d.id + '\')">启用</a>') +
         '<a class="action-link warn" onclick="delDev(\'' + d.id + '\')">删除</a>' +
       '</td>' +
       '</tr>';
@@ -3666,14 +3627,13 @@ function devFillActSelect(sel) {
   (window.__ACTIVITY_LIST || []).forEach(function(a) {
     opts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  opts += '<option value="__none">未分配（公司自持）</option>';
   sel.innerHTML = opts;
 }
 function devSyncCustomerTip() {
   var v = document.getElementById('dev-act').value;
   var tip = document.getElementById('dev-cust-tip');
-  if (!v || v === '__none') {
-    tip.textContent = '未分配时不带出客户，该屏不归属任何活动，扫码不进入活动流程';
+  if (!v) {
+    tip.textContent = '所属活动为必填项：设备必须归属一个活动，扫码才能进入该活动';
     return;
   }
   var a = pcActivityOf(v);
@@ -3702,7 +3662,7 @@ function openDevModal(id) {
   document.getElementById('dev-name').value = d ? d.name : '';
   document.getElementById('dev-mac').value = d ? (d.mac || '') : '';
   devFillActSelect(document.getElementById('dev-act'));
-  document.getElementById('dev-act').value = d ? (d.actId || '__none') : '';
+  document.getElementById('dev-act').value = d ? (d.actId || '') : '';
   document.getElementById('dev-state').value = (d && d.enabled === false) ? 'off' : 'on';
   devSyncCustomerTip();
   DEV_IMG.carousel = (d && d.carouselImg) ? d.carouselImg : null;
@@ -3720,19 +3680,20 @@ function saveDevModal() {
   if (!name) { devShowToast('请填写设备名称'); return; }
   if (!mac) { devShowToast('请填写设备 MAC'); return; }
   if (!actV) { devShowToast('请选择所属活动'); return; }
-  /* 硬约束：同一 MAC 同时只能有一条「启用」记录（原型仅前端拦截，正式版由服务端校验） */
-  if (stateOn) {
-    var conflict = pcEnabledDeviceByMac(mac, DEV_EDIT_ID);
-    if (conflict) {
-      var ca = conflict.actId ? pcActivityName(conflict.actId) : '未分配';
-      devShowToast('该 MAC（' + mac + '）已被「' + ca + '」的设备「' + conflict.name + '」启用，请先停用那条记录');
-      return;
-    }
+  /* 硬约束：同一 MAC 同时只能有一条「启用」记录
+     (1) 新建时：若同 MAC 已有启用记录 → 拦截，提示先停用再建
+     (2) 编辑时：若同 MAC 已有别的启用记录 → 拦截，提示冲突是哪条 */
+  var conflict = pcEnabledDeviceByMac(mac, DEV_EDIT_ID);
+  if (conflict) {
+    var ca = conflict.actId ? pcActivityName(conflict.actId) : '未分配';
+    alert('保存失败：同一 MAC（' + mac + '）已被「' + conflict.name + '」启用，该设备属于「' + ca + '」。\n\n' +
+      '同一 MAC 地址只能同时启用一个设备。请先停用那条记录，再新建 / 启用本条。');
+    return;
   }
   var data = {
     name: name,
     mac: mac,
-    actId: (actV === '__none') ? '' : actV,
+    actId: actV,
     enabled: stateOn,
     carousel: !!DEV_IMG.carousel,
     carouselImg: DEV_IMG.carousel,
@@ -3762,23 +3723,27 @@ function init_device_mgmt() { devFillFilters(); renderDevTable(); }
 init_device_mgmt();
 
 /* ================= 活动管理（数据的最上层归属） ================= */
-var ACT_SELECTED = {};
 var ACT_PAGE = 1;
 var ACT_PAGE_SIZE = 10;
 var ACT_EDIT_ID = null;
-/* 配置弹窗内的勾选暂存，保存时写回活动 */
+/* 弹窗内勾选暂存，保存时写回模板/画风的 actIds，再由 sync 重建活动侧 */
 var AC_PICK_STYLE = {};
 var AC_PICK_TPL = {};
 
 function actList() { return (window.__ACTIVITY_LIST = window.__ACTIVITY_LIST || []); }
+function actNowStr() {
+  var d = new Date();
+  function p(n) { return ('0' + n).slice(-2); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
 function actShowToast(msg) {
   var ta = document.getElementById('act-toast-area');
   ta.innerHTML = '<div class="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(0,0,0,0.82);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px">' + msg + '</div>';
   setTimeout(function(){ ta.innerHTML = ''; }, 1800);
 }
-function actToast(msg) { actShowToast(msg); }
-function actStateTag(st) {
-  return '<span class="act-state ' + (st || 'notstart') + '">' + pcActivityStatusText(st) + '</span>';
+function actStatusKey(a) { return (a.status === 'running' || a.status === 'ended') ? a.status : 'notstart'; }
+function actStateTag(k) {
+  return '<span class="act-state ' + k + '">' + pcActivityStatusText(k) + '</span>';
 }
 function actFillCustomerFilter() {
   var el = document.getElementById('act-f-cust');
@@ -3789,257 +3754,156 @@ function actFillCustomerFilter() {
   });
   el.innerHTML = opts;
 }
-function actToggleAll(el) {
-  actList().forEach(function(a) { if (el.checked) ACT_SELECTED[a.id] = true; else delete ACT_SELECTED[a.id]; });
-  renderActTable();
-}
 function renderActTable() {
   var kw = (document.getElementById('act-f-name').value || '').trim();
   var custF = document.getElementById('act-f-cust').value;
   var stF = document.getElementById('act-f-state').value;
   var list = actList().filter(function(a) {
-    if (kw && a.name.indexOf(kw) < 0 && (a.code || '').indexOf(kw) < 0) return false;
+    if (kw && a.name.indexOf(kw) < 0) return false;
     if (custF && a.customerId !== custF) return false;
-    if (stF && (a.status || 'notstart') !== stF) return false;
+    if (stF && actStatusKey(a) !== stF) return false;
     return true;
   });
-  /* 默认按更新时间倒序 */
   list = list.slice().sort(function(a, b) { return a.updateTime < b.updateTime ? 1 : (a.updateTime > b.updateTime ? -1 : 0); });
   var start = (ACT_PAGE - 1) * ACT_PAGE_SIZE;
   var pageList = list.slice(start, start + ACT_PAGE_SIZE);
   var tb = document.getElementById('act-tbody');
   var html = '';
   pageList.forEach(function(a) {
-    var ck = ACT_SELECTED[a.id] ? ' checked' : '';
     var c = pcCustomerOf(a.customerId);
-    var devCount = (window.__DEVICE_LIST || []).filter(function(d){ return d.actId === a.id; }).length;
+    var st = actStatusKey(a);
+    var ended = (st === 'ended');
     html += '<tr>' +
-      '<td class="td-check"><input type="checkbox" data-aid="' + a.id + '"' + ck + ' onclick="actCheckRow(this)"></td>' +
-      '<td class="act-name">' + a.name + (devCount ? ' <span style="color:#999;font-weight:400;font-size:12px">（' + devCount + ' 台设备）</span>' : '') + '</td>' +
-      '<td>' + (a.code || '—') + '</td>' +
+      '<td>' + a.name + '</td>' +
       '<td>' + (c ? c.name : '—') + '</td>' +
-      '<td>' + actStateTag(a.status) + '</td>' +
-      '<td>' + (a.startTime || '—') + '</td>' +
-      '<td>' + (a.endTime || '—') + '</td>' +
-      '<td class="act-num">' + (a.scanCount || 0) + '</td>' +
-      '<td class="act-num">' + (a.workCount || 0) + '</td>' +
-      '<td class="act-num">' + (a.pickCount || 0) + '</td>' +
+      '<td>' + actStateTag(st) + '</td>' +
+      '<td>' + (a.startTime || '—') + '<br><span style="color:#999">' + (a.endTime || '—') + '</span></td>' +
       '<td>' + (a.updateTime || '—') + '</td>' +
       '<td>' +
         '<a class="action-link" onclick="actOpenModal(\'' + a.id + '\')">编辑</a>' +
-        '<a class="action-link" onclick="actCopy(\'' + a.id + '\')">复制</a>' +
-        '<a class="action-link" onclick="actShowQr(\'' + a.id + '\')">二维码</a>' +
-        '<a class="action-link" onclick="actShowData(\'' + a.id + '\')">数据</a>' +
-        (a.status === 'running'
-          ? '<a class="action-link" style="color:#fa8c16" onclick="actTogglePause(\'' + a.id + '\')">暂停</a>'
-          : (a.status === 'ended'
-              ? '<a class="action-link" onclick="actTogglePause(\'' + a.id + '\')">启用</a>'
-              : '<a class="action-link" onclick="actTogglePause(\'' + a.id + '\')">启用</a>')) +
-        (a.status === 'running' || a.status === 'paused'
-          ? '<a class="action-link warn" onclick="actEnd(\'' + a.id + '\')">结束</a>'
-          : '') +
+        (ended
+          ? '<span style="color:#ccc;margin-right:12px">启用</span>'
+          : '<a class="action-link" onclick="actEnable(\'' + a.id + '\')">启用</a>') +
+        (ended
+          ? '<span style="color:#ccc">结束</span>'
+          : '<a class="action-link warn" onclick="actEnd(\'' + a.id + '\')">结束</a>') +
       '</td>' +
       '</tr>';
   });
-  if (!pageList.length) html = '<tr><td colspan="12" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的活动</td></tr>';
+  if (!pageList.length) html = '<tr><td colspan="6" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的活动</td></tr>';
   tb.innerHTML = html;
-  var allEl = document.getElementById('act-all');
-  if (allEl) allEl.checked = list.length > 0 && list.every(function(a) { return ACT_SELECTED[a.id]; });
   window.__PAGER['act-pager'] = function(pg) { ACT_PAGE = pg; renderActTable(); };
   renderPager('act-pager', list.length, ACT_PAGE, ACT_PAGE_SIZE);
-}
-function actCheckRow(el) {
-  var id = el.getAttribute('data-aid');
-  if (el.checked) ACT_SELECTED[id] = true; else delete ACT_SELECTED[id];
 }
 function actApplyFilter() { ACT_PAGE = 1; renderActTable(); }
 function actResetFilter() {
   document.getElementById('act-f-name').value = '';
   document.getElementById('act-f-cust').value = '';
   document.getElementById('act-f-state').value = '';
-  ACT_SELECTED = {};
   renderActTable();
 }
-/* ---- 行内状态操作：只原地置灰，不重排序 ---- */
-function actTogglePause(id) {
+/* 行内状态操作：只原地变色，不重排序 */
+function actEnable(id) {
   var a = pcActivityOf(id);
   if (!a) return;
-  a.status = (a.status === 'running') ? 'paused' : 'running';
+  a.status = 'running';
   a.updateTime = actNowStr();
-  actShowToast(a.status === 'running' ? '已启用：' + a.name : '已暂停：' + a.name);
+  actShowToast('已启用：' + a.name);
   renderActTable();
 }
 function actEnd(id) {
   var a = pcActivityOf(id);
   if (!a) return;
-  if (!confirm('确定结束活动「' + a.name + '」吗？结束后扫码将按「结束后可查看历史作品」设置处理。')) return;
+  if (!confirm('确定结束活动「' + a.name + '」吗？结束后不可再启用。')) return;
   a.status = 'ended';
   a.updateTime = actNowStr();
   actShowToast('活动已结束：' + a.name);
   renderActTable();
 }
-function actCopy(id) {
-  var a = pcActivityOf(id);
-  if (!a) return;
-  if (!confirm('确定复制活动「' + a.name + '」吗？复制后为新活动，不继承设备绑定。')) return;
-  var n = JSON.parse(JSON.stringify(a));
-  n.id = 'act' + (actList().length + 1);
-  n.code = (a.code || 'ACT') + '-COPY';
-  n.name = a.name + '（副本）';
-  n.shortName = (a.shortName || '') + '副本';
-  n.status = 'notstart';
-  n.scanCount = 0; n.workCount = 0; n.pickCount = 0;
-  n.updateTime = actNowStr();
-  actList().push(n);
-  actShowToast('已复制活动：' + n.name);
-  renderActTable();
+
+/* ---- 创作能力选择器 ---- */
+function actTplBg(id) {
+  var n = 0; for (var i = 0; i < id.length; i++) n += id.charCodeAt(i);
+  return (n % 8) + 1;
 }
-function actShowQr(id) {
-  var a = pcActivityOf(id);
-  if (!a) return;
-  actShowToast('二维码：' + actLink(a));
+function actRenderStylePick() {
+  var kw = (document.getElementById('ac-style-kw').value || '').trim();
+  var all = (window.__STYLE_LIST || []).slice().sort(function(a, b) { return (a.sort || 0) - (b.sort || 0); });
+  var list = all.filter(function(s) { return !kw || s.name.indexOf(kw) >= 0; });
+  var html = '';
+  list.forEach(function(s) {
+    var off = s.enabled === false;
+    html += '<tr>' +
+      '<td><input type="checkbox" data-id="' + s.id + '"' + (AC_PICK_STYLE[s.id] ? ' checked' : '') + ' onclick="acPickStyle(this)"></td>' +
+      '<td><span class="ac-thumb style effect-' + s.id + '"><span class="pt-person2"></span></span></td>' +
+      '<td>' + s.name + '</td>' +
+      '<td>' + (s.mode || '默认合成') + '</td>' +
+      '<td>' + (off ? '<span class="ac-state-tag off">停用</span>' : '<span class="ac-state-tag on">启用</span>') + '</td>' +
+      '</tr>';
+  });
+  if (!list.length) html = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px 0">没有匹配的画风</td></tr>';
+  document.getElementById('ac-style-rows').innerHTML = html;
+  document.getElementById('ac-style-count').textContent = '已选 ' + Object.keys(AC_PICK_STYLE).length + ' 个';
+  var allEl = document.getElementById('ac-style-all');
+  if (allEl) allEl.checked = list.length > 0 && list.every(function(s) { return !!AC_PICK_STYLE[s.id]; });
 }
-function actShowData(id) {
-  var a = pcActivityOf(id);
-  if (!a) return;
-  var lines = [
-    '活动：' + a.name,
-    '扫码人数：' + (a.scanCount || 0) + ' 人',
-    '成功作品数：' + (a.workCount || 0) + ' 件',
-    '精选作品数：' + (a.pickCount || 0) + ' 件',
-    '现场风采：仅展示本活动已上屏作品'
-  ];
-  alert(lines.join('\n'));
+function actRenderTplPick() {
+  var kw = (document.getElementById('ac-tpl-kw').value || '').trim();
+  var list = (window.__TPL_LIST || []).filter(function(t) { return !kw || t.name.indexOf(kw) >= 0; });
+  var html = '';
+  list.forEach(function(t) {
+    var off = t.state === 'off';
+    html += '<tr>' +
+      '<td><input type="checkbox" data-id="' + t.id + '"' + (AC_PICK_TPL[t.id] ? ' checked' : '') + ' onclick="acPickTpl(this)"></td>' +
+      '<td><span class="ac-thumb"><span class="pt-bg2 wb-' + actTplBg(t.id) + '"></span><span class="pt-person2"></span></span></td>' +
+      '<td>' + t.name + '</td>' +
+      '<td>' + (t.direction || '—') + '</td>' +
+      '<td>' + (off ? '<span class="ac-state-tag off">停用</span>' : '<span class="ac-state-tag on">启用</span>') + '</td>' +
+      '</tr>';
+  });
+  if (!list.length) html = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px 0">没有匹配的模板</td></tr>';
+  document.getElementById('ac-tpl-rows').innerHTML = html;
+  document.getElementById('ac-tpl-count').textContent = '已选 ' + Object.keys(AC_PICK_TPL).length + ' 个';
+  var allEl = document.getElementById('ac-tpl-all');
+  if (allEl) allEl.checked = list.length > 0 && list.every(function(t) { return !!AC_PICK_TPL[t.id]; });
 }
-function actLink(a) {
-  var devs = (window.__DEVICE_LIST || []).filter(function(d){ return d.actId === a.id; });
-  var sid = devs.length ? devs[0].id : '';
-  var ch = a.channel || '';
-  return 'https://domain.example/album?a=' + a.id + '&s=' + sid + (ch ? '&c=' + ch : '');
+function acPickStyle(el) {
+  var id = el.getAttribute('data-id');
+  if (el.checked) AC_PICK_STYLE[id] = true; else delete AC_PICK_STYLE[id];
+  actRenderStylePick();
+}
+function acPickTpl(el) {
+  var id = el.getAttribute('data-id');
+  if (el.checked) AC_PICK_TPL[id] = true; else delete AC_PICK_TPL[id];
+  actRenderTplPick();
+}
+function actToggleAllStyle() {
+  var kw = (document.getElementById('ac-style-kw').value || '').trim();
+  var list = (window.__STYLE_LIST || []).filter(function(s) { return !kw || s.name.indexOf(kw) >= 0; });
+  var allOn = list.length > 0 && list.every(function(s) { return !!AC_PICK_STYLE[s.id]; });
+  list.forEach(function(s) { if (allOn) delete AC_PICK_STYLE[s.id]; else AC_PICK_STYLE[s.id] = true; });
+  actRenderStylePick();
+}
+function actToggleAllTpl() {
+  var kw = (document.getElementById('ac-tpl-kw').value || '').trim();
+  var list = (window.__TPL_LIST || []).filter(function(t) { return !kw || t.name.indexOf(kw) >= 0; });
+  var allOn = list.length > 0 && list.every(function(t) { return !!AC_PICK_TPL[t.id]; });
+  list.forEach(function(t) { if (allOn) delete AC_PICK_TPL[t.id]; else AC_PICK_TPL[t.id] = true; });
+  actRenderTplPick();
 }
 
-/* ---- 配置弹窗 ---- */
-var AC_TABS = ['basic', 'time', 'visual', 'ability', 'limit', 'pick', 'data', 'qr'];
+/* ---- 弹窗 ---- */
+var AC_TABS = ['basic', 'ability'];
 function actSwitchTab(name, el) {
   AC_TABS.forEach(function(t) {
     var pane = document.getElementById('ac-pane-' + t);
     if (pane) pane.classList.remove('active');
   });
-  document.querySelectorAll('.ac-tab').forEach(function(t) { t.classList.remove('active'); });
+  var tabs = document.querySelectorAll('#ac-modal .ac-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
   var p = document.getElementById('ac-pane-' + name);
   if (p) p.classList.add('active');
   if (el) el.classList.add('active');
-}
-function actRenderStylePick() {
-  var box = document.getElementById('ac-style-pick');
-  var html = '';
-  (window.__STYLE_LIST || []).forEach(function(s) {
-    var own = s.actId ? 'own' : 'pub';
-    var ownTxt = s.actId ? pcActivityName(s.actId) : '公共';
-    var off = s.enabled === false;
-    html += '<div class="ac-pick-row">' +
-      '<input type="checkbox" data-kind="style" data-id="' + s.id + '"' + (AC_PICK_STYLE[s.id] ? ' checked' : '') + ' onclick="acPick(this)">' +
-      '<span style="flex:1">' + s.name + '</span>' +
-      '<span class="tag ' + own + '">' + ownTxt + '</span>' +
-      (off ? '<span class="tag off">已停用</span>' : '') +
-      '</div>';
-  });
-  box.innerHTML = html || '<div class="ac-pick-row"><span style="color:#999">暂无可选画风</span></div>';
-}
-function actRenderTplPick() {
-  var box = document.getElementById('ac-tpl-pick');
-  var html = '';
-  (window.__TPL_LIST || []).forEach(function(t) {
-    var own = t.actId ? 'own' : 'pub';
-    var ownTxt = t.actId ? pcActivityName(t.actId) : '公共';
-    var off = t.state === 'off';
-    html += '<div class="ac-pick-row">' +
-      '<input type="checkbox" data-kind="tpl" data-id="' + t.id + '"' + (AC_PICK_TPL[t.id] ? ' checked' : '') + ' onclick="acPick(this)">' +
-      '<span style="flex:1">' + t.name + '</span>' +
-      '<span class="tag ' + own + '">' + ownTxt + '</span>' +
-      (off ? '<span class="tag off">已停用</span>' : '') +
-      '</div>';
-  });
-  box.innerHTML = html || '<div class="ac-pick-row"><span style="color:#999">暂无可选模板</span></div>';
-}
-function acPick(el) {
-  var kind = el.getAttribute('data-kind');
-  var id = el.getAttribute('data-id');
-  var store = (kind === 'style') ? AC_PICK_STYLE : AC_PICK_TPL;
-  if (el.checked) store[id] = true; else delete store[id];
-  if (kind === 'tpl') actRenderDefaultTpl();
-  /* 已保存的活动：实时预览勾选后的前台可见范围 */
-  if (ACT_EDIT_ID && (kind === 'style' || kind === 'tpl')) actRenderScopePreview();
-}
-function actRenderDefaultTpl() {
-  var sel = document.getElementById('ac-default-tpl');
-  var cur = sel.value;
-  var opts = '<option value="">未设置</option>';
-  Object.keys(AC_PICK_TPL).forEach(function(id) {
-    var t = (window.__TPL_LIST || []).filter(function(x){ return x.id === id; })[0];
-    if (t) opts += '<option value="' + t.id + '">' + t.name + '</option>';
-  });
-  sel.innerHTML = opts;
-  if (cur && AC_PICK_TPL[cur]) sel.value = cur;
-}
-function actRenderDevPick(aId) {
-  var box = document.getElementById('ac-dev-pick');
-  var list = (window.__DEVICE_LIST || []).filter(function(d){ return d.actId === aId; });
-  if (!list.length) {
-    box.innerHTML = '<div class="ac-pick-row"><span style="color:#999">本活动还没有绑定设备，去「设备管理」新建或改绑</span></div>';
-    return;
-  }
-  var html = '';
-  list.forEach(function(d) {
-    html += '<div class="ac-dev-row">' +
-      '<span style="flex:1">' + d.name + '　<span style="color:#999">' + d.mac + '</span></span>' +
-      '<span class="dev-state ' + (d.enabled ? 's-on' : 's-off') + '">' + (d.enabled ? '启用' : '停用') + '</span>' +
-      '</div>';
-  });
-  box.innerHTML = html;
-}
-function actUpdateQrLink(a) {
-  var el = document.getElementById('ac-qr-url');
-  if (el) el.textContent = actLink(a);
-}
-function actCopyLink() {
-  var a = ACT_EDIT_ID ? pcActivityOf(ACT_EDIT_ID) : { id: '(新活动保存后生成)' };
-  actShowToast('已复制链接：' + actLink(a));
-}
-function actRenderScopePreview() {
-  var a = ACT_EDIT_ID ? pcActivityOf(ACT_EDIT_ID) : null;
-  var el = document.getElementById('ac-scope-preview');
-  if (!el) return;
-  if (!a) {
-    el.innerHTML = '<div class="ac-tip">保存活动后，这里显示扫码进本活动时前台实际能看到的画风与模板。</div>';
-    return;
-  }
-  /* 按当前勾选实时算，不用已保存值 */
-  var styles = Object.keys(AC_PICK_STYLE).map(function(id) {
-    var s = (window.__STYLE_LIST || []).filter(function(x){ return x.id === id; })[0];
-    return s ? s.name : '';
-  }).filter(Boolean);
-  var tpls = Object.keys(AC_PICK_TPL).map(function(id) {
-    var t = (window.__TPL_LIST || []).filter(function(x){ return x.id === id; })[0];
-    return t ? t.name : '';
-  }).filter(Boolean);
-  var devs = pcActivityEnabledDevices(a.id);
-  var allDevs = pcActivityDevices(a.id);
-  var html = '<div class="ac-row" style="margin:0 0 12px"><div class="ac-field">' +
-    '<label class="ac-lbl">扫码进本活动时，前台可见画风（' + styles.length + '）</label>' +
-    '<div class="ac-tip" style="font-size:13px;color:#333">' + (styles.length ? styles.join('、') : '无') + '</div>' +
-    '</div><div class="ac-field">' +
-    '<label class="ac-lbl">前台可见模板（' + tpls.length + '）</label>' +
-    '<div class="ac-tip" style="font-size:13px;color:#333">' + (tpls.length ? tpls.join('、') : '无') + '</div>' +
-    '</div></div>' +
-    '<div class="ac-tip">扫码入口设备：本活动共绑定 ' + allDevs.length + ' 台，其中启用 ' + devs.length +
-    ' 台。停用设备的二维码不生效；现场风采只展示本活动已上屏作品。</div>';
-  el.innerHTML = html;
-}
-function actNowStr() {
-  var d = new Date();
-  function p(n) { return ('0' + n).slice(-2); }
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
 function actOpenModal(id) {
   ACT_EDIT_ID = id || null;
@@ -4053,41 +3917,26 @@ function actOpenModal(id) {
   var custSel = document.getElementById('ac-cust');
   custSel.innerHTML = cOpts;
   document.getElementById('ac-name').value = a ? a.name : '';
-  document.getElementById('ac-short').value = a ? (a.shortName || '') : '';
-  document.getElementById('ac-code').value = a ? (a.code || '') : '';
-  custSel.value = a ? (a.customerId || '') : '';
-  document.getElementById('ac-fullname').value = a ? (a.fullName || '') : '';
   document.getElementById('ac-intro').value = a ? (a.intro || '') : '';
   document.getElementById('ac-start').value = a ? (a.startTime || '') : '';
   document.getElementById('ac-end').value = a ? (a.endTime || '') : '';
-  document.getElementById('ac-state').value = a ? (a.status || 'notstart') : 'notstart';
-  document.getElementById('ac-viewafter').value = (a && a.viewAfterEnd) ? '1' : '0';
-  document.getElementById('ac-title').value = a ? (a.title || '') : '';
-  document.getElementById('ac-slogan').value = a ? (a.slogan || '') : '';
-  document.getElementById('ac-logo').value = a ? (a.logo || '') : '';
-  document.getElementById('ac-color').value = a ? (a.themeColor || '') : '';
-  document.getElementById('ac-disclaimer').value = a ? (a.disclaimer || '') : '';
-  document.getElementById('ac-daily').value = a ? (a.dailyLimit || 3) : 3;
-  document.getElementById('ac-ailimit').value = a ? (a.aiLimit || 5) : 5;
-  document.getElementById('ac-overtip').value = a ? (a.overTip || '') : '';
-  document.getElementById('ac-pickopen').value = (a && a.pickOpen) ? '1' : '0';
-  document.getElementById('ac-mustpass').value = (a && a.mustAiPass) ? '1' : '0';
-  document.getElementById('ac-picknote').value = a ? (a.pickNote || '') : '';
-  document.getElementById('ac-savemode').value = a ? (a.saveMode || 'long') : 'long';
-  document.getElementById('ac-savedays').value = a ? (a.saveDays || '') : '';
-  document.getElementById('ac-channel').value = a ? (a.channel || '') : '';
+  document.getElementById('ac-state').value = a ? actStatusKey(a) : 'notstart';
+  custSel.value = a ? (a.customerId || '') : '';
+  var aid = a ? a.id : '';
   AC_PICK_STYLE = {};
   AC_PICK_TPL = {};
-  ((a && a.styleIds) || []).forEach(function(id2) { AC_PICK_STYLE[id2] = true; });
-  ((a && a.tplIds) || []).forEach(function(id2) { AC_PICK_TPL[id2] = true; });
+  (window.__STYLE_LIST || []).forEach(function(s) {
+    if (aid && (s.actIds || []).indexOf(aid) >= 0) AC_PICK_STYLE[s.id] = true;
+  });
+  (window.__TPL_LIST || []).forEach(function(t) {
+    if (aid && (t.actIds || []).indexOf(aid) >= 0) AC_PICK_TPL[t.id] = true;
+  });
+  document.getElementById('ac-style-kw').value = '';
+  document.getElementById('ac-tpl-kw').value = '';
   actRenderStylePick();
   actRenderTplPick();
-  actRenderDefaultTpl();
-  actRenderScopePreview();
-  if (a && a.defaultTpl) { var s = document.getElementById('ac-default-tpl'); if (s.querySelector('option[value="' + a.defaultTpl + '"]')) s.value = a.defaultTpl; }
-  actRenderDevPick(a ? a.id : '');
-  actUpdateQrLink(a || { id: '(新活动保存后生成)' });
-  document.querySelectorAll('.ac-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
+  var tabs = document.querySelectorAll('#ac-modal .ac-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === 0);
   AC_TABS.forEach(function(t) { var p = document.getElementById('ac-pane-' + t); if (p) p.classList.remove('active'); });
   var p0 = document.getElementById('ac-pane-basic');
   if (p0) p0.classList.add('active');
@@ -4096,60 +3945,57 @@ function actOpenModal(id) {
 function actCloseModal() { document.getElementById('ac-modal').style.display = 'none'; }
 function actSave() {
   var name = document.getElementById('ac-name').value.trim();
-  var short = document.getElementById('ac-short').value.trim();
-  var code = document.getElementById('ac-code').value.trim();
   var custId = document.getElementById('ac-cust').value;
-  var fullName = document.getElementById('ac-fullname').value.trim();
   if (!name) { actShowToast('请填写活动名称'); return; }
-  if (!short) { actShowToast('请填写活动简称'); return; }
-  if (!code) { actShowToast('请填写活动编号'); return; }
   if (!custId) { actShowToast('请选择所属客户'); return; }
-  if (!fullName) { actShowToast('请填写活动全称'); return; }
   var styleIds = Object.keys(AC_PICK_STYLE);
   var tplIds = Object.keys(AC_PICK_TPL);
-  if (!tplIds.length && !confirm('本活动没有勾选任何模板，前台将没有可用模板。确定继续吗？')) return;
   var data = {
-    name: name, shortName: short, code: code, customerId: custId, fullName: fullName,
-    intro: document.getElementById('ac-intro').value.trim(),
+    name: name,
+    customerId: custId,
     status: document.getElementById('ac-state').value,
+    intro: document.getElementById('ac-intro').value.trim(),
     startTime: document.getElementById('ac-start').value.trim(),
     endTime: document.getElementById('ac-end').value.trim(),
-    viewAfterEnd: document.getElementById('ac-viewafter').value === '1',
-    title: document.getElementById('ac-title').value.trim(),
-    slogan: document.getElementById('ac-slogan').value.trim(),
-    logo: document.getElementById('ac-logo').value.trim(),
-    themeColor: document.getElementById('ac-color').value.trim(),
-    disclaimer: document.getElementById('ac-disclaimer').value.trim(),
-    styleIds: styleIds, tplIds: tplIds,
-    defaultTpl: document.getElementById('ac-default-tpl').value || '',
-    dailyLimit: parseInt(document.getElementById('ac-daily').value, 10) || 0,
-    aiLimit: parseInt(document.getElementById('ac-ailimit').value, 10) || 0,
-    overTip: document.getElementById('ac-overtip').value.trim(),
-    pickOpen: document.getElementById('ac-pickopen').value === '1',
-    mustAiPass: document.getElementById('ac-mustpass').value === '1',
-    pickNote: document.getElementById('ac-picknote').value.trim(),
-    saveMode: document.getElementById('ac-savemode').value,
-    saveDays: document.getElementById('ac-savedays').value.trim(),
-    channel: document.getElementById('ac-channel').value.trim(),
     updateTime: actNowStr()
   };
+  var actId;
   if (ACT_EDIT_ID) {
     var a = pcActivityOf(ACT_EDIT_ID);
-    if (a) {
-      for (var k in data) a[k] = data[k];
-      actShowToast('活动已保存：' + name);
-    }
+    if (a) { for (var k in data) a[k] = data[k]; actId = a.id; }
+    actShowToast('活动已保存：' + name);
   } else {
     data.id = 'act' + (actList().length + 1);
+    data.code = 'ACT-2026-' + ('00' + (actList().length + 1)).slice(-3);
     data.scanCount = 0; data.workCount = 0; data.pickCount = 0;
     actList().push(data);
+    actId = data.id;
     actShowToast('活动已新建：' + name);
   }
+  /* 写回模板/画风侧 actIds（多选），再由 sync 重建各活动的启用清单 */
+  (window.__TPL_LIST || []).forEach(function(t) {
+    var ids = t.actIds || [];
+    var i = ids.indexOf(actId);
+    var want = tplIds.indexOf(t.id) >= 0;
+    if (want && i < 0) { t.actIds = ids.concat([actId]); t.time = actNowStr(); }
+    else if (!want && i >= 0) { t.actIds = ids.filter(function(x) { return x !== actId; }); t.time = actNowStr(); }
+  });
+  (window.__STYLE_LIST || []).forEach(function(s) {
+    var ids = s.actIds || [];
+    var i = ids.indexOf(actId);
+    var want = styleIds.indexOf(s.id) >= 0;
+    if (want && i < 0) s.actIds = ids.concat([actId]);
+    else if (!want && i >= 0) s.actIds = ids.filter(function(x) { return x !== actId; });
+  });
+  pcSyncActivityFromAssets();
   actCloseModal();
   renderActTable();
-  /* 客户下拉可能新增，刷新其他页口径 */
-  if (typeof renderPhotoTable === 'function') { try { photoSyncScreenFilters(); } catch (e) {} }
-  if (typeof renderSelTable === 'function') { try { selSyncScreenFilters(); } catch (e) {} }
+  actRefreshPeers();
+}
+/* 刷新模板/画风列表，让归属列立刻反映本次改动 */
+function actRefreshPeers() {
+  if (typeof renderTplMgmt === 'function') { try { renderTplMgmt(); } catch (e) {} }
+  if (typeof renderStMgmt === 'function') { try { renderStMgmt(); } catch (e) {} }
 }
 function init_activity_mgmt() { actFillCustomerFilter(); renderActTable(); }
 init_activity_mgmt();

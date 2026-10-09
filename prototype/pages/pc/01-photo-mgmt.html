@@ -247,7 +247,6 @@ function photoSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">未分配</option>';
   aEl.innerHTML = aOpts;
   photoSyncScreenFilters();
   renderPhotoTable();
@@ -256,8 +255,7 @@ function photoSyncActivityFilter() {
 function photoSyncScreenFilters() {
   var actF = document.getElementById('f-act').value;
   var devs = (window.__DEVICE_LIST || []).filter(function(d) {
-    if (!actF || actF === '__none') return true;
-    return actF === '__none' ? false : (d.actId === actF);
+    return !actF || d.actId === actF;
   });
   var opts = '<option value="">全部</option>';
   devs.forEach(function(d) {
@@ -281,8 +279,7 @@ function photoMatchFilter(p) {
     var a = actId ? pcActivityOf(actId) : null;
     if (!a || a.customerId !== custF) return false;
   }
-  if (actF === '__none') { if (actId) return false; }
-  else if (actF && actId !== actF) return false;
+  if (actF && actId !== actF) return false;
   return true;
 }
 function renderStatCards(list) {

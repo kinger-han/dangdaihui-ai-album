@@ -274,7 +274,6 @@ function selSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">未分配</option>';
   aEl.innerHTML = aOpts;
   selSyncScreenFilters();
   renderSelTable();
@@ -283,8 +282,7 @@ function selSyncScreenFilters() {
   var actF = document.getElementById('f-sel-act').value;
   var opts = '<option value="">全部</option>';
   (window.__DEVICE_LIST || []).forEach(function(d) {
-    if (actF && actF !== '__none' && d.actId !== actF) return;
-    if (actF === '__none' && d.actId) return;
+    if (actF && d.actId !== actF) return;
     var label = d.name;
     if (d.actId) { var a = pcActivityOf(d.actId); if (a) label += '（' + a.shortName + '）'; }
     opts += '<option value="' + d.id + '">' + label + '</option>';
@@ -301,8 +299,7 @@ function selMatchFilter(p) {
     var a = actId ? pcActivityOf(actId) : null;
     if (!a || a.customerId !== custF) return false;
   }
-  if (actF === '__none') { if (actId) return false; }
-  else if (actF && actId !== actF) return false;
+  if (actF && actId !== actF) return false;
   return true;
 }
 function renderSelTable() {

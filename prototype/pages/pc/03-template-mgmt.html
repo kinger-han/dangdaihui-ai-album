@@ -45,6 +45,9 @@
     .tpl-img-ph::after { content: '模板图片'; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 12px; color: #b8a88f; }
     .tpl-img-ops { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
     .tpl-img-tip { font-size: 12px; color: #999; line-height: 1.6; margin-top: 4px; }
+    /* 归属活动多选 */
+    .tf-act-pick { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 4px; max-height: 110px; overflow-y: auto; }
+    .tf-act-pick label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
   </style>
 
   <div class="filter-bar">
@@ -149,8 +152,8 @@
         <div class="tf-row">
           <div class="tf-field">
             <label class="tf-label">归属活动</label>
-            <select class="tf-input" id="tpl-act"></select>
-            <div class="tf-tip">留空 = 公共模板，所有活动都可勾选使用；指定活动 = 该活动私有，其他活动看不到</div>
+            <div class="tf-act-pick" id="tpl-act-pick"></div>
+            <div class="tf-tip">不勾选 = 公共模板，所有活动都能选；勾选 = 仅这些活动可用。保存后自动同步到「活动管理 → 创作能力 → 启用模板」</div>
           </div>
         </div>
 
@@ -174,8 +177,13 @@ function tplBgOf(id) {
   return (n % 8) + 1;
 }
 function tplActCell(t) {
-  if (!t.actId) return '<span style="color:#999">公共</span>';
-  return pcActivityName(t.actId) || '—';
+  var ids = t.actIds || [];
+  if (!ids.length) return '<span style="color:#999">公共</span>';
+  var names = ids.map(function(id) { return pcActivityOf(id) ? pcActivityOf(id).name : ''; }).filter(Boolean);
+  if (!names.length) return '<span style="color:#999">公共</span>';
+  var first = names[0];
+  var rest = names.length - 1;
+  return '<span title="' + names.join('、') + '">' + first + (rest > 0 ? ' <span style="color:#0B5DEA">+' + rest + '</span>' : '') + '</span>';
 }
 function tplShowToast(msg) {
   var ta = document.getElementById('tpl-toast-area');
@@ -201,7 +209,6 @@ function tplSyncActivityFilter() {
     if (custId && a.customerId !== custId) return;
     aOpts += '<option value="' + a.id + '">' + a.name + '</option>';
   });
-  aOpts += '<option value="__none">公共（未指定活动）</option>';
   aEl.innerHTML = aOpts;
   renderTplMgmt();
 }
@@ -226,12 +233,13 @@ function renderTplMgmt() {
     if (dir && (t.direction || '') !== dir) return false;
     if (kw && t.name.indexOf(kw) < 0) return false;
     if (custF) {
-      if (!t.actId) return false;
-      var a = pcActivityOf(t.actId);
-      if (!a || a.customerId !== custF) return false;
+      var hit = (t.actIds || []).some(function(id) {
+        var a = pcActivityOf(id);
+        return a && a.customerId === custF;
+      });
+      if (!hit) return false;
     }
-    if (actF === '__none') { if (t.actId) return false; }
-    else if (actF && (t.actId || '') !== actF) return false;
+    if (actF && (t.actIds || []).indexOf(actF) < 0) return false;
     return true;
   });
   var tbody = document.getElementById('tpl-tbody');
@@ -316,13 +324,14 @@ function openTplModal(id) {
   document.getElementById('tpl-state').value = t ? t.state : 'on';
   document.getElementById('tpl-direction').value = t ? (t.direction || '竖屏') : '竖屏';
   document.getElementById('tpl-guide').value = t ? t.guide : '';
-  var actSel = document.getElementById('tpl-act');
-  var opts = '<option value="">公共模板（留空）</option>';
+  var actBox = document.getElementById('tpl-act-pick');
+  var ahtml = '';
   (window.__ACTIVITY_LIST || []).forEach(function(a) {
-    opts += '<option value="' + a.id + '">' + a.name + '</option>';
+    var on = t && (t.actIds || []).indexOf(a.id) >= 0;
+    ahtml += '<label><input type="checkbox" class="tpl-act-cb" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + a.name + '</label>';
   });
-  actSel.innerHTML = opts;
-  actSel.value = (t && t.actId) ? t.actId : '';
+  if (!ahtml) ahtml = '<span style="color:#999;font-size:13px">暂无可选活动</span>';
+  actBox.innerHTML = ahtml;
   tplRenderImg(t ? t.img : null);
   document.getElementById('tpl-modal').style.display = 'flex';
 }
@@ -354,13 +363,17 @@ function saveTplModal() {
   var imgEl = document.getElementById('tpl-img-preview');
   var hasImg = imgEl.classList.contains('has-img');
   var img = hasImg ? (imgEl.querySelector('img') ? imgEl.querySelector('img').src : null) : null;
+  var actIds = [];
+  document.querySelectorAll('#tpl-act-pick .tpl-act-cb').forEach(function(cb) {
+    if (cb.checked) actIds.push(cb.getAttribute('value'));
+  });
   var data = {
     name: name,
     img: img,
     state: document.getElementById('tpl-state').value,
     direction: document.getElementById('tpl-direction').value,
     guide: guide,
-    actId: document.getElementById('tpl-act').value || ''
+    actIds: actIds
   };
   if (TPL_MODAL_EDIT_ID) {
     var t = TPL_ALL().filter(function(x){ return x.id === TPL_MODAL_EDIT_ID; })[0];
@@ -370,16 +383,23 @@ function saveTplModal() {
     }
   } else {
     TPL_ALL().push({
-      id: 'tpl' + (TPL_ALL().length + 1), uses: 0, time: '09-02 现在',
+      id: 'tpl' + (TPL_ALL().length + 1), uses: 0, time: actNowStr(),
       img: data.img,
       state: data.state,
       direction: data.direction,
       name: data.name, guide: data.guide,
-      actId: data.actId
+      actIds: data.actIds
     });
     showToast('模板已新增：' + name, 'success');
   }
+  /* 归属活动变了 → 同步活动侧的启用清单 */
+  if (typeof pcSyncActivityFromAssets === 'function') pcSyncActivityFromAssets();
   closeTplModal();
   renderTplMgmt();
+}
+function actNowStr() {
+  var d = new Date();
+  function p(n) { return ('0' + n).slice(-2); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
 </script>
