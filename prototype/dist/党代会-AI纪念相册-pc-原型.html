@@ -1807,7 +1807,7 @@ table tr { cursor: pointer; }
           <th>活动状态</th>
           <th>开始/结束日期</th>
           <th>更新时间</th>
-          <th style="width:180px">操作</th>
+          <th style="width:220px">操作</th>
         </tr>
       </thead>
       <tbody id="act-tbody"></tbody>
@@ -3904,6 +3904,7 @@ function renderActTable() {
         (ended
           ? '<span style="color:#ccc">结束</span>'
           : '<a class="action-link warn" onclick="actEnd(\'' + a.id + '\')">结束</a>') +
+        '<a class="action-link warn" onclick="actDel(\'' + a.id + '\')">删除</a>' +
       '</td>' +
       '</tr>';
   });
@@ -3947,6 +3948,35 @@ function actEnd(id) {
   a.updateTime = actNowStr();
   actShowToast('活动已结束：' + a.name);
   renderActTable();
+}
+
+/* 删除活动：设备 / 照片有归属时阻断；模板 / 画风是多选引用关系，删除时自动解除关联 */
+function actDel(id) {
+  var a = pcActivityOf(id);
+  if (!a) return;
+  var devCnt = pcActivityDevices(id).length; /* 含停用记录：设备必须先删除或改投 */
+  var phCnt = (typeof PHOTO_LIST !== 'undefined' ? PHOTO_LIST : [])
+    .filter(function(p) { return (typeof _pActOf === 'function' ? _pActOf(p) : (p.actId || '')) === id; }).length;
+  if (devCnt || phCnt) {
+    alert('无法删除活动「' + a.name + '」：\n\n该活动下还有 ' + devCnt + ' 台设备记录、' + phCnt + ' 张照片。'
+      + '\n请先在设备管理中删除或改投设备、清理照片后再试。');
+    return;
+  }
+  var tplCnt = 0, stCnt = 0;
+  (window.__TPL_LIST || []).forEach(function(t) { if ((t.actIds || []).indexOf(id) >= 0) tplCnt++; });
+  (window.__STYLE_LIST || []).forEach(function(s) { if ((s.actIds || []).indexOf(id) >= 0) stCnt++; });
+  var tip = '确定删除活动「' + a.name + '」吗？';
+  if (tplCnt || stCnt) tip += '\n\n将同时解除 ' + tplCnt + ' 个模板、' + stCnt + ' 个画风的归属关联。';
+  tip += '\n\n删除后不可恢复。';
+  if (!confirm(tip)) return;
+  window.__ACTIVITY_LIST = window.__ACTIVITY_LIST.filter(function(x) { return x.id !== id; });
+  (window.__TPL_LIST || []).forEach(function(t) { t.actIds = (t.actIds || []).filter(function(x) { return x !== id; }); });
+  (window.__STYLE_LIST || []).forEach(function(s) { s.actIds = (s.actIds || []).filter(function(x) { return x !== id; }); });
+  pcSyncActivityFromAssets();
+  ACT_PAGE = 1;
+  actShowToast('已删除活动：' + a.name);
+  renderActTable();
+  actRefreshPeers();
 }
 
 /* ---- 创作能力选择器 ---- */
