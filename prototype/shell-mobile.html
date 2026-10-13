@@ -992,6 +992,7 @@ body {
       <div class="dm-title">状态演示</div>
       <div class="dm-item" onclick="demoStatus('notstart')">活动未开始</div>
       <div class="dm-item" onclick="demoStatus('ended')">活动已结束</div>
+      <div class="dm-item" onclick="demoStatus('stopped')">设备已停用</div>
       <div class="dm-item" onclick="demoStatus('invalid')">链接无效</div>
       <div class="dm-item" onclick="demoStatus('network')">网络异常</div>
       <div class="dm-item" onclick="demoFail('common')">生成失败</div>
@@ -1022,45 +1023,49 @@ body {
       }
     });
     function demoStatus(type) {
+      /* 通用入口页：所有状态共用同一套视觉（党建红渐变，由 12-status.html 默认提供），
+         只按状态切换图标 / 文案 / 按钮；活动信息卡仅在「未开始 / 已结束」显示 */
       var states = {
         notstart: {
-          bg: 'linear-gradient(170deg, #6B1512 0%, #8C1D15 45%, #A8271B 100%)',
           icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
           title: '活动即将开始', desc: '敬请期待现场纪念相册',
           btns: '<button class="status-btn plain" onclick="goHome()">返回首页</button>',
-          showCount: false
+          meta: true, showCount: false
         },
         ended: {
-          bg: 'linear-gradient(170deg, #3F3D3A 0%, #5C5854 48%, #78736E 100%)',
           icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13l1.5 8-5-3-5 3 1.5-8"/></svg>',
           title: '本次活动已结束', desc: '感谢参与，共同珍藏这份大会记忆',
-          btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button>',
-          showCount: true
+          btns: '<button class="status-btn primary" onclick="goMine()">查看我的纪念</button><button class="status-btn plain" onclick="goHome()">返回首页</button>',
+          meta: true, showCount: true
+        },
+        stopped: {
+          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+          title: '当前活动入口已停用', desc: '请扫描现场其他二维码，或联系现场工作人员',
+          btns: '<button class="status-btn plain" onclick="goHome()">返回首页</button>',
+          meta: false, showCount: false
         },
         invalid: {
-          bg: 'linear-gradient(170deg, #5A4A42 0%, #7A6459 50%, #96786A 100%)',
           icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor"/></svg>',
           title: '暂时无法进入', desc: '二维码信息无效，请扫描现场正式二维码',
           btns: '<button class="status-btn plain" onclick="goHome()">返回首页</button>',
-          showCount: false
+          meta: false, showCount: false
         },
         network: {
-          bg: 'linear-gradient(170deg, #37474F 0%, #455A64 50%, #546E7A 100%)',
           icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8a15 15 0 0 1 22 0"/><path d="M5 12a10 10 0 0 1 14 0"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></svg>',
           title: '网络连接不稳定', desc: '请检查网络后重试',
           btns: '<button class="status-btn primary" onclick="demoStatus(\'network\')">重新加载</button>',
-          showCount: false
+          meta: false, showCount: false
         }
       };
       var st = states[type];
       if (!st) return;
-      /* 图标与背景必须用 innerHTML：textContent 不解析 HTML，会把 SVG 当纯文本输出 */
-      document.getElementById('status-bg').style.background = st.bg;
+      /* 图标必须用 innerHTML：textContent 不解析 HTML，会把 SVG 当纯文本输出 */
       document.getElementById('status-icon').innerHTML = st.icon;
       document.getElementById('status-title').textContent = st.title;
       document.getElementById('status-desc').textContent = st.desc;
       document.getElementById('status-btns').innerHTML = st.btns;
-      /* 活动信息：演示态取当前活动的活动名 / 档期 / 参与人数 */
+      /* 活动信息卡：停用 / 无效 / 网络异常态不显示（此时活动归属不明确） */
+      document.getElementById('status-meta').style.display = st.meta ? '' : 'none';
       var A = window.ACTIVITY || {};
       document.getElementById('st-meta-name').textContent = A.fullName || '—';
       document.getElementById('st-meta-time').textContent =

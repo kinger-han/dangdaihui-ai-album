@@ -94,7 +94,7 @@
           <th>活动状态</th>
           <th>开始/结束日期</th>
           <th>更新时间</th>
-          <th style="width:220px">操作</th>
+          <th style="width:150px">操作</th>
         </tr>
       </thead>
       <tbody id="act-tbody"></tbody>
@@ -230,7 +230,6 @@ function renderActTable() {
   pageList.forEach(function(a) {
     var c = pcCustomerOf(a.customerId);
     var st = actStatusKey(a);
-    var ended = (st === 'ended');
     html += '<tr>' +
       '<td>' + a.name + '</td>' +
       '<td>' + (c ? c.name : '—') + '</td>' +
@@ -239,10 +238,6 @@ function renderActTable() {
       '<td>' + (a.updateTime || '—') + '</td>' +
       '<td>' +
         '<a class="action-link" onclick="actOpenModal(\'' + a.id + '\')">编辑</a>' +
-        '<a class="action-link" onclick="actEnable(\'' + a.id + '\')">启用</a>' +
-        (ended
-          ? '<span style="color:#ccc">结束</span>'
-          : '<a class="action-link warn" onclick="actEnd(\'' + a.id + '\')">结束</a>') +
         '<a class="action-link warn" onclick="actDel(\'' + a.id + '\')">删除</a>' +
       '</td>' +
       '</tr>';
@@ -259,36 +254,6 @@ function actResetFilter() {
   document.getElementById('act-f-state').value = '';
   renderActTable();
 }
-/* 行内状态操作：只原地变色，不重排序 */
-function actEnable(id) {
-  var a = pcActivityOf(id);
-  if (!a) return;
-  if (actStatusKey(a) === 'running') { actShowToast('活动已在进行中：' + a.name); return; }
-  if (actStatusKey(a) === 'ended') {
-    var devCnt = pcActivityEnabledDevices(a.id).length;
-    var tip = '确定重新启用已结束的活动「' + a.name + '」吗？\n\n启用后状态回到「进行中」。'
-      + (devCnt ? '\n该活动下有 ' + devCnt + ' 台已启用设备，扫码将重新生效。' : '\n该活动下没有已启用设备，扫码不生效。')
-      + '\n\n（设备启停需人工在设备管理里调整，不会自动变更）';
-    if (!confirm(tip)) return;
-  }
-  a.status = 'running';
-  a.updateTime = actNowStr();
-  actShowToast('已启用：' + a.name);
-  renderActTable();
-}
-function actEnd(id) {
-  var a = pcActivityOf(id);
-  if (!a) return;
-  var devCnt = pcActivityEnabledDevices(a.id).length;
-  var tip = '确定结束活动「' + a.name + '」吗？\n\n结束后可再重新启用回「进行中」。'
-    + (devCnt ? '\n该活动下 ' + devCnt + ' 台设备仍为启用状态，设备启停需人工在设备管理里调整。' : '');
-  if (!confirm(tip)) return;
-  a.status = 'ended';
-  a.updateTime = actNowStr();
-  actShowToast('活动已结束：' + a.name);
-  renderActTable();
-}
-
 /* 删除活动：设备 / 照片有归属时阻断；模板 / 画风是多选引用关系，删除时自动解除关联 */
 function actDel(id) {
   var a = pcActivityOf(id);
