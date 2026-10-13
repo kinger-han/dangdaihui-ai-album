@@ -79,6 +79,7 @@
           <th style="width:70px">示例</th>
           <th>画风名称</th>
           <th>归属活动</th>
+          <th>所属客户</th>
           <th style="width:100px">合成模式</th>
           <th style="width:90px">预计耗时</th>
           <th>提示词</th>
@@ -234,6 +235,7 @@ function renderStMgmt() {
         : '<span class="st-thumb effect-' + s.id + '"><span class="photo-person"></span></span>') + '</td>' +
       '<td>' + s.name + '</td>' +
       '<td>' + stActCell(s) + '</td>' +
+      '<td>' + (pcActIdsCustomerNames(s.actIds).join('、') || '—') + '</td>' +
       '<td>' + s.mode + '</td>' +
       '<td>' + s.time + '</td>' +
       '<td class="st-leaf">' + (s.prompt || '—') + '</td>' +
@@ -251,7 +253,7 @@ function renderStMgmt() {
         '<a class="action-link warn" onclick="delStyle(\'' + s.id + '\')">删除</a>' +
       '</td></tr>';
   });
-  if (!list.length) html = '<tr><td colspan="13" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的画风</td></tr>';
+  if (!list.length) html = '<tr><td colspan="14" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的画风</td></tr>';
   tb.innerHTML = html;
   var allEl = document.getElementById('st-all');
   if (allEl) allEl.checked = list.length > 0 && list.every(function(s) { return ST_SELECTED[s.id]; });

@@ -218,10 +218,11 @@ function devQuickToggle(id) {
   var d = pcDeviceOf(id);
   if (!d) return;
   if (d.enabled) {
-    if (!confirm('确定停用设备「' + d.name + '」吗？停用后该屏二维码不生效、不接收上屏。')) return;
+    if (!confirm('确定停用设备「' + d.name + '」吗？停用后该屏二维码不生效、不接收上屏，已上屏照片自动下屏。')) return;
     d.enabled = false;
     d.time = nowStr();
-    devShowToast('已停用：' + d.name);
+    var down = pcTakeDownDevicePhotos(d.id);
+    devShowToast('已停用：' + d.name + (down ? '，已自动下屏 ' + down + ' 张照片' : ''));
     renderDevTable();
     return;
   }
@@ -300,7 +301,8 @@ function resetDevFilter() {
 function batchDelDev() {
   var ids = Object.keys(DEV_SELECTED);
   if (!ids.length) { devShowToast('请先勾选设备'); return; }
-  if (!confirm('确定删除所选 ' + ids.length + ' 台设备吗？删除后该设备不再接收上屏内容。')) return;
+  if (!confirm('确定删除所选 ' + ids.length + ' 台设备吗？删除后该设备不再接收上屏内容，已上屏照片自动下屏。')) return;
+  ids.forEach(function(id) { pcTakeDownDevicePhotos(id); });
   window.__DEVICE_LIST = (window.__DEVICE_LIST || []).filter(function(d) { return !DEV_SELECTED[d.id]; });
   DEV_SELECTED = {};
   renderDevTable();
@@ -309,10 +311,11 @@ function batchDelDev() {
 function delDev(id) {
   var d = (window.__DEVICE_LIST || []).filter(function(x){ return x.id === id; })[0];
   if (!d) return;
-  if (!confirm('确定删除设备「' + d.name + '」吗？删除后该设备不再接收上屏内容。')) return;
+  if (!confirm('确定删除设备「' + d.name + '」吗？删除后该设备不再接收上屏内容，已上屏照片自动下屏。')) return;
+  var down = pcTakeDownDevicePhotos(id);
   window.__DEVICE_LIST = (window.__DEVICE_LIST || []).filter(function(x){ return x.id !== id; });
   renderDevTable();
-  devShowToast('已删除设备：' + d.name);
+  devShowToast('已删除设备：' + d.name + (down ? '，已自动下屏 ' + down + ' 张照片' : ''));
 }
 
 /* ---- 新增/编辑弹窗 ---- */
@@ -399,7 +402,12 @@ function saveDevModal() {
   };
   if (DEV_EDIT_ID) {
     var d = (window.__DEVICE_LIST || []).filter(function(x){ return x.id === DEV_EDIT_ID; })[0];
-    if (d) { for (var k in data) d[k] = data[k]; d.time = nowStr(); devShowToast('设备已保存：' + name); }
+    if (d) {
+      var prevEnabled = d.enabled;
+      for (var k in data) d[k] = data[k]; d.time = nowStr();
+      var down = (prevEnabled && !stateOn) ? pcTakeDownDevicePhotos(d.id) : 0;
+      devShowToast('设备已保存：' + name + (down ? '，已自动下屏 ' + down + ' 张照片' : ''));
+    }
   } else {
     data.id = 'dev' + ((window.__DEVICE_LIST || []).length + 1);
     data.sort = (window.__DEVICE_LIST || []).length + 1;

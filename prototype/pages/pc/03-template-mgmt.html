@@ -89,6 +89,7 @@
           <th class="tpl-thumb-cell">模板图片</th>
           <th>模板名称</th>
           <th>归属活动</th>
+          <th>所属客户</th>
           <th>模板方向</th>
           <th>适用建议</th>
           <th>状态</th>
@@ -257,6 +258,7 @@ function renderTplMgmt() {
         : '<span class="pt-bg2 wb-' + tplBgOf(t.id) + '"></span><span class="pt-person2"></span>') + '</span></td>' +
       '<td>' + t.name + '</td>' +
       '<td>' + tplActCell(t) + '</td>' +
+      '<td class="tpl-leaf">' + (pcActIdsCustomerNames(t.actIds).join('、') || '—') + '</td>' +
       '<td>' + (t.direction || '—') + '</td>' +
       '<td class="tpl-leaf">' + (t.guide || '—') + '</td>' +
       '<td>' + (t.state === 'on'
@@ -274,7 +276,7 @@ function renderTplMgmt() {
       '</tr>';
   });
   if (!list.length) {
-    html = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的模板</td></tr>';
+    html = '<tr><td colspan="11" style="text-align:center;color:#999;padding:40px 0">暂无符合条件的模板</td></tr>';
   }
   tbody.innerHTML = html;
   var allEl = document.getElementById('tpl-all');

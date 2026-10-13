@@ -424,8 +424,20 @@ function actSave() {
   var actId;
   if (ACT_EDIT_ID) {
     var a = pcActivityOf(ACT_EDIT_ID);
-    if (a) { for (var k in data) a[k] = data[k]; actId = a.id; }
-    actShowToast('活动已保存：' + name);
+    if (a) {
+      var prevStatus = a.status;
+      for (var k in data) a[k] = data[k]; actId = a.id;
+      /* 活动与设备联动：结束 → 自动停用其下全部设备 + 已上屏照片自动下屏；重开不自动恢复设备 */
+      if (prevStatus !== 'ended' && a.status === 'ended') {
+        var dis = pcDisableActivityDevices(a.id);
+        var down = pcTakeDownActivityPhotos(a.id);
+        actShowToast('活动已结束：' + name + (dis ? '，已自动停用 ' + dis + ' 台设备' : '') + (down ? '、自动下屏 ' + down + ' 张照片' : ''));
+      } else if (prevStatus === 'ended' && a.status === 'running') {
+        actShowToast('活动已重新开始：' + name + '（设备不会自动恢复启用，请在设备管理人工启用）');
+      } else {
+        actShowToast('活动已保存：' + name);
+      }
+    }
   } else {
     data.id = 'act' + (actList().length + 1);
     data.code = 'ACT-2026-' + ('00' + (actList().length + 1)).slice(-3);

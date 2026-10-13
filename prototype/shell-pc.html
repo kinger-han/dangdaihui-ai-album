@@ -1280,6 +1280,60 @@ function pcEnabledDeviceByMac(mac, exceptId) {
     return d.mac === mac && d.enabled && d.id !== exceptId;
   })[0] || null;
 }
+/* 多个活动对应的客户名去重列表（模板 / 画风列表「所属客户」列用） */
+function pcActIdsCustomerNames(actIds) {
+  var names = [];
+  (actIds || []).forEach(function(id) {
+    var a = pcActivityOf(id);
+    if (!a) return;
+    var c = pcCustomerOf(a.customerId);
+    var n = c ? c.name : '';
+    if (n && names.indexOf(n) < 0) names.push(n);
+  });
+  return names;
+}
+/* 已上屏照片自动下屏（V2.2）：退出「正在展示」回到「等待上屏」，记录下屏时间；返回下屏张数 */
+function pcTakeDownPhotos(filterFn) {
+  var n = 0;
+  if (typeof PHOTO_LIST === 'undefined') return 0;
+  PHOTO_LIST.forEach(function(p) {
+    if (!p.on || !filterFn(p)) return;
+    p.on = false;
+    if (p.status === 'selected') p.status = 'wait';
+    p.offTime = (typeof nowStr === 'function') ? nowStr() : '';
+    n++;
+  });
+  if (n) {
+    if (typeof renderPhotoTable === 'function') { try { renderPhotoTable(); } catch (e) {} }
+    if (typeof renderSelTable === 'function') { try { renderSelTable(); } catch (e) {} }
+  }
+  return n;
+}
+/* 设备停用 / 删除联动：该设备上的已上屏照片自动下屏 */
+function pcTakeDownDevicePhotos(devId) {
+  return pcTakeDownPhotos(function(p) {
+    return p.screenId === devId || String(p.onScreen || '').indexOf(devId) >= 0;
+  });
+}
+/* 活动结束联动：该活动已上屏照片自动下屏 */
+function pcTakeDownActivityPhotos(actId) {
+  return pcTakeDownPhotos(function(p) {
+    return (typeof _pActOf === 'function') ? _pActOf(p) === actId : p.actId === actId;
+  });
+}
+/* 活动结束联动：自动停用该活动下全部设备记录（含启用中），返回停用台数 */
+function pcDisableActivityDevices(actId) {
+  var n = 0;
+  (window.__DEVICE_LIST || []).forEach(function(d) {
+    if (d.actId === actId && d.enabled) {
+      d.enabled = false;
+      d.time = (typeof nowStr === 'function') ? nowStr() : d.time;
+      n++;
+    }
+  });
+  if (n && typeof renderDevTable === 'function') { try { renderDevTable(); } catch (e) {} }
+  return n;
+}
 
 /* ===== 通用分页（真实系统口径：共 N 条 / 10条/页 / 页码 / 前往 N 页） ===== */
 window.__PAGER = window.__PAGER || {};
