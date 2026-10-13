@@ -6,7 +6,18 @@
        在壳样式之后，会覆盖壳内规则，所以背景层单独用 .st-bg 自带。 */
     #page-status .st-bg {
       position: absolute; inset: 0;
-      background: linear-gradient(170deg, #6B1512 0%, #8C1D15 45%, #A8271B 100%);
+      /* 中性深蓝渐变：通用活动可用，不绑定党建红 */
+      background: linear-gradient(168deg, #2A3550 0%, #3C4E74 46%, #5873A3 100%);
+    }
+    #page-status .st-bg::before {
+      content: ''; position: absolute; top: -80px; right: -60px;
+      width: 260px; height: 260px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.10) 0%, transparent 70%);
+    }
+    #page-status .st-bg::after {
+      content: ''; position: absolute; bottom: -110px; left: -90px;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
     }
     #page-status .st-inner {
       position: relative; z-index: 1;
@@ -40,7 +51,7 @@
       min-height: 46px; border-radius: 22px; border: none;
       font-size: 15px; font-weight: 600; cursor: pointer;
     }
-    #page-status .status-btn.primary { background: #fff; color: #A8271B; }
+    #page-status .status-btn.primary { background: #fff; color: #2E3D5C; }
     #page-status .status-btn.plain { background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
   </style>
   <!-- 自带背景层：build.py 注入的 .page{background:#fff} 优先级高于壳内样式，

@@ -204,28 +204,6 @@ body {
   display: flex; justify-content: center; align-items: center;
   min-height: 100vh; padding: 24px 0;
 }
-/* ============ 手机外框 ============ */
-.phone-frame {
-  width: 395px; height: 850px;
-  background: #1c1c1e; border-radius: 44px; padding: 10px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-}
-.phone-screen {
-  width: 100%; height: 100%; background: #fff; border-radius: 34px;
-  overflow: hidden; position: relative;
-}
-.phone-notch {
-  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-  width: 126px; height: 28px; background: #1c1c1e;
-  border-radius: 0 0 20px 20px; z-index: 999;
-}
-.status-bar {
-  height: 44px; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 26px; font-size: 13px; font-weight: 600; color: var(--ink);
-  position: relative; z-index: 998; background: #fff;
-}
-.status-bar .icons { display: flex; gap: 4px; align-items: center; font-size: 11px; }
-
 /* ============ 页面容器 ============ */
 .page { display: none; position: absolute; inset: 0; flex-direction: column; background: #fff; }
 .page.active { display: flex; }
@@ -966,7 +944,9 @@ body {
 .terms-sec li { font-size: 13px; color: var(--gray); line-height: 1.9; }
 
 /* ============ H12 活动状态页 ============ */
-.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+/* toast 默认隐藏：base.css 的 .toast 默认可见，空泡常驻状态栏顶部中央，看着像「刘海」 */
+.toast { opacity: 0; visibility: hidden; pointer-events: none; }
+.toast.show { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
 .toast .t-icon { display: block; font-size: 30px; margin-bottom: 6px; }
 
 /* ============ 离开确认弹层（H07） ============ */
@@ -1378,7 +1358,18 @@ body {
        在壳样式之后，会覆盖壳内规则，所以背景层单独用 .st-bg 自带。 */
     #page-status .st-bg {
       position: absolute; inset: 0;
-      background: linear-gradient(170deg, #6B1512 0%, #8C1D15 45%, #A8271B 100%);
+      /* 中性深蓝渐变：通用活动可用，不绑定党建红 */
+      background: linear-gradient(168deg, #2A3550 0%, #3C4E74 46%, #5873A3 100%);
+    }
+    #page-status .st-bg::before {
+      content: ''; position: absolute; top: -80px; right: -60px;
+      width: 260px; height: 260px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.10) 0%, transparent 70%);
+    }
+    #page-status .st-bg::after {
+      content: ''; position: absolute; bottom: -110px; left: -90px;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
     }
     #page-status .st-inner {
       position: relative; z-index: 1;
@@ -1412,7 +1403,7 @@ body {
       min-height: 46px; border-radius: 22px; border: none;
       font-size: 15px; font-weight: 600; cursor: pointer;
     }
-    #page-status .status-btn.primary { background: #fff; color: #A8271B; }
+    #page-status .status-btn.primary { background: #fff; color: #2E3D5C; }
     #page-status .status-btn.plain { background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
   </style>
   <!-- 自带背景层：build.py 注入的 .page{background:#fff} 优先级高于壳内样式，
@@ -2602,7 +2593,7 @@ function mockRequest(data, delay) {
       }
     });
     function demoStatus(type) {
-      /* 通用入口页：所有状态共用同一套视觉（党建红渐变，由 12-status.html 默认提供），
+      /* 通用入口页：所有状态共用同一套视觉（中性深蓝渐变，由 12-status.html 默认提供，非党建红、其他活动可复用），
          只按状态切换图标 / 文案 / 按钮；活动信息卡仅在「未开始 / 已结束」显示 */
       var states = {
         notstart: {
@@ -2619,7 +2610,7 @@ function mockRequest(data, delay) {
         },
         stopped: {
           icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
-          title: '当前活动入口已停用', desc: '请扫描现场其他二维码，或联系现场工作人员',
+          title: '活动已结束', desc: '本次活动已停止，感谢您的参与',
           btns: '<button class="status-btn plain" onclick="goHome()">返回首页</button>',
           meta: false, showCount: false
         },
